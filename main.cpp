@@ -88,7 +88,7 @@ int main() {
     optimizers.push_back((cmp::Optimizer*)new cmp::ConstFoldingOptimizer());
     optimizers.push_back((cmp::Optimizer*)new cmp::EraseUnusedVariableOptimizer());
 
-	for (int i = 0; i < 10; ++i) {
+	for (int i = 0; i < 1; ++i) {
 		for (auto p : optimizers) {
 			p->optimize(symbol_table);
 		}

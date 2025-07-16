@@ -54,8 +54,8 @@ struct BinaryExpression : public Expression {
             case OPERATOR::GE:  return ">=";
             case OPERATOR::LE:  return "<=";
 
-            case OPERATOR::AND: return "&&";
-            case OPERATOR::OR:  return "||";
+            case OPERATOR::AND: return "and";
+            case OPERATOR::OR:  return "or";
 
             default: return "unknown";
         }

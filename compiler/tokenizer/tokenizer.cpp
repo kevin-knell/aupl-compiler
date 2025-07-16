@@ -40,7 +40,7 @@ namespace {
         static std::regex int_number(R"(^[+-]?\d+$)");
         static std::regex double_number(R"(^[+-]?\d+\.\d+$)");
         static std::regex string(R"(^\"(.*)\"$)");
-        static std::regex special(R"(^[{}()\[\]:;.,=+\-*/<>!&|]$@)");
+        static std::regex special(R"(^[{}()\[\]:;.,=+\-*/<>!&|@]+$)");
 
         if (keywords.count(token)) return cmp::TokenType::KEYWORD;
         if (std::regex_match(token, double_number)) return cmp::TokenType::DOUBLE_LITERAL;
@@ -66,7 +66,8 @@ std::vector<Token> tokenize(const std::string& source) {
     const std::string identifier = R"([a-zA-Z_][a-zA-Z0-9_]*)";
     const std::string double_number = R"([+-]?\d+\.\d+)";
     const std::string int_number = R"([+-]?\d+)";
-    const std::string special = R"([{}()\[\]:;,=+\-*/<>!&|.@])";
+    // Multi-char operators first, then single-char
+    const std::string special = R"(>=|<=|==|!=|[{}()\[\]:;,=+\-*/<>!&|.@])";
     const std::string string_literal = R"(^\"(.*)\"$)";
     const std::string char_literal = R"('(\\.|[^'\\])')";
 

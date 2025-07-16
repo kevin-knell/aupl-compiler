@@ -13,66 +13,124 @@
 namespace cmp {
 
 ExprPtr SymbolBuilder::parse_expression(ParserInfo& parser_info) {
-    return parse_add(parser_info);
+    return parse_or(parser_info);
 }
 
-ExprPtr SymbolBuilder::parse_add(ParserInfo& parser_info) {
-    ExprPtr left = parse_sub(parser_info);
-    if (!left) return nullptr;
-
-    while (expect("+")) {
-        next(); // consume +
-        ExprPtr right = parse_sub(parser_info);
+// or / and
+ExprPtr SymbolBuilder::parse_or(ParserInfo& parser_info) {
+    ExprPtr left = parse_and(parser_info);
+    while (expect("or")) {
+        next(); // consume 'or'
+        ExprPtr right = parse_and(parser_info);
         if (!right) return nullptr;
-        
-        left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::ADD);
+        left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::OR);
     }
-
     return left;
 }
 
-ExprPtr SymbolBuilder::parse_sub(ParserInfo& parser_info) {
+ExprPtr SymbolBuilder::parse_and(ParserInfo& parser_info) {
+    ExprPtr left = parse_equality(parser_info);
+    while (expect("and")) {
+        next(); // consume 'and'
+        ExprPtr right = parse_equality(parser_info);
+        if (!right) return nullptr;
+        left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::AND);
+    }
+    return left;
+}
+
+ExprPtr SymbolBuilder::parse_equality(ParserInfo& parser_info) {
+    ExprPtr left = parse_comparison(parser_info);
+    while (expect("==") || expect("!=")) {
+        if (expect("==")) {
+            next();
+            ExprPtr right = parse_comparison(parser_info);
+            if (!right) return nullptr;
+            left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::EQ);
+        } else if (expect("!=")) {
+            next();
+            ExprPtr right = parse_comparison(parser_info);
+            if (!right) return nullptr;
+            left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::NEQ);
+        }
+    }
+    return left;
+}
+
+// == !=
+ExprPtr SymbolBuilder::parse_comparison(ParserInfo& parser_info) {
+    ExprPtr left = parse_add(parser_info);
+    while (expect("<") || expect(">") || expect("<=") || expect(">=")) {
+        if (expect("<")) {
+            next();
+            ExprPtr right = parse_add(parser_info);
+            if (!right) return nullptr;
+            left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::LT);
+        } else if (expect(">")) {
+            next();
+            ExprPtr right = parse_add(parser_info);
+            if (!right) return nullptr;
+            left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::GT);
+        } else if (expect("<=")) {
+            next();
+            ExprPtr right = parse_add(parser_info);
+            if (!right) return nullptr;
+            left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::LE);
+        } else if (expect(">=")) {
+            next();
+            ExprPtr right = parse_add(parser_info);
+            if (!right) return nullptr;
+            left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::GE);
+        }
+    }
+    return left;
+}
+
+// + -
+ExprPtr SymbolBuilder::parse_add(ParserInfo& parser_info) {
     ExprPtr left = parse_mul(parser_info);
     if (!left) return nullptr;
 
-    while (expect("-")) {
-        next(); // consume -
-        ExprPtr right = parse_mul(parser_info);
-        if (!right) return nullptr;
-        
-        left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::SUB);
+    while (expect("+") || expect("-")) {
+		if (expect("+")){
+        	next(); // consume +
+        	ExprPtr right = parse_mul(parser_info);
+        	if (!right) return nullptr;
+        	left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::ADD);
+		} else if (expect("-")){
+        	next(); // consume -
+        	ExprPtr right = parse_mul(parser_info);
+        	if (!right) return nullptr;
+        	left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::SUB);
+		}
     }
 
     return left;
 }
 
+// * / %
 ExprPtr SymbolBuilder::parse_mul(ParserInfo& parser_info) {
-    ExprPtr left = parse_div(parser_info);
-    if (!left) return nullptr;
-
-    while (expect("*")) {
-        next(); // consume *
-        ExprPtr right = parse_div(parser_info);
-        if (!right) return nullptr;
-        
-        left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::MUL);
-    }
-
-    return left;
-}
-
-ExprPtr SymbolBuilder::parse_div(ParserInfo& parser_info) {
     ExprPtr left = parse_access(parser_info);
     if (!left) return nullptr;
 
-    while (expect("/")) {
-        next(); // consume /
-        ExprPtr right = parse_access(parser_info);
-        if (!right) return nullptr;
-        
-        left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::DIV);
+    while (expect("*") || expect("/") || expect("%")) {
+        if (expect("*")) {
+            next(); // consume *
+            ExprPtr right = parse_access(parser_info);
+            if (!right) return nullptr;
+            left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::MUL);
+        } else if (expect("/")) {
+            next(); // consume /
+            ExprPtr right = parse_access(parser_info);
+            if (!right) return nullptr;
+            left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::DIV);
+        } else if (expect("%")) {
+            next(); // consume %
+            ExprPtr right = parse_access(parser_info);
+            if (!right) return nullptr;
+            left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::MOD);
+        }
     }
-
     return left;
 }
 
@@ -84,7 +142,6 @@ ExprPtr SymbolBuilder::parse_access(ParserInfo& parser_info) {
         next(); // consume .
         ExprPtr right = parse_primary(parser_info);
         if (!right) return nullptr;
-        
         left = std::make_shared<AccessExpression>(left, right);
     }
 
@@ -93,7 +150,7 @@ ExprPtr SymbolBuilder::parse_access(ParserInfo& parser_info) {
 
 ExprPtr SymbolBuilder::parse_primary(ParserInfo& parser_info) {
     if (auto call_expr = parse_call(parser_info)) return call_expr;
-	if (auto tuple_expr = parse_tuple(parser_info)) return tuple_expr;
+    if (auto tuple_expr = parse_tuple(parser_info)) return tuple_expr;
 
     if (match(TokenType::INT_LITERAL)) {
         vm::Value8* value8 = new vm::Value8();
@@ -167,6 +224,7 @@ ExprPtr SymbolBuilder::parse_tuple(ParserInfo &parser_info) {
     size_t idx = index;
 
     if (!expect("(")) {
+		index = idx;
         return nullptr;
     }
     next(); // consume (
@@ -174,9 +232,13 @@ ExprPtr SymbolBuilder::parse_tuple(ParserInfo &parser_info) {
     ExprVec expressions;
 
     while (!expect(")")) {
-        if (expect(",")) {
-            if (!expressions.empty()) next(); // consume ,
-            else return nullptr;
+        if (!expressions.empty()) {
+			if (expect(",")) {
+				next(); // consume ,
+			} else {
+				index = idx;
+				return nullptr;
+			}
         }
 
         ExprPtr t = parse_expression(parser_info);
