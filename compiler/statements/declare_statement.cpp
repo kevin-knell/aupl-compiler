@@ -49,7 +49,7 @@ std::vector<uint8_t> DeclareStatement::generate_bytecode(BytecodeGenerationInfo&
         }
         case Expression::LOAD_CONST: {
 			std::vector<uint8_t> result;
-			int size = value->get_type()->get_size();
+			int size = variable_symbol->type->get_size();
 			if (size == 0) return {};
 
 			vm::Value* v = value->eval_constexpr();
@@ -90,7 +90,7 @@ size_t DeclareStatement::get_bytecode_size(BytecodeGenerationInfo &bgi) const {
             if (value->get_type() == PrimitiveType::TYPE_INT) return 1 + 2 + 2 + 2;
             else return 1;
         case Expression::LOAD_CONST: {
-			int size = value->get_type()->get_size();
+			int size = variable_symbol->type->get_size();
 			switch (size) {
 				case 0: return 0;
 				case 1: return 1 + 2 + 1;

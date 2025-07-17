@@ -45,26 +45,23 @@ namespace vm {
         OP_GROW: ERROR();
         OP_SHRINK: ERROR();
 
+		#define LOAD_CONST(TYPE)																\
+			do {																				\
+				struct [[gnu::packed]] LoadStruct {												\
+					uint16_t dest_addr;															\
+					TYPE value;																	\
+				};																				\
+				LoadStruct& load = FETCH(LoadStruct);                                   		\
+				TYPE& v = STACK_REF(TYPE, fp + load.dest_addr);									\
+				v = load.value;																	\
+				std::cout << "load: " << (int)load.dest_addr << " <- " << (uint64_t)v << std::endl;		\
+			} while(0);
+
         
-        OP_LOAD_CONST_1: {
-            ERROR();
-        }
-
-        OP_LOAD_CONST_2: {
-            ERROR();
-        }
-
-        OP_LOAD_CONST_4: {
-            ERROR();
-        }
-
-        OP_LOAD_CONST_8: {
-            uint16_t& offset = FETCH(uint16_t);
-            uint64_t& v = STACK_REF(uint64_t, fp + offset);
-            v = FETCH(int64_t);
-            std::cout << "load: " << (int)offset << " <- " << v << std::endl;
-            ADVANCE();
-        }
+        OP_LOAD_CONST_1: LOAD_CONST(uint8_t); ADVANCE();
+        OP_LOAD_CONST_2: LOAD_CONST(uint16_t); ADVANCE();
+        OP_LOAD_CONST_4: LOAD_CONST(uint32_t); ADVANCE();
+        OP_LOAD_CONST_8: LOAD_CONST(uint64_t); ADVANCE();
 
         OP_LOAD_CONST_16: {
             uint16_t& offset = FETCH(uint16_t);
