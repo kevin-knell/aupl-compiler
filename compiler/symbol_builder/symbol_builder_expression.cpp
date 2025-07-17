@@ -168,6 +168,22 @@ ExprPtr SymbolBuilder::parse_primary(ParserInfo& parser_info) {
         return load_expr;
     }
 
+	if (expect("true")) {
+		next(); // consume true
+		vm::Value* value = new vm::Value();
+		value->b = true; // true
+		auto load_expr = std::make_shared<LoadConstExpression>(PrimitiveType::TYPE_BOOL, value);
+		return load_expr;
+	}
+
+	if (expect("false")) {
+		next(); // consume false
+		vm::Value* value = new vm::Value();
+		value->b = false; // false
+		auto load_expr = std::make_shared<LoadConstExpression>(PrimitiveType::TYPE_BOOL, value);
+		return load_expr;
+	}
+
     if (match(TokenType::STRING_LITERAL)) {
         vm::Value8* value8 = new vm::Value8();
         value8->i64 = std::stoi(next().value);

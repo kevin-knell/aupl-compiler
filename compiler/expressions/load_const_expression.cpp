@@ -1,5 +1,7 @@
 #include "load_const_expression.hpp"
 
+#include "type.hpp"
+#include "primitive_type.hpp"
 #include "color.hpp"
 #include <assert.h>
 
@@ -34,7 +36,21 @@ vm::Value* LoadConstExpression::eval_constexpr() const {
 }
 
 std::string LoadConstExpression::to_string() const {
-    return C_HIDE("L") + std::to_string(*reinterpret_cast<int64_t*>(value));
+	if (type == PrimitiveType::TYPE_BOOL) {
+		if (value->as<bool>()) {
+			return C_KEYWORD("true");
+		} else {
+			return C_KEYWORD("false");
+		}
+	}
+
+	switch (type->get_size()) {
+	case 1: return C_HIDE("L") + std::to_string(*reinterpret_cast<int8_t*>(value));
+	case 2: return C_HIDE("L") + std::to_string(*reinterpret_cast<int16_t*>(value));
+	case 4: return C_HIDE("L") + std::to_string(*reinterpret_cast<int32_t*>(value));
+	case 8: return C_HIDE("L") + std::to_string(*reinterpret_cast<int64_t*>(value));
+	default: return C_HIDE("L") + "unknown size";
+	}
 }
 
 }
