@@ -34,28 +34,28 @@ namespace {
 
 		vm::BinType bin_type;
 
-		if (left_op->get_type() == PrimitiveType::TYPE_U8) {
+		if (variable_symbol->type == PrimitiveType::TYPE_U8) {
 			bin_type = vm::BinType::UINT8;
-		} else if (left_op->get_type() == PrimitiveType::TYPE_I8) {
+		} else if (variable_symbol->type == PrimitiveType::TYPE_I8) {
 			bin_type = vm::BinType::INT8;
-		} else if (left_op->get_type() == PrimitiveType::TYPE_U16) {
+		} else if (variable_symbol->type == PrimitiveType::TYPE_U16) {
 			bin_type = vm::BinType::UINT16;
-		} else if (left_op->get_type() == PrimitiveType::TYPE_I16) {
+		} else if (variable_symbol->type == PrimitiveType::TYPE_I16) {
 			bin_type = vm::BinType::INT16;
-		} else if (left_op->get_type() == PrimitiveType::TYPE_U32) {
+		} else if (variable_symbol->type == PrimitiveType::TYPE_U32) {
 			bin_type = vm::BinType::UINT32;
-		} else if (left_op->get_type() == PrimitiveType::TYPE_I32) {
+		} else if (variable_symbol->type == PrimitiveType::TYPE_I32) {
 			bin_type = vm::BinType::INT32;
-		} else if (left_op->get_type() == PrimitiveType::TYPE_U64) {
+		} else if (variable_symbol->type == PrimitiveType::TYPE_U64) {
 			bin_type = vm::BinType::UINT64;
-		} else if (left_op->get_type() == PrimitiveType::TYPE_INT) {
+		} else if (variable_symbol->type == PrimitiveType::TYPE_INT) {
 			bin_type = vm::BinType::INT64;
-		} else if (left_op->get_type() == PrimitiveType::TYPE_F32) {
+		} else if (variable_symbol->type == PrimitiveType::TYPE_F32) {
 			bin_type = vm::BinType::FLOAT;
-		} else if (left_op->get_type() == PrimitiveType::TYPE_FLOAT) {
+		} else if (variable_symbol->type == PrimitiveType::TYPE_FLOAT) {
 			bin_type = vm::BinType::DOUBLE;
 		} else {
-			std::cerr << "Unsupported type for binary operation: " << left_op->get_type()->to_string() << std::endl;
+			std::cerr << "Unsupported type for binary operation: " << variable_symbol->type->to_string() << std::endl;
 			return { static_cast<uint8_t>(vm::Instruction::ERR) };
 		}
 
@@ -77,6 +77,7 @@ namespace {
         std::vector<uint8_t> result;
         int size = variable_symbol->type->get_size();
         if (size == 0) return {};
+		
         vm::Value* v = value->eval_constexpr();
         vm::Value2 dest{ .u16 = static_cast<uint16_t>(bgi.scope->variable_indices[variable_symbol->name]) };
         switch (size) {

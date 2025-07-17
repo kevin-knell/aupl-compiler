@@ -21,6 +21,7 @@ TypePtr SymbolBuilder::parse_primitive_type(ParserInfo& parser_info) {
     if (expect("i8"))    return next(), PrimitiveType::TYPE_I8;
     if (expect("i16"))   return next(), PrimitiveType::TYPE_I16;
     if (expect("i32"))   return next(), PrimitiveType::TYPE_I32;
+    if (expect("i64"))   return next(), PrimitiveType::TYPE_INT;
     if (expect("int"))   return next(), PrimitiveType::TYPE_INT;
 
     if (expect("u8"))    return next(), PrimitiveType::TYPE_U8;
@@ -29,6 +30,7 @@ TypePtr SymbolBuilder::parse_primitive_type(ParserInfo& parser_info) {
     if (expect("u64"))   return next(), PrimitiveType::TYPE_U64;
 
     if (expect("f32"))   return next(), PrimitiveType::TYPE_F32;
+    if (expect("f64"))   return next(), PrimitiveType::TYPE_FLOAT;
     if (expect("float")) return next(), PrimitiveType::TYPE_FLOAT;
 
     if (expect("bool"))  return next(), PrimitiveType::TYPE_BOOL;
