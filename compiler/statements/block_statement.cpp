@@ -24,7 +24,7 @@ std::string BlockStatement::to_string() const {
     std::string result = C_BRACE_L + "\n";
 
     for (auto s : scope->body) {
-        result += s->to_string();
+        result += s->to_string() + "\n";
     }
 
     result += "\n" + C_BRACE_R;

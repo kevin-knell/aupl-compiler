@@ -4,7 +4,10 @@
 #include "assign_statement.hpp"
 #include "expression_statement.hpp"
 #include "return_statement.hpp"
-#include "if_statement.hpp"
+#include "label_statement.hpp"
+#include "label.hpp"
+#include "conditional_jump_statement.hpp"
+#include "block_statement.hpp"
 #include <iostream>
 
 namespace cmp {
@@ -83,7 +86,7 @@ std::shared_ptr<Statement> SymbolBuilder::parse_declare_statement(ParserInfo& pa
     return std::make_shared<DeclareStatement>(var);
 }
 
-std::shared_ptr<Statement> SymbolBuilder::parse_block(ParserInfo& parser_info) {
+std::shared_ptr<BlockStatement> SymbolBuilder::parse_block(ParserInfo& parser_info) {
     size_t start_idx = index;
 
     if (!expect("{")) {
@@ -99,11 +102,17 @@ std::shared_ptr<Statement> SymbolBuilder::parse_block(ParserInfo& parser_info) {
     auto parser_info_sub = ParserInfo{.cls = parser_info.cls, .func = parser_info.func, .scope = scope};
 
     while (!expect("}")) {
+		bool is_volatile = false;
+		if (expect("volatile")) {
+			is_volatile = true;
+			next(); // consume 'volatile'
+		}
         StmtPtr st = parse_statement(parser_info_sub);
         if (st == nullptr) {
             index = start_idx;
             return nullptr;
         }
+		st->is_volatile = is_volatile;
         scope->body.push_back(st);
     }
     next(); // consume }
@@ -120,14 +129,19 @@ std::shared_ptr<Statement> SymbolBuilder::parse_if(ParserInfo& parser_info) {
     }
     next(); // consume if
 
+	std::cout << "if" << std::endl;
+
     ExprPtr condition_expr = parse_expression(parser_info);
     if (!condition_expr) {
         index = start_idx;
         return nullptr;
     }
 
-    StmtPtr if_block = parse_block(parser_info);
-    StmtPtr else_block = nullptr;
+    std::shared_ptr<BlockStatement> if_block = parse_block(parser_info);
+	std::shared_ptr<Label> if_label = std::make_shared<Label>(if_block->scope, "if_block");
+
+    std::shared_ptr<BlockStatement> else_block = nullptr;
+	std::shared_ptr<Label> else_label = nullptr;
 
     if (expect("else")) {
         next(); // consume else
@@ -138,9 +152,10 @@ std::shared_ptr<Statement> SymbolBuilder::parse_if(ParserInfo& parser_info) {
             index = start_idx;
             return nullptr;
         }
-    }
+		else_label = std::make_shared<Label>(else_block->scope, "else_block");
+	}
 
-    return std::make_shared<IfStatement>(condition_expr, if_block, else_block);
+    return std::make_shared<ConditionalJumpStatement>(condition_expr, if_label, else_label);
 }
 
 std::shared_ptr<Statement> SymbolBuilder::parse_for(ParserInfo& parser_info) {
