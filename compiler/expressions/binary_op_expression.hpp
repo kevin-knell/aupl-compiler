@@ -1,27 +1,12 @@
 #pragma once
 #include "expression.hpp"
+#include "instructions.hpp"
 
 namespace cmp {
 
 struct BinaryExpression : public Expression {
-    enum class OPERATOR {
-        ADD,
-        SUB,
-        MUL,
-        DIV,
-        MOD,
+    using OPERATOR = vm::BinOp;
 
-        EQ,
-        NEQ,
-        GT,
-        LT,
-        GE,
-        LE,
-
-        AND,
-        OR
-    };
-    
     ExprPtr left;
     ExprPtr right;
     OPERATOR op;

@@ -42,7 +42,7 @@
     _(COPY_TO_PTR_8, s(1, 2, 2)) \
     _(COPY_TO_PTR_16, s(1, 2, 2)) \
     _(COPY_TO_PTR_VAR, s(1, 2, 2, 2)) \
-	\
+    \
     _(PTR_OF, s(1, 2, 2)) \
     \
     _(ADD_I8, s(1, 2, 2, 2)) \
@@ -223,7 +223,7 @@
     _(PRINT, s(1, 2, 2, 2)) \
     \
     _(ALT, s(1, 2, 2, 2)) \
-	\
+    \
     _(DIRECT_THREADED, s(1)) \
     \
     _(ERR, s(1)) \
@@ -231,6 +231,38 @@
 
 
 namespace vm {
+
+    enum class BinType {
+        INT8,
+        UINT8,
+        INT16,
+        UINT16,
+        INT32,
+        UINT32,
+        INT64,
+        UINT64,
+        FLOAT,
+        DOUBLE
+    };
+
+    enum class BinOp {
+        ADD,
+        SUB,
+        MUL,
+        DIV,
+        MOD,
+
+        EQ,
+        NEQ,
+        GT,
+        LT,
+        GE,
+        LE,
+
+        AND,
+        OR
+    };
+	
     enum class Instruction : uint8_t {
         #define ENUM_ENTRY(op, size) op,
         OPCODES(ENUM_ENTRY, _)
@@ -239,16 +271,100 @@ namespace vm {
 
     static_assert((uint8_t)Instruction::HALT <= 255);
 
-	#define OPCODE_SIZE(op, size) v.push_back(std::vector<int>(size));
-	#define OP_SIZE_LIST(...) {__VA_ARGS__}
+    #define OPCODE_SIZE(op, size) v.push_back(std::vector<int>(size));
+    #define OP_SIZE_LIST(...) {__VA_ARGS__}
 
-	const std::vector<std::vector<int>> OP_SIZES = []{
-		std::vector<std::vector<int>> v;
-		OPCODES(OPCODE_SIZE, OP_SIZE_LIST)
-		return v;
-	}();
+    const std::vector<std::vector<int>> OP_SIZES = []{
+        std::vector<std::vector<int>> v;
+        OPCODES(OPCODE_SIZE, OP_SIZE_LIST)
+        return v;
+    }();
 
-	#undef OPCODE_SIZE
-	#undef OP_SIZE_LIST
+    inline Instruction get_binary_opcode(BinType type, BinOp op, bool is_const) {
+        switch (type) {
+            case BinType::INT8:
+                switch (op) {
+                    case BinOp::ADD: return is_const ? Instruction::ADD_CONST_I8 : Instruction::ADD_I8;
+                    case BinOp::SUB: return is_const ? Instruction::SUB_CONST_I8 : Instruction::SUB_I8;
+                    case BinOp::MUL: return is_const ? Instruction::MUL_CONST_I8 : Instruction::MUL_I8;
+                    case BinOp::DIV: return is_const ? Instruction::DIV_CONST_I8 : Instruction::DIV_I8;
+                    case BinOp::MOD: return is_const ? Instruction::MOD_CONST_I8 : Instruction::MOD_I8;
+                }
+                break;
+            case BinType::UINT8:
+                switch (op) {
+                    case BinOp::DIV: return is_const ? Instruction::DIV_CONST_U8 : Instruction::DIV_U8;
+                    // Add other ops as needed
+                }
+                break;
+            case BinType::INT16:
+                switch (op) {
+                    case BinOp::ADD: return is_const ? Instruction::ADD_CONST_I16 : Instruction::ADD_I16;
+                    case BinOp::SUB: return is_const ? Instruction::SUB_CONST_I16 : Instruction::SUB_I16;
+                    case BinOp::MUL: return is_const ? Instruction::MUL_CONST_I16 : Instruction::MUL_I16;
+                    case BinOp::DIV: return is_const ? Instruction::DIV_CONST_I16 : Instruction::DIV_I16;
+                    case BinOp::MOD: return is_const ? Instruction::MOD_CONST_I16 : Instruction::MOD_I16;
+                }
+                break;
+            case BinType::UINT16:
+                switch (op) {
+                    case BinOp::DIV: return is_const ? Instruction::DIV_CONST_U16 : Instruction::DIV_U16;
+                    // Add other ops as needed
+                }
+                break;
+            case BinType::INT32:
+                switch (op) {
+                    case BinOp::ADD: return is_const ? Instruction::ADD_CONST_I32 : Instruction::ADD_I32;
+                    case BinOp::SUB: return is_const ? Instruction::SUB_CONST_I32 : Instruction::SUB_I32;
+                    case BinOp::MUL: return is_const ? Instruction::MUL_CONST_I32 : Instruction::MUL_I32;
+                    case BinOp::DIV: return is_const ? Instruction::DIV_CONST_I32 : Instruction::DIV_I32;
+                    case BinOp::MOD: return is_const ? Instruction::MOD_CONST_I32 : Instruction::MOD_I32;
+                }
+                break;
+            case BinType::UINT32:
+                switch (op) {
+                    case BinOp::DIV: return is_const ? Instruction::DIV_CONST_U32 : Instruction::DIV_U32;
+                    // Add other ops as needed
+                }
+                break;
+            case BinType::INT64:
+                switch (op) {
+                    case BinOp::ADD: return is_const ? Instruction::ADD_CONST_I64 : Instruction::ADD_I64;
+                    case BinOp::SUB: return is_const ? Instruction::SUB_CONST_I64 : Instruction::SUB_I64;
+                    case BinOp::MUL: return is_const ? Instruction::MUL_CONST_I64 : Instruction::MUL_I64;
+                    case BinOp::DIV: return is_const ? Instruction::DIV_CONST_I64 : Instruction::DIV_I64;
+                    case BinOp::MOD: return is_const ? Instruction::MOD_CONST_I64 : Instruction::MOD_I64;
+                }
+                break;
+            case BinType::UINT64:
+                switch (op) {
+                    case BinOp::DIV: return is_const ? Instruction::DIV_CONST_U64 : Instruction::DIV_U64;
+                    // Add other ops as needed
+                }
+                break;
+            case BinType::FLOAT:
+                switch (op) {
+                    case BinOp::ADD: return is_const ? Instruction::ADD_CONST_FLOAT : Instruction::ADD_FLOAT;
+                    case BinOp::SUB: return is_const ? Instruction::SUB_CONST_FLOAT : Instruction::SUB_FLOAT;
+                    case BinOp::MUL: return is_const ? Instruction::MUL_CONST_FLOAT : Instruction::MUL_FLOAT;
+                    case BinOp::DIV: return is_const ? Instruction::DIV_CONST_FLOAT : Instruction::DIV_FLOAT;
+                    // No MOD for float
+                }
+                break;
+            case BinType::DOUBLE:
+                switch (op) {
+                    case BinOp::ADD: return is_const ? Instruction::ADD_CONST_DOUBLE : Instruction::ADD_DOUBLE;
+                    case BinOp::SUB: return is_const ? Instruction::SUB_CONST_DOUBLE : Instruction::SUB_DOUBLE;
+                    case BinOp::MUL: return is_const ? Instruction::MUL_CONST_DOUBLE : Instruction::MUL_DOUBLE;
+                    case BinOp::DIV: return is_const ? Instruction::DIV_CONST_DOUBLE : Instruction::DIV_DOUBLE;
+                    // No MOD for double
+                }
+                break;
+        }
+        return Instruction::ERR;
+    }
+
+    #undef OPCODE_SIZE
+    #undef OP_SIZE_LIST
 } // namespace vm
 
