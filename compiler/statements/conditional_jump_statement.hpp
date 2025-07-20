@@ -6,15 +6,16 @@
 namespace cmp {
 
 class Label;
+using LabelPtr = std::shared_ptr<Label>;
 
 class ConditionalJumpStatement : public Statement {
 public:
     ExprPtr condition;
-    std::shared_ptr<Label> if_label;
-	std::shared_ptr<Label> else_label;
+    LabelPtr if_label;
+    LabelPtr else_label;
 
-    ConditionalJumpStatement(const ExprPtr& cond, const std::shared_ptr<Label>& if_lbl, const std::shared_ptr<Label>& else_lbl)
-		: condition(cond), if_label(if_lbl), else_label(else_lbl) {};
+    ConditionalJumpStatement(const ExprPtr& cond, const LabelPtr& if_lbl, const LabelPtr& else_lbl)
+        : condition(cond), if_label(if_lbl), else_label(else_lbl) {};
 
     std::vector<uint8_t> generate_bytecode(BytecodeGenerationInfo& bgi) const override;
     size_t get_bytecode_size(BytecodeGenerationInfo& bgi) const override;

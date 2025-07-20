@@ -5,8 +5,11 @@
 #include <map>
 #include <memory>
 #include "forward_declarations.hpp"
+#include "bytecode_generation_info.hpp"
 
 namespace cmp {
+
+class LabelStatement;
 
 struct Scope {
     enum SCOPE_TYPE {
@@ -21,6 +24,8 @@ struct Scope {
     std::weak_ptr<Scope> upper_scope;
     std::vector<std::weak_ptr<Scope>> lower_scopes;
 	std::vector<StmtPtr> body;
+	size_t starting_address;
+	std::map<std::shared_ptr<LabelStatement>, size_t> label_addresses;
 	std::map<std::string, VarPtr> variables;
     std::map<std::string, int> variable_indices;
     int size;
@@ -32,8 +37,9 @@ struct Scope {
     void generate_structure(int offset = 0);
     bool has(std::string name);
     std::string get_full_name();
-    std::string sructure_to_string() const;
+    std::string structure_to_string() const;
     VarPtr get_temp(TypePtr type, ExprPtr init_val, std::string temp_name = "tmp");
+	size_t get_bytecode_size(BytecodeGenerationInfo& bgi) const;
 };
 
 using ScopePtr = std::shared_ptr<Scope>;

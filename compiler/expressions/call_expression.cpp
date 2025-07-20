@@ -25,7 +25,7 @@ std::vector<uint8_t> CallExpression::generate_bytecode(BytecodeGenerationInfo& b
         }
     }
 
-    vm::Value4 func_address{.u32 = static_cast<uint32_t>(f->starting_address)};
+    vm::Value4 func_address{.u32 = static_cast<uint32_t>(f->scope->starting_address)};
 
     result.push_back(static_cast<uint8_t>(vm::Instruction::CALL_1));
     result.push_back(func_address.v[3].u8);

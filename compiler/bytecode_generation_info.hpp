@@ -16,13 +16,13 @@ class Scope;
 using ScopePtr = std::shared_ptr<Scope>;
 
 struct BytecodeGenerationInfo {
-    SymbolTable& symbol_table;
-    ClassPtr cls;
-    FuncPtr f;
-    ScopePtr scope;
-    int label_number = 0;
+	SymbolTable& symbol_table;
+	ClassPtr cls;
+	FuncPtr f;
+	ScopePtr scope;
+	size_t bytecode_size = 0;
 
-    BytecodeGenerationInfo(SymbolTable& symbol_table, ClassPtr cls, FuncPtr f, ScopePtr scope)
+	BytecodeGenerationInfo(SymbolTable& symbol_table, ClassPtr cls, FuncPtr f, ScopePtr scope)
 			: symbol_table(symbol_table), cls(cls), f(f), scope(scope) {}
 };
 

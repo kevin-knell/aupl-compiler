@@ -97,6 +97,7 @@ std::shared_ptr<BlockStatement> SymbolBuilder::parse_block(ParserInfo& parser_in
 
     ScopePtr scope = std::make_shared<Scope>(Scope::FUNCTION_SUB);
     scope->upper_scope = parser_info.scope;
+	parser_info.scope->lower_scopes.push_back(std::weak_ptr<Scope>(scope));
     scope->name = "block";
 
     auto parser_info_sub = ParserInfo{.cls = parser_info.cls, .func = parser_info.func, .scope = scope};

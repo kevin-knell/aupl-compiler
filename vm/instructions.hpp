@@ -115,16 +115,16 @@
     _(MUL_CONST_DOUBLE, s(1, 2, 2, 8)) \
     _(DIV_CONST_DOUBLE, s(1, 2, 2, 8)) \
     \
-    _(IF_EQ_I8, s(1, 2, 2, 2)) \
-    _(IF_NEQ_I8, s(1, 2, 2, 2)) \
-    _(IF_LT_I8, s(1, 2, 2, 2)) \
-    _(IF_ELT_I8, s(1, 2, 2, 2)) \
-    _(IF_EQ_CONST_I8, s(1, 2, 2, 2)) \
-    _(IF_NEQ_CONST_I8, s(1, 2, 2, 2)) \
-    _(IF_LT_CONST_I8, s(1, 2, 2, 2)) \
-    _(IF_ELT_CONST_I8, s(1, 2, 2, 2)) \
-    _(IF_GT_CONST_I8, s(1, 2, 2, 2)) \
-    _(IF_EGT_CONST_I8, s(1, 2, 2, 2)) \
+    _(IF_EQ_I8, s(1, 2, 2, 4)) \
+    _(IF_NEQ_I8, s(1, 2, 2, 4)) \
+    _(IF_LT_I8, s(1, 2, 2, 4)) \
+    _(IF_ELT_I8, s(1, 2, 2, 4)) \
+    _(IF_EQ_CONST_I8, s(1, 2, 1, 4)) \
+    _(IF_NEQ_CONST_I8, s(1, 2, 1, 4)) \
+    _(IF_LT_CONST_I8, s(1, 2, 1, 4)) \
+    _(IF_ELT_CONST_I8, s(1, 2, 1, 4)) \
+    _(IF_GT_CONST_I8, s(1, 2, 1, 4)) \
+    _(IF_EGT_CONST_I8, s(1, 2, 1, 4)) \
     \
     _(IF_EQ_I16, s(1, 2, 2, 2)) \
     _(IF_NEQ_I16, s(1, 2, 2, 2)) \
@@ -218,7 +218,7 @@
     \
     _(CALL_NATIVE, s(1, 2, 2, 2)) \
     \
-    _(GOTO, s(1, 2, 2, 2)) \
+    _(GOTO, s(1, 4)) \
     \
     _(PRINT, s(1, 2, 2, 2)) \
     \

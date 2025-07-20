@@ -15,7 +15,6 @@ struct FunctionSymbol {
 	std::string name;
 	std::vector<VarPtr> parameters;
 	ScopePtr scope;
-	size_t starting_address;
 
 	bool is_public = false;
 	bool is_static = false;

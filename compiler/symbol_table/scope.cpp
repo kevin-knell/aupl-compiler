@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "variable_symbol.hpp"
+#include "statement.hpp"
 #include <iomanip>
 
 namespace cmp {
@@ -29,6 +30,9 @@ void Scope::generate_structure(int offset) {
         }
     }
 
+	std::cout << get_full_name() << std::endl;
+	std::cout << structure_to_string() << std::endl;
+
     if (type == FUNCTION || type == FUNCTION_SUB) {
         for (auto wp : lower_scopes) {
             if (auto sp = wp.lock()) {
@@ -48,7 +52,7 @@ std::string Scope::get_full_name() {
     return name;
 }
 
-std::string Scope::sructure_to_string() const {
+std::string Scope::structure_to_string() const {
     std::stringstream result;
     for (auto [name, offset] : variable_indices) {
         VarPtr var = variables.find(name)->second;
@@ -64,6 +68,13 @@ VarPtr Scope::get_temp(TypePtr type, ExprPtr init_val, std::string temp_name) {
     var->is_const = true;
     variables[name] = var;
     return var;
+}
+
+size_t Scope::get_bytecode_size(BytecodeGenerationInfo& bgi) const {
+	for (const auto& stmt : body) {
+		bgi.bytecode_size += stmt->get_bytecode_size(bgi);
+	}
+	return bgi.bytecode_size;
 }
 
 }

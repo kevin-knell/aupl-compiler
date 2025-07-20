@@ -88,31 +88,25 @@ int main() {
     optimizers.push_back((cmp::Optimizer*)new cmp::ConstFoldingOptimizer());
     optimizers.push_back((cmp::Optimizer*)new cmp::EraseUnusedVariableOptimizer());
 
-	for (int i = 0; i < 1; ++i) {
-		for (auto p : optimizers) {
-			p->optimize(symbol_table);
-		}
-	}
+    for (int i = 0; i < 1; ++i) {
+        for (auto p : optimizers) {
+            p->optimize(symbol_table);
+        }
+    }
 
     std::cout << "\ngenerating scope structures" << std::endl;
 
     for (auto [n, cls] : symbol_table.classes) {
         cls->static_scope->generate_structure();
-        std::cout << cls->static_scope->get_full_name() << std::endl;
-        std::cout << cls->static_scope->sructure_to_string() << std::endl;
     }
 
     for (auto [n, cls] : symbol_table.classes) {
         cls->scope->generate_structure();
-        std::cout << cls->scope->get_full_name() << std::endl;
-        std::cout << cls->scope->sructure_to_string() << std::endl;
     }
 
     for (auto [n, cls] : symbol_table.classes) {
         for (auto [fn, f] : cls->functions) {
             f->scope->generate_structure();
-            std::cout << f->scope->get_full_name() << std::endl;
-            std::cout << f->scope->sructure_to_string() << std::endl;
         }
     }
 
@@ -131,10 +125,24 @@ int main() {
         std::cout << cn << std::endl;
 
         for (auto [fn, f] : cls->functions) {
-            cmp::BytecodeGenerationInfo bgi(symbol_table, cls, f, f->scope);
-            bytecode_size += f->get_bytecode_size(bgi) + 1;
-            std::cout << f->head_to_string() << ": " << (int)bytecode_size << std::endl;
-            f->starting_address = bytecode_size;
+        	std::function<void(cmp::ScopePtr)> accumulate_scope_sizes = [&](cmp::ScopePtr scope) {
+            	cmp::BytecodeGenerationInfo bgi(symbol_table, cls, f, scope);
+				bgi.bytecode_size = bytecode_size;
+            	size_t bytecode_size_new = scope->get_bytecode_size(bgi);
+				std::cout << scope->get_full_name() << ": " << (int)(bytecode_size_new - bytecode_size) << std::endl;
+				bytecode_size = bytecode_size_new;
+            	scope->starting_address = bytecode_size;
+                
+				for (auto& lower : scope->lower_scopes) {
+					if (auto lower_scope = lower.lock())
+						accumulate_scope_sizes(lower_scope);
+					else
+						std::cout << "Warning: lower scope is expired" << std::endl;
+                }
+            };
+            accumulate_scope_sizes(f->scope);
+
+			bytecode_size += 1; // add 1 because of HALT
         }
     }
 
@@ -143,7 +151,7 @@ int main() {
     std::vector<uint8_t> bytecode;
     bytecode.reserve(bytecode_size);
     size_t main_start;
-	bool has_main = false;
+    bool has_main = false;
 
     for (auto [cn, cls] : symbol_table.classes) {
         std::cout << cn << std::endl;
@@ -151,52 +159,68 @@ int main() {
         for (auto [fn, f] : cls->functions) {
             if (fn == "main") {
                 main_start = bytecode.size();
-				has_main = true;
+                has_main = true;
             }
 
             std::cout << "\n" << f->to_string() << std::endl;
 
-            for (auto stmt : f->scope->body) {
-                cmp::BytecodeGenerationInfo bgi(symbol_table, cls, f, f->scope);
-                std::vector<uint8_t> bytecode_new = stmt->generate_bytecode(bgi);
-                bytecode.insert(bytecode.end(), bytecode_new.begin(), bytecode_new.end());
+			std::function<void(cmp::ScopePtr)> generate_bytecode = [&](cmp::ScopePtr scope) {
+				std::cout << scope->get_full_name() << " " << (int)scope->starting_address << " {" << std::endl;
 
-                if (bytecode_new.size() != stmt->get_bytecode_size(bgi)) {
-                    std::cout << "wrong bytecode size: " << stmt->to_string() << std::endl;
-                }
+				for (auto stmt : scope->body) {
+					cmp::BytecodeGenerationInfo bgi(symbol_table, cls, f, scope);
+				
+					std::vector<uint8_t> bytecode_new = stmt->generate_bytecode(bgi);
+					bytecode.insert(bytecode.end(), bytecode_new.begin(), bytecode_new.end());
 
-                for (size_t i = 0; i < bytecode_new.size(); ++i) {
-					uint8_t opcode = bytecode_new[i];
-					auto op_sizes = vm::OP_SIZES[opcode];
-
-					std::cout << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << (int)opcode << " " << C_KEYWORD(strings[opcode]) << " ";
-
-					size_t offset = i + 1;
-					for (size_t j = 1; j < op_sizes.size(); ++j) {
-						size_t size = op_sizes[j];
-						for (size_t k = 0; k < size; ++k) {
-							std::cout << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << (int)bytecode_new[offset + k];
-						}
-						std::cout << " ";
-						offset += size;
+					if (bytecode_new.size() != stmt->get_bytecode_size(bgi)) {
+						std::cout << "wrong bytecode size: " << stmt->to_string() << std::endl;
 					}
 
-					i = offset - 1;
-					std::cout << std::endl;
+					for (size_t i = 0; i < bytecode_new.size(); ++i) {
+						uint8_t opcode = bytecode_new[i];
+						auto op_sizes = vm::OP_SIZES[opcode];
+
+						std::cout << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << (int)opcode << " " << C_KEYWORD(strings[opcode]) << " ";
+
+						size_t offset = i + 1;
+						for (size_t j = 1; j < op_sizes.size(); ++j) {
+							size_t size = op_sizes[j];
+							for (size_t k = 0; k < size; ++k) {
+								std::cout << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << (int)bytecode_new[offset + k];
+							}
+							std::cout << " ";
+							offset += size;
+						}
+
+						i = offset - 1;
+						std::cout << std::endl;
+					}
 				}
-            }
+
+				std::cout << "}" << std::endl;
+                
+				for (auto& lower : scope->lower_scopes) {
+					if (auto lower_scope = lower.lock())
+						generate_bytecode(lower_scope);
+					else
+						std::cout << "Warning: lower scope is expired" << std::endl;
+                }
+            };
+
+			generate_bytecode(f->scope);
 
             bytecode.push_back(static_cast<uint8_t>(vm::Instruction::HALT));
         }
     }
 
-	if (!has_main) {
-		std::cout << "no main function!" << std::endl;
-		return 1;
-	}
+    if (!has_main) {
+        std::cout << "no main function!" << std::endl;
+        return 1;
+    }
 
-	if (bytecode.size() != bytecode_size) {
-        std::cout << "bytecode size is wrong" << std::endl;
+    if (bytecode.size() != bytecode_size) {
+        std::cout << std::dec << "bytecode size is wrong:" << bytecode.size() << " / " << bytecode_size << std::endl;
         return 1;
     }
 
@@ -218,16 +242,4 @@ int main() {
     
     std::cout << "\nprocess finished" << std::endl;
     return 0;
-
-
-	int x;
-	int y;
-	int* p;
-	int* q;
-
-	x = y;
-	p = q;
-
-	p = &x;
-	*p = x;
 }

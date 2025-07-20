@@ -114,18 +114,30 @@ namespace vm {
 
         #define COMPARE_OP(TYPE, OP)                                            \
             do {                                                                \
-            bool& dest = STACK_REF(bool, fp + FETCH(uint16_t));                 \
-            const TYPE& operand_a = STACK_REF(TYPE, fp + FETCH(uint16_t));      \
-            const TYPE& operand_b = STACK_REF(TYPE, fp + FETCH(uint16_t));      \
-            dest = operand_a OP operand_b;                                      \
+			struct [[gnu::packed]] OperandsStruct {								\
+				uint16_t a_addr;												\
+				uint16_t b_addr;												\
+				uint32_t jump_addr;												\
+			};																	\
+            const auto& operands = FETCH(OperandsStruct);						\
+            const TYPE& operand_a = STACK_REF(TYPE, fp + operands.a_addr);      \
+            const TYPE& operand_b = STACK_REF(TYPE, fp + operands.b_addr);      \
+            if (operand_a OP operand_b) ip = code + operands.jump_addr;			\
+			std::cout << "jump at: " << operands.jump_addr << std::endl;		\
             } while (0);
 
         #define COMPARE_CONST_OP(TYPE, OP)                                      \
             do {                                                                \
-            bool& dest = STACK_REF(bool, fp + FETCH(uint16_t));                 \
-            const TYPE& operand_a = STACK_REF(TYPE, fp + FETCH(uint16_t));      \
-            const TYPE& operand_b = FETCH(TYPE);                                \
-            dest = operand_a OP operand_b;                                      \
+			struct [[gnu::packed]] OperandsStruct {								\
+				uint16_t a_addr;												\
+				TYPE b;															\
+				uint32_t jump_addr;												\
+			};																	\
+			const auto& operands = FETCH(OperandsStruct);						\
+            const TYPE& operand_a = STACK_REF(TYPE, fp + operands.a_addr);		\
+            const TYPE& operand_b = operands.b;                                	\
+            if (operand_a OP operand_b) ip = code + operands.jump_addr;			\
+			std::cout << "jump at: " << operands.jump_addr << std::endl;		\
             } while (0);
         
         OP_COPY_TO_PTR_1: ERROR();
@@ -351,7 +363,7 @@ namespace vm {
         }
 
         OP_GOTO: {
-            ip += FETCH(Value4).i32;
+            ip = code + FETCH(uint32_t);
             DISPATCH();
         }
 
