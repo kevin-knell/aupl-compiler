@@ -127,11 +127,11 @@ int main() {
         for (auto [fn, f] : cls->functions) {
         	std::function<void(cmp::ScopePtr)> accumulate_scope_sizes = [&](cmp::ScopePtr scope) {
             	cmp::BytecodeGenerationInfo bgi(symbol_table, cls, f, scope);
+				scope->starting_address = bytecode_size;
 				bgi.bytecode_size = bytecode_size;
             	size_t bytecode_size_new = scope->get_bytecode_size(bgi);
 				std::cout << scope->get_full_name() << ": " << (int)(bytecode_size_new - bytecode_size) << std::endl;
 				bytecode_size = bytecode_size_new;
-            	scope->starting_address = bytecode_size;
                 
 				for (auto& lower : scope->lower_scopes) {
 					if (auto lower_scope = lower.lock())
@@ -173,9 +173,9 @@ int main() {
 					std::vector<uint8_t> bytecode_new = stmt->generate_bytecode(bgi);
 					bytecode.insert(bytecode.end(), bytecode_new.begin(), bytecode_new.end());
 
-					if (bytecode_new.size() != stmt->get_bytecode_size(bgi)) {
-						std::cout << "wrong bytecode size: " << stmt->to_string() << std::endl;
-					}
+					//if (bytecode_new.size() != stmt->get_bytecode_size(bgi)) {
+					//	std::cout << "wrong bytecode size: " << stmt->to_string() << std::endl;
+					//}
 
 					for (size_t i = 0; i < bytecode_new.size(); ++i) {
 						uint8_t opcode = bytecode_new[i];

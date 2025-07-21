@@ -136,8 +136,10 @@ namespace vm {
 			const auto& operands = FETCH(OperandsStruct);						\
             const TYPE& operand_a = STACK_REF(TYPE, fp + operands.a_addr);		\
             const TYPE& operand_b = operands.b;                                	\
-            if (operand_a OP operand_b) ip = code + operands.jump_addr;			\
-			std::cout << "jump at: " << operands.jump_addr << std::endl;		\
+            if (operand_a OP operand_b) {										\
+				ip = code + operands.jump_addr;									\
+				std::cout << "cjump at: " << (int)(ip - code) << std::endl;		\
+			}																	\
             } while (0);
         
         OP_COPY_TO_PTR_1: ERROR();
@@ -362,13 +364,15 @@ namespace vm {
             ADVANCE();
         }
 
-        OP_GOTO: {
-            ip = code + FETCH(uint32_t);
-            DISPATCH();
-        }
+        OP_GOTO:
+		do {
+			auto jump_addr = FETCH(uint32_t);
+            ip = code + jump_addr;
+			std::cout << "jump at: " << (int)(ip - code) << std::endl;
+        } while(0); ADVANCE();
 
         OP_IF_FALSE_GOTO: {
-            DISPATCH();
+            ERROR();
         }
 
         OP_PRINT: ERROR();
