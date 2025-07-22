@@ -70,11 +70,8 @@ VarPtr Scope::get_temp(TypePtr type, ExprPtr init_val, std::string temp_name) {
     return var;
 }
 
-size_t Scope::get_bytecode_size(BytecodeGenerationInfo& bgi) const {
-	for (const auto& stmt : body) {
-		bgi.bytecode_size += stmt->get_bytecode_size(bgi);
-	}
-	return bgi.bytecode_size;
+std::string Scope::get_label_name(std::string name) const {
+	return name + std::to_string(label_count++);
 }
 
 }

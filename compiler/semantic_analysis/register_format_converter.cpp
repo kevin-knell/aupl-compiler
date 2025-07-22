@@ -45,8 +45,8 @@ void RegisterFormatConverter::convert_to_register_format(SymbolTable &symbol_tab
 
                     RegisterFormatInfo rfi{.statements = {}, .scope = f->scope};
 
-                    if (stmt->get_kind() == Statement::IF
-                            || stmt->get_kind() == Statement::RETURN) {
+                    if ((stmt->get_kind() == Statement::IF
+                            || stmt->get_kind() == Statement::RETURN) && expr->get_kind() != Expression::VARIABLE) {
                         TypePtr type = expr->get_type();
                         VarPtr tmp = rfi.scope->get_temp(type, expr);
                         ExprPtr tmp_expr = std::make_shared<VariableExpression>(tmp);

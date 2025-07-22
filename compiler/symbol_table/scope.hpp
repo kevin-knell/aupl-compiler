@@ -23,13 +23,14 @@ struct Scope {
     const SCOPE_TYPE type;
     std::weak_ptr<Scope> upper_scope;
     std::vector<std::weak_ptr<Scope>> lower_scopes;
-	std::vector<StmtPtr> body;
-	size_t starting_address;
-	std::map<std::shared_ptr<LabelStatement>, size_t> label_addresses;
-	std::map<std::string, VarPtr> variables;
+    std::vector<StmtPtr> body;
+    size_t starting_address;
+    std::map<std::string, size_t> label_addresses;
+    std::map<std::string, VarPtr> variables;
     std::map<std::string, int> variable_indices;
     int size;
     int temp_count = 0;
+	mutable int label_count = 0;
 
     static std::shared_ptr<Scope> find_scope(const std::shared_ptr<Scope>& scope, const std::string& name);
 
@@ -39,7 +40,7 @@ struct Scope {
     std::string get_full_name();
     std::string structure_to_string() const;
     VarPtr get_temp(TypePtr type, ExprPtr init_val, std::string temp_name = "tmp");
-	size_t get_bytecode_size(BytecodeGenerationInfo& bgi) const;
+	std::string get_label_name(std::string name) const;
 };
 
 using ScopePtr = std::shared_ptr<Scope>;

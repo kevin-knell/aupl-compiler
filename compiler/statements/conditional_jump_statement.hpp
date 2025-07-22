@@ -14,7 +14,7 @@ public:
     LabelPtr if_label;
     LabelPtr else_label;
 
-    ConditionalJumpStatement(const ExprPtr& cond, const LabelPtr& if_lbl, const LabelPtr& else_lbl)
+    ConditionalJumpStatement(ExprPtr cond, LabelPtr if_lbl, LabelPtr else_lbl)
         : condition(cond), if_label(if_lbl), else_label(else_lbl) {};
 
     std::vector<uint8_t> generate_bytecode(BytecodeGenerationInfo& bgi) const override;

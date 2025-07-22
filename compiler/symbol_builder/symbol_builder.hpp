@@ -33,20 +33,20 @@ public:
     TypePtr parse_tuple_type(ParserInfo& parser_info);
 
     // statements
-    StmtPtr parse_statement(ParserInfo& parser_info);
+    std::vector<StmtPtr> parse_statement(ParserInfo& parser_info);
 
-    StmtPtr parse_assign(ParserInfo& parser_info);
-    StmtPtr parse_declare_statement(ParserInfo& parser_info);
+    std::vector<StmtPtr> parse_assign(ParserInfo& parser_info);
+    std::vector<StmtPtr> parse_declare_statement(ParserInfo& parser_info);
 
     std::shared_ptr<BlockStatement> parse_block(ParserInfo& parser_info);
 
-    StmtPtr parse_if(ParserInfo& parser_info);
-    StmtPtr parse_for(ParserInfo& parser_info);
-    StmtPtr parse_while(ParserInfo& parser_info);
+    std::vector<StmtPtr> parse_if(ParserInfo& parser_info);
+    std::vector<StmtPtr> parse_for(ParserInfo& parser_info);
+    std::vector<StmtPtr> parse_while(ParserInfo& parser_info);
 
-    StmtPtr parse_expression_statement(ParserInfo& parser_info);
+    std::vector<StmtPtr> parse_expression_statement(ParserInfo& parser_info);
 
-    StmtPtr parse_return(ParserInfo& parser_info);
+    std::vector<StmtPtr> parse_return(ParserInfo& parser_info);
     
     // expressions
     ExprPtr parse_expression(ParserInfo& parser_info);

@@ -219,13 +219,13 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
         next(); // consume {
 
         while (!expect("}")) {
-            std::shared_ptr<Statement> statement = parse_statement(parser_info_body);
+            StmtVec statements = parse_statement(parser_info_body);
 
-            if (!statement) {
+            if (statements.empty()) {
                 std::cout << "no statement in constructor: " << peek().value << std::endl;
                 next();
             } else {
-                constructor_symbol->scope->body.push_back(statement);
+                constructor_symbol->scope->body.insert(constructor_symbol->scope->body.end(), statements.begin(), statements.end());
             }
         }
         next(); // consume }
@@ -378,14 +378,16 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
 				is_volatile = true;
 			}
 
-            StmtPtr statement = parse_statement(parser_info_body);
-			statement->is_volatile = is_volatile;
+			StmtVec statements = parse_statement(parser_info_body);
 
-            if (!statement) {
-                std::cout << ("no statement: " + peek().value) << std::endl;
+            if (statements.empty()) {
+                std::cout << "no statement in constructor: " << peek().value << std::endl;
                 next();
             } else {
-                function_symbol->scope->body.push_back(statement);
+				for (auto st : statements) {
+					st->is_volatile = is_volatile;
+					function_symbol->scope->body.push_back(st);
+				}
             }
         }
         next(); // consume }

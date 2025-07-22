@@ -9,21 +9,23 @@ std::vector<uint8_t> LabelStatement::generate_bytecode(BytecodeGenerationInfo &b
 }
 
 size_t LabelStatement::get_bytecode_size(BytecodeGenerationInfo &bgi) const {
-	bgi.scope->label_addresses[std::make_shared<LabelStatement>(*this)] = bgi.bytecode_size;
-	std::cout << "Label: " << identifier << " at address: " << bgi.bytecode_size << std::endl;
+	if (bgi.scope->label_addresses.find(identifier) != bgi.scope->label_addresses.end()) {
+		std::cout << "ERROR, already has label " << to_string() << ": " << bgi.scope->label_addresses[identifier] << std::endl;
+	}
+    bgi.scope->label_addresses[identifier] = bgi.bytecode_size;
     return size_t();
 }
 
-Statement::KIND LabelStatement::get_kind() const
-{
-    return KIND();
+Statement::KIND LabelStatement::get_kind() const {
+    return LABEL;
 }
-std::vector<ExprPtr *> LabelStatement::get_expressions()
-{
+
+std::vector<ExprPtr *> LabelStatement::get_expressions() {
     return std::vector<ExprPtr *>();
 }
-std::string LabelStatement::to_string() const
-{
+
+std::string LabelStatement::to_string() const {
     return "@" + identifier;
 }
+
 }
