@@ -11,7 +11,7 @@ namespace vm {
         Instruction*& code = vm.code;
         Instruction* ip = code + vm.main_start;
 
-        //Value* static_memory = new Value[5];
+        Value* static_memory = vm.static_memory;
         //Value* const_memory = vm.const_memory;
         //(void) const_memory;
         
@@ -150,6 +150,26 @@ namespace vm {
         OP_COPY_TO_PTR_VAR: ERROR();
 
         OP_PTR_OF: ERROR();
+
+		#define COPY_TO_STATIC(TYPE)															\
+			do {																				\
+				struct [[gnu::packed]] LoadStruct {												\
+					uint16_t dest_addr;															\
+					uint16_t local_addr;														\
+				};																				\
+				LoadStruct& load = FETCH(LoadStruct);                                   		\
+				TYPE& dest = STACK_REF(TYPE, static_memory + load.dest_addr);					\
+				TYPE& local = STACK_REF(TYPE, fp + load.local_addr);							\
+				dest = local;																	\
+				std::cout << "copy to static: " << (int)load.dest_addr << " <- " << (int)local << std::endl;		\
+			} while(0);
+
+		OP_COPY_TO_STATIC_1: COPY_TO_STATIC(uint8_t); ADVANCE();
+		OP_COPY_TO_STATIC_2: COPY_TO_STATIC(uint16_t); ADVANCE();
+		OP_COPY_TO_STATIC_4: COPY_TO_STATIC(uint32_t); ADVANCE();
+		OP_COPY_TO_STATIC_8: COPY_TO_STATIC(uint64_t); ADVANCE();
+		OP_COPY_TO_STATIC_16: ERROR();
+		OP_COPY_TO_STATIC_VAR: ERROR();
 
         OP_ADD_I8: BINARY_OP(int8_t, +); ADVANCE();
         OP_SUB_I8: BINARY_OP(int8_t, -); ADVANCE();

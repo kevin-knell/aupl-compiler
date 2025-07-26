@@ -82,6 +82,7 @@ int main() {
 
     cmp::RegisterFormatConverter::convert_to_register_format(symbol_table);
 
+#ifdef OPTIMIZE
     std::cout << "\noptimizing code" << std::endl;
 
     std::vector<cmp::Optimizer*> optimizers;
@@ -93,6 +94,7 @@ int main() {
             p->optimize(symbol_table);
         }
     }
+#endif // OPTIMIZE
 
     std::cout << "\ngenerating scope structures" << std::endl;
 
@@ -230,8 +232,11 @@ int main() {
         return 1;
     }
 
+	//return 0;
+
     vm.code = reinterpret_cast<vm::Instruction*>(bytecode.data());
     vm.main_start = main_start;
+	vm.static_memory = new vm::Value[256];
     
     std::cout << "\nprocessing" << std::endl;
 

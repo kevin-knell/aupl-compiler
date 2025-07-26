@@ -305,6 +305,7 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
 	if (!is_static) {
 		auto this_temp = scope->get_temp(parser_info.cls->type, nullptr, "this");
 		this_temp->is_const = is_const;
+		this_temp->scope = scope;
 		parameters.push_back(this_temp);
 	}
 

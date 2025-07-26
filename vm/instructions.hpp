@@ -45,6 +45,13 @@
     \
     _(PTR_OF, s(1, 2, 2)) \
     \
+    _(COPY_TO_STATIC_1, s(1, 2, 2)) \
+    _(COPY_TO_STATIC_2, s(1, 2, 2)) \
+    _(COPY_TO_STATIC_4, s(1, 2, 2)) \
+    _(COPY_TO_STATIC_8, s(1, 2, 2)) \
+    _(COPY_TO_STATIC_16, s(1, 2, 2)) \
+    _(COPY_TO_STATIC_VAR, s(1, 2, 2, 2)) \
+    \
     _(ADD_I8, s(1, 2, 2, 2)) \
     _(SUB_I8, s(1, 2, 2, 2)) \
     _(MUL_I8, s(1, 2, 2, 2)) \
@@ -280,6 +287,9 @@ namespace vm {
         return v;
     }();
 
+    #undef OPCODE_SIZE
+    #undef OP_SIZE_LIST
+
     inline Instruction get_binary_opcode(BinType type, BinOp op, bool is_const) {
         switch (type) {
             case BinType::INT8:
@@ -363,8 +373,5 @@ namespace vm {
         }
         return Instruction::ERR;
     }
-
-    #undef OPCODE_SIZE
-    #undef OP_SIZE_LIST
 } // namespace vm
 

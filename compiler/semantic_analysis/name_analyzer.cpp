@@ -5,6 +5,7 @@
 #include "statement.hpp"
 #include "expression.hpp"
 #include "color.hpp"
+#include "assign_statement.hpp"
 
 namespace cmp {
 
@@ -32,6 +33,11 @@ void NameAnalyzer::resolve_variables() const {
             for (auto& stmt : f->scope->body) {
                 NameAnalysisInfo name_analysis_info{.symbol_table = symbol_table, .cls = cls, .f = f};
                 resolve_expressions(name_analysis_info, stmt->get_expressions());
+				if (stmt->get_kind() == Statement::ASSIGN) {
+					auto assign_stmt = std::dynamic_pointer_cast<AssignmentStatement>(stmt);
+					ExprPtr* expr_left = &assign_stmt->expr_left;
+					resolve_expressions(name_analysis_info, {expr_left});
+				}
             }
         }
         std::cout << std::endl;

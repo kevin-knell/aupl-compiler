@@ -4,6 +4,7 @@
 #include "scope.hpp"
 #include "declare_statement.hpp"
 #include "symbol_table.hpp"
+#include "assign_statement.hpp"
 #include <color.hpp>
 
 
@@ -22,6 +23,7 @@ void RegisterFormatConverter::convert_to_register_format(RegisterFormatInfo& rfi
         ExprPtr tmp_expr = std::make_shared<VariableExpression>(tmp);
         StmtPtr tmp_decl = std::make_shared<DeclareStatement>(tmp);
 		tmp_decl->is_volatile = is_volatile;
+		tmp->scope = rfi.scope;
 
         // recursion
         convert_to_register_format(rfi, sub_expr, is_volatile);
@@ -45,13 +47,31 @@ void RegisterFormatConverter::convert_to_register_format(SymbolTable &symbol_tab
 
                     RegisterFormatInfo rfi{.statements = {}, .scope = f->scope};
 
-                    if ((stmt->get_kind() == Statement::IF
-                            || stmt->get_kind() == Statement::RETURN) && expr->get_kind() != Expression::VARIABLE) {
+					bool requires_variable = false;
+
+					if (expr->get_kind() != Expression::VARIABLE) {
+						if (stmt->get_kind() == Statement::IF
+                            	|| stmt->get_kind() == Statement::RETURN) {
+							requires_variable = true;
+						} else if (stmt->get_kind() == Statement::ASSIGN) {
+							auto assign_stmt = std::dynamic_pointer_cast<AssignmentStatement>(stmt);
+							auto expr_left = std::dynamic_pointer_cast<VariableExpression>(assign_stmt->expr_left);
+							if (expr_left) {
+								auto var = expr_left->var;
+								if (var->is_static) {
+									requires_variable = true;
+								}
+							}
+						}
+					}
+
+                    if (requires_variable) {
                         TypePtr type = expr->get_type();
                         VarPtr tmp = rfi.scope->get_temp(type, expr);
                         ExprPtr tmp_expr = std::make_shared<VariableExpression>(tmp);
                         StmtPtr tmp_decl = std::make_shared<DeclareStatement>(tmp);
 						tmp_decl->is_volatile = stmt->is_volatile;
+						tmp->scope = rfi.scope;
 
                         convert_to_register_format(rfi, expr, stmt->is_volatile);
 
