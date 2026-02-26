@@ -6,26 +6,38 @@
 #include <type_traits>
 #include <tuple>
 #include "value.hpp"
+#include <regex>
+#include "function_parser.hpp"
+#include "type_traits.hpp"
 
 namespace vm {
 
 class Value;
-using MethodFunc = std::function<void(Value*&, void* raw_obj)>;
-using StaticMethodFunc = std::function<void(Value*&)>;
+using MethodFunc = std::function<void(Value* args, void* raw_obj, void* ret_ptr)>;
+using StaticMethodFunc = MethodFunc; //std::function<void(Value*, void* ret_ptr)>;
 
 struct MethodPair {
     std::string name;
+	std::string signature;
     MethodFunc value_call;
     MethodFunc pointer_call;
+	bool is_global = false;
+	size_t arg_count;
+	uint16_t class_id;
+	uint16_t method_id;
 };
 
 class ClassBind {
 public:
     std::string name;
     int id;
+	size_t size;
     std::vector<MethodPair> static_methods;
     std::vector<MethodPair> methods;
 };
+
+template<typename Constructor>
+MethodFunc bind_constructor();
 
 template <class Method>
 MethodFunc bind_method(Method method);
@@ -33,55 +45,85 @@ MethodFunc bind_method(Method method);
 template <class Method>
 MethodFunc bind_method_ptr_args(Method method);
 
+template <class Method>
+StaticMethodFunc bind_static_method(Method method);
+
+namespace {
+	std::string replace_member_pointer_with_name(const std::string& input, const std::string& funcName) {
+    	return std::regex_replace(input, std::regex(R"(\(\w+::\*\)|\(\*\))"), funcName);
+	}
+}
+
 class ClassDB {
 public:
     std::vector<ClassBind> classes;
 
+	template<typename ClassType>
     void register_class(int id, std::string name) {
         ClassBind class_bind;
         class_bind.id = id;
         class_bind.name = name;
+		class_bind.size = sizeof(ClassType);
         classes.push_back(class_bind);
     }
 
-    template<typename Method>
-    void register_method(int class_id, std::string name, Method method) {
+    template<typename Constructor>
+    void register_constructor(int class_id, std::string signature) {
         MethodPair pair;
-        pair.name = name;
-        pair.value_call = bind_method(method);
-        pair.pointer_call = bind_method_ptr_args(method);
+		pair.name = classes[class_id].name;
+		pair.signature = signature;
+		pair.is_global = true;
+        pair.value_call = bind_constructor<Constructor>();
+        pair.pointer_call = bind_constructor<Constructor>();
+
+		auto parsed = FunctionParser::parse(signature);
+		pair.arg_count = parsed.parameters.size();
+
+		pair.class_id = class_id;
+		pair.method_id = classes[class_id].methods.size();
+
+		pair.is_global = false;
+
         classes[class_id].methods.push_back(std::move(pair));
     }
-};
 
-// MethodTraits to extract class, return type, argument types and constness
-template<typename Method>
-struct MethodTraits;
+    template<typename Method>
+    void register_method(int class_id, std::string name, Method method, std::string signature) {
+        MethodPair pair;
+        pair.name = name;
+		pair.signature = replace_member_pointer_with_name(signature, name);
+        pair.value_call = bind_method(method);
+        pair.pointer_call = bind_method(method); //bind_method_ptr_args(method);
 
-// Non-const method
-template<typename T, typename Ret, typename... Args>
-struct MethodTraits<Ret (T::*)(Args...)> {
-    using ClassType = T;
-    using ReturnType = Ret;
-    using ArgTuple = std::tuple<Args...>;
-    static constexpr bool is_const = false;
-};
+		auto parsed = FunctionParser::parse(signature);
+		pair.arg_count = parsed.parameters.size();
 
-// Const method
-template<typename T, typename Ret, typename... Args>
-struct MethodTraits<Ret (T::*)(Args...) const> {
-    using ClassType = T;
-    using ReturnType = Ret;
-    using ArgTuple = std::tuple<Args...>;
-    static constexpr bool is_const = true;
-};
+		pair.class_id = class_id;
+		pair.method_id = classes[class_id].methods.size();
 
-// Non-const method
-template<typename Ret, typename... Args>
-struct MethodTraits<Ret (*)(Args...)> {
-    using ReturnType = Ret;
-    using ArgTuple = std::tuple<Args...>;
-    static constexpr bool is_const = false;
+		pair.is_global = false;
+
+		classes[class_id].methods.push_back(std::move(pair));
+    }
+
+    template<typename Method>
+    void register_static_method(int class_id, std::string name, Method method, std::string signature, bool is_global = false) {
+        MethodPair pair;
+        pair.name = name;
+		pair.signature = replace_member_pointer_with_name(signature, name);
+        pair.value_call = bind_static_method(method);
+        pair.pointer_call = bind_static_method(method); //bind_method_ptr_args(method);
+
+		auto parsed = FunctionParser::parse(signature);
+		pair.arg_count = parsed.parameters.size();
+
+		pair.class_id = class_id;
+		pair.method_id = classes[class_id].methods.size();
+
+		pair.is_global = is_global;
+
+		classes[class_id].methods.push_back(std::move(pair));
+    }
 };
 
 // Helper: safely create a tuple of pointers for arguments (or empty tuple)
@@ -110,6 +152,7 @@ inline void pop_ptr_from_stack(Value*& sp, void* out, size_t size) {
     std::memcpy(out, sp, size);
 }
 
+/*
 // bind_method_ptr_args: binds method by extracting pointers from stack
 template<typename Method>
 MethodFunc bind_method_ptr_args(Method method) {
@@ -152,6 +195,7 @@ MethodFunc bind_method_ptr_args(Method method) {
         }
     };
 }
+*/
 
 template<typename T>
 struct ArgStorage {
@@ -191,6 +235,12 @@ struct MethodCaller {
     }
 };
 
+// Helper to pop a pointer from stack (Value*& sp)
+inline void get_from_array(Value*& args, void* out, size_t size) {
+    std::memcpy(out, args, size);
+	args += size;
+}
+
 template<typename Method>
 MethodFunc bind_method(Method method) {
     using Traits = MethodTraits<Method>;
@@ -199,11 +249,11 @@ MethodFunc bind_method(Method method) {
     using ArgTuple = typename Traits::ArgTuple;
     using ArgStorage = typename ArgStorageTuple<ArgTuple>::type;
 
-    return [method](Value*& sp, void* raw_obj) {
+    return [method](Value* args, void* raw_obj, void* ret_ptr) {
         ArgStorage arg_storage;
 
         auto pop_any = [&](auto& slot) {
-            pop_ptr_from_stack(sp, &slot, sizeof(slot));
+            get_from_array(args, &slot, sizeof(slot));
         };
 
         std::apply([&](auto&... unpacked) {
@@ -213,17 +263,41 @@ MethodFunc bind_method(Method method) {
         using ObjType = std::conditional_t<Traits::is_const, const T*, T*>;
         ObjType obj = reinterpret_cast<ObjType>(raw_obj);
 
-        if constexpr (!std::is_void_v<Ret>) {
+        if constexpr (!std::is_same_v<Ret, void>) {
             MethodCaller<Method, ObjType, Ret> caller(method, obj);
             Ret result = std::apply(caller, arg_storage);
-            std::memcpy(sp, &result, sizeof(result));
-            sp += sizeof(result);
+            new (ret_ptr) Ret(std::move(result));
         } else {
             MethodCaller<Method, ObjType, void> caller(method, obj);
             std::apply(caller, arg_storage);
         }
     };
 }
+
+template<typename Constructor>
+MethodFunc bind_constructor() {
+    using Traits = ConstructorTraits<Constructor>;
+    using ClassType = typename Traits::ClassType;
+    using ArgTuple = typename Traits::ArgTuple;
+    using ArgStorage = typename ArgStorageTuple<ArgTuple>::type;
+
+    return [](Value* args, void* raw_obj, void*) {
+        ArgStorage arg_storage;
+
+        auto pop_any = [&](auto& slot) {
+            get_from_array(args, &slot, sizeof(slot));
+        };
+
+        std::apply([&](auto&... unpacked) {
+            (pop_any(unpacked), ...);
+        }, arg_storage);
+
+        std::apply([&](auto&&... unpacked) {
+            new (raw_obj) ClassType(std::forward<decltype(unpacked)>(unpacked)...);
+        }, arg_storage);
+    };
+}
+
 
 template<typename Method, typename Ret>
 struct StaticMethodCaller {
@@ -245,35 +319,42 @@ struct StaticMethodCaller {
 };
 
 
-template<typename StaticMethod>
-StaticMethodFunc bind_static_method(StaticMethod method) {
-    using Traits = MethodTraits<StaticMethod>;
-    using Ret = typename Traits::ReturnType;
-    using ArgTuple = typename Traits::ArgTuple;
-    using ArgStorage = typename ArgStorageTuple<ArgTuple>::type;
+template<typename Method>
+StaticMethodFunc bind_static_method(Method method) {
+    using Traits    = MethodTraits<Method>;
+    using Ret        = typename Traits::ReturnType;
+    using ArgTuple    = typename Traits::ArgTuple;
 
-    return [method](Value*& sp) {
+    // ArgStorage is a tuple of pointers (from ArgPtrTupleHelper)
+    using ArgStorage = typename ArgPtrTupleHelper<ArgTuple>::type;
+
+    return [method](Value* args, void*, void* ret_ptr) {
         ArgStorage arg_storage;
 
+        // For each tuple element: point it at the stack slot
         auto pop_any = [&](auto& slot) {
-            pop_ptr_from_stack(sp, &slot, sizeof(slot));
+            using Obj = std::remove_pointer_t<std::decay_t<decltype(*slot)>>;
+
+            slot = reinterpret_cast<Obj*>(args);
+            args += sizeof(Obj);
         };
 
         std::apply([&](auto&... unpacked) {
             (pop_any(unpacked), ...);
         }, arg_storage);
 
-        if constexpr (!std::is_void_v<Ret>) {
-            StaticMethodCaller<StaticMethod, Ret> caller(method);
+        if constexpr (!std::is_same_v<Ret, void>) {
+            StaticMethodCaller<Method, Ret> caller(method);
             Ret result = std::apply(caller, arg_storage);
-            std::memcpy(sp, &result, sizeof(result));
-            sp += sizeof(result);
+
+            new (ret_ptr) Ret(std::move(result));
         } else {
-            StaticMethodCaller<StaticMethod, void> caller(method);
+            StaticMethodCaller<Method, void> caller(method);
             std::apply(caller, arg_storage);
         }
     };
 }
+
 
 
 

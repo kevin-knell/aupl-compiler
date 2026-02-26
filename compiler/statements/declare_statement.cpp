@@ -6,6 +6,10 @@
 #include "variable_expression.hpp"
 #include "load_const_expression.hpp"
 #include "color.hpp"
+#include "call_expression.hpp"
+#include "class_db.hpp"
+#include "string_literal_expression.hpp"
+#include "symbol_table.hpp"
 
 #define TAG(s, b) std::string(b ? s : "")
 
@@ -16,7 +20,7 @@ DeclareStatement::DeclareStatement(const VarPtr& variable_symbol)
 
 std::string DeclareStatement::to_string() const {
     return TAG(C_KEYWORD("volatile "), is_volatile) + variable_symbol->to_string() + " " +
-           (variable_symbol->initial_value != nullptr
+           (variable_symbol->initial_value
                ? "= " + variable_symbol->initial_value->to_string()
                : "") + " ";
 }
@@ -97,6 +101,38 @@ namespace {
         }
         return result;
     }
+
+	std::vector<uint8_t> generate_native_call_bytecode(const CallExpression& value, const VarPtr& variable_symbol, BytecodeGenerationInfo& bgi) {
+        std::vector<uint8_t> result;
+
+		result.push_back((uint8_t)vm::Instruction::CALL_NATIVE);
+		std::shared_ptr<VariableExpression> arg0 = nullptr;
+
+		if (!value.arguments.empty()) {
+			arg0 = std::dynamic_pointer_cast<VariableExpression>(value.arguments[0]);
+		}
+
+		auto method_pair = *value.f->method_pair;
+
+		vm::Value2 class_id = vm::Value2::from<uint16_t>(method_pair.class_id); // Math
+		vm::Value2 method_id = vm::Value2::from<uint16_t>(method_pair.method_id); // sqrt()
+		vm::Value2 obj_address = vm::Value2::from<uint16_t>(0); // static -> don't care
+		vm::Value2 args_address = vm::Value2::from<uint16_t>(arg0 ? bgi.scope->variable_indices[arg0->var->name] : 0);
+		vm::Value2 ret_address = vm::Value2::from<uint16_t>(bgi.scope->variable_indices[variable_symbol->name]);
+
+		result.push_back(class_id.v[0].u8);
+		result.push_back(class_id.v[1].u8);
+		result.push_back(method_id.v[0].u8);
+		result.push_back(method_id.v[1].u8);
+		result.push_back(obj_address.v[0].u8);
+		result.push_back(obj_address.v[1].u8);
+		result.push_back(args_address.v[0].u8);
+		result.push_back(args_address.v[1].u8);
+		result.push_back(ret_address.v[0].u8);
+		result.push_back(ret_address.v[1].u8);
+
+        return result;
+    }
 }
 
 std::vector<uint8_t> DeclareStatement::generate_bytecode(BytecodeGenerationInfo& bgi) const {
@@ -113,8 +149,29 @@ std::vector<uint8_t> DeclareStatement::generate_bytecode(BytecodeGenerationInfo&
         }
         case Expression::LOAD_CONST:
             return generate_load_const_bytecode(value, variable_symbol, bgi);
-        case Expression::CALL:
-            return { static_cast<uint8_t>(vm::Instruction::ERR) };
+		case Expression::STRING_LIT: {
+			auto string_lit_expr = std::dynamic_pointer_cast<StringLiteralExpression>(value);
+			vm::Value2 dest{ .u16 = static_cast<uint16_t>(bgi.scope->variable_indices[variable_symbol->name]) };
+			vm::Value2 string_pos = vm::Value2::from<uint16_t>(bgi.symbol_table.const_memory.size());
+			for (char c : string_lit_expr->value) {
+				bgi.symbol_table.const_memory.emplace_back(vm::Value::from(c));
+			}
+			bgi.symbol_table.const_memory.emplace_back(vm::Value::from<uint8_t>(0));
+			return {
+				(uint8_t)vm::Instruction::LOAD_STRING,
+				dest.v[0].u8, dest.v[1].u8,
+				string_pos.v[0].u8, string_pos.v[1].u8,
+			};
+		}
+        case Expression::CALL: {
+			auto call_expr = std::dynamic_pointer_cast<CallExpression>(value);
+            
+			if (call_expr->f->method_pair) {
+				return generate_native_call_bytecode(*call_expr, variable_symbol, bgi);
+			} else {
+				return { static_cast<uint8_t>(vm::Instruction::ERR) };
+			}
+		}
         default:
             return { static_cast<uint8_t>(vm::Instruction::ERR) };
     }
@@ -140,6 +197,12 @@ size_t DeclareStatement::get_bytecode_size(BytecodeGenerationInfo &bgi) const {
                 default: return 1 + 1 + 2 + size;
             }
         }
+		case Expression::STRING_LIT: {
+			return 1 + 2 + 2;
+		}
+		case Expression::CALL: {
+			return 1 + 2 + 2 + 2 + 2 + 2;
+		}
         default: return 1; // ERR
     }
 }

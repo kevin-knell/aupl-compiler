@@ -10,6 +10,7 @@
 namespace cmp {
 
 struct ParserInfo {
+	const SymbolTable symbol_table;
     const ClassPtr cls;
     const FuncPtr func;
     const ScopePtr scope;
@@ -28,9 +29,12 @@ public:
     bool parse_variable(ParserInfo parser_info);
     
     TypePtr parse_type(ParserInfo& parser_info);
+    TypePtr parse_base_type(ParserInfo& parser_info);
+	TypePtr parse_native_type(ParserInfo& parser_info);
     TypePtr parse_primitive_type(ParserInfo& parser_info);
     TypePtr parse_class_type(ParserInfo& parser_info);
     TypePtr parse_tuple_type(ParserInfo& parser_info);
+    TypePtr parse_array_type(ParserInfo& parser_info);
 
     // statements
     std::vector<StmtPtr> parse_statement(ParserInfo& parser_info);

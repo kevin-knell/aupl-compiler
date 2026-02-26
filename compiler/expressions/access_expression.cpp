@@ -24,7 +24,7 @@ std::string AccessExpression::to_string() const {
 }
 
 std::vector<ExprPtr*> AccessExpression::get_expressions() {
-    return {&left, &right};
+    return { &right };
 }
 
 bool AccessExpression::is_unresolved_symbol() const {

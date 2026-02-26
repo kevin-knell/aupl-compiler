@@ -7,10 +7,11 @@ namespace cmp {
 struct CallExpression : public Expression {
     std::string name;
     std::vector<ExprPtr> arguments;
+	ExprPtr obj_expr;
     FuncPtr f;
 
-    CallExpression(std::string name, const std::vector<ExprPtr>& arguments)
-        : name(name), arguments(arguments) {}
+    CallExpression(std::string name, const std::vector<ExprPtr>& arguments, ExprPtr obj_expr)
+        : name(name), arguments(arguments), obj_expr(obj_expr) {}
 
     std::string to_string() const override;
     std::vector<uint8_t> generate_bytecode(BytecodeGenerationInfo& bgi) const override;

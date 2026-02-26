@@ -31,7 +31,16 @@ struct is_primitive {
 #define STATIC_ASSERT_UTILITY_CLASS(ClassName) \
     static_assert(std::is_empty<ClassName>::value, #ClassName " must only contain static members.")
 
-#define REGISTER_CLASS(m_id, m_name) db.register_class(m_id, #m_name)
+#define REGISTER_CLASS(m_id, m_name) db.register_class<m_name>(m_id, #m_name)
+
+#define REGISTER_CONSTRUCTOR(m_id, ...) \
+    db.register_constructor<__VA_ARGS__>(m_id, #__VA_ARGS__)
 
 #define REGISTER_METHOD(m_id, m_class, m_name, ...) \
-    db.register_method<__VA_ARGS__>(m_id, #m_name, &m_class::m_name)
+    db.register_method<__VA_ARGS__>(m_id, #m_name, &m_class::m_name, #__VA_ARGS__)
+
+#define REGISTER_STATIC_METHOD(m_id, m_class, m_name, ...) \
+    db.register_static_method<__VA_ARGS__>(m_id, #m_name, &m_class::m_name, #__VA_ARGS__)
+
+#define REGISTER_GLOBAL_METHOD(m_id, m_class, m_name, ...) \
+    db.register_static_method<__VA_ARGS__>(m_id, #m_name, &m_class::m_name, #__VA_ARGS__, true)

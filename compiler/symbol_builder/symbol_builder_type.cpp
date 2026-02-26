@@ -2,17 +2,41 @@
 #include "primitive_type.hpp"
 #include "class_type.hpp"
 #include "tuple_type.hpp"
+#include "array_type.hpp"
+#include "load_const_expression.hpp"
+#include "value.hpp"
 
 namespace cmp {
 
 TypePtr SymbolBuilder::parse_type(ParserInfo& parser_info) {
-    if (auto result = parse_tuple_type(parser_info)) return result;
-
-    if (auto result = parse_primitive_type(parser_info)) return result;
-    if (auto result = parse_class_type(parser_info)) return result;
-    if (auto result = parse_tuple_type(parser_info)) return result;
+	if (auto result = parse_array_type(parser_info)) return result;
 
     return nullptr;
+}
+
+TypePtr SymbolBuilder::parse_base_type(ParserInfo& parser_info) {
+	if (auto result = parse_native_type(parser_info)) return result;
+    if (auto result = parse_tuple_type(parser_info)) return result;
+    if (auto result = parse_primitive_type(parser_info)) return result;
+    if (auto result = parse_class_type(parser_info)) return result;
+
+    return nullptr;
+}
+
+TypePtr SymbolBuilder::parse_native_type(ParserInfo& parser_info) {
+	if (!match(TokenType::IDENTIFIER)) {
+		return nullptr;
+	}
+	std::string id = next().value;
+
+	auto native_types = parser_info.symbol_table.native_types;
+	auto it = native_types.find(id);
+
+	if (it != native_types.end()) {
+		return it->second;
+	}
+
+	return nullptr;
 }
 
 TypePtr SymbolBuilder::parse_primitive_type(ParserInfo& parser_info) {
@@ -78,6 +102,51 @@ TypePtr SymbolBuilder::parse_tuple_type(ParserInfo& parser_info) {
     next(); // consume )
 
     return std::make_shared<TupleType>(types);
+}
+
+TypePtr SymbolBuilder::parse_array_type(ParserInfo& parser_info) {
+    (void)parser_info;
+    
+    size_t idx = index;
+
+	TypePtr base_type = parse_base_type(parser_info);
+
+	if (!base_type) {
+		index = idx;
+		return nullptr;
+	}
+
+    if (!expect("[")) {
+        return base_type;
+    }
+    next(); // consume [
+
+	if (expect("]")) {
+		next(); // consume ]
+		return std::make_shared<ArrayType>(base_type, nullptr, false);
+	}
+	
+	bool is_const = false;
+
+	if (expect("const")) {
+		next(); // consume const
+		is_const = true;
+	}
+	
+	ExprPtr size_expr = parse_expression(parser_info);
+
+	if (!size_expr) {
+		index = idx;
+		return nullptr;
+	}
+
+	if (!expect("]")) {
+		index = idx;
+		return nullptr;
+	}
+	next(); // consume ]
+
+    return std::make_shared<ArrayType>(base_type, size_expr, is_const);
 }
 
 }

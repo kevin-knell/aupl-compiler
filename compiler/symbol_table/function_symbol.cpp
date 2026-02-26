@@ -2,6 +2,7 @@
 #include "return_statement.hpp"
 #include "statement.hpp"
 #include <color.hpp>
+#include "class_db.hpp"
 
 #define TAG(s, b) std::string(b ? s : "")
 
@@ -18,7 +19,13 @@ size_t FunctionSymbol::get_bytecode_size(BytecodeGenerationInfo& bgi) const {
     return result;
 };
 
+FunctionSymbol::FunctionSymbol(vm::MethodPair &method_pair) : name(method_pair.name), method_pair(&method_pair) {}
+
 std::string FunctionSymbol::head_to_string() {
+	if (method_pair) {
+		return method_pair->signature;
+	}
+
     std::string begin = TAG("public ", is_public) +
             TAG("static ", is_static) +
             TAG("const ", is_const) +
@@ -44,6 +51,10 @@ std::string FunctionSymbol::head_to_string() {
 
 std::string FunctionSymbol::to_string() {
     auto head = head_to_string();
+
+	if (method_pair) {
+		return head;
+	}
 
     std::string code;
 

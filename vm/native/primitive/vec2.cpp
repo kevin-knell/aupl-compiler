@@ -39,26 +39,29 @@ void vec2::register_to_db(vm::ClassDB& db) {
         constexpr int id = 0;
 
         REGISTER_CLASS(id, vec2);
-        REGISTER_METHOD(id, vec2, set_x);
-        REGISTER_METHOD(id, vec2, get_x);
-        REGISTER_METHOD(id, vec2, set_y);
-        REGISTER_METHOD(id, vec2, get_y);
+		REGISTER_CONSTRUCTOR(id, vec2());
+		REGISTER_CONSTRUCTOR(id, vec2(double x, double y));
 
-        REGISTER_METHOD(id, vec2, set_xx);
-        REGISTER_METHOD(id, vec2, set_yx);
-        REGISTER_METHOD(id, vec2, set_yy);
+        REGISTER_METHOD(id, vec2, set_x, void (vec2::*)(double x));
+        REGISTER_METHOD(id, vec2, get_x, double (vec2::*)() const);
+        REGISTER_METHOD(id, vec2, set_y, void (vec2::*)(double y));
+        REGISTER_METHOD(id, vec2, get_y, double (vec2::*)() const);
 
-        REGISTER_METHOD(id, vec2, get_xx);
-        REGISTER_METHOD(id, vec2, get_yx);
-        REGISTER_METHOD(id, vec2, get_yy);
+        REGISTER_METHOD(id, vec2, set_xx, void (vec2::*)(vec2 xx));
+        REGISTER_METHOD(id, vec2, set_yx, void (vec2::*)(vec2 yx));
+        REGISTER_METHOD(id, vec2, set_yy, void (vec2::*)(vec2 yy));
+
+        REGISTER_METHOD(id, vec2, get_xx, vec2 (vec2::*)() const);
+        REGISTER_METHOD(id, vec2, get_yx, vec2 (vec2::*)() const);
+        REGISTER_METHOD(id, vec2, get_yy, vec2 (vec2::*)() const);
 
         REGISTER_METHOD(id, vec2, dot);
         REGISTER_METHOD(id, vec2, length_squared);
         REGISTER_METHOD(id, vec2, length);
 
-        REGISTER_METHOD(id, vec2, operator+);
+        REGISTER_METHOD(id, vec2, operator+, vec2 (vec2::*)(const vec2& other) const);
         REGISTER_METHOD(id, vec2, operator-, vec2 (vec2::*)() const);
-        REGISTER_METHOD(id, vec2, operator-, vec2 (vec2::*)(const vec2&) const);
+        REGISTER_METHOD(id, vec2, operator-, vec2 (vec2::*)(const vec2& other) const);
         REGISTER_METHOD(id, vec2, operator*);
         REGISTER_METHOD(id, vec2, operator/);
 }

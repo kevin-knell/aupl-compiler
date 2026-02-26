@@ -2,8 +2,38 @@
 #include <cmath>
 #include <algorithm>
 
+void Math::register_to_db(vm::ClassDB &db) {
+	constexpr int id = 3;
+
+	REGISTER_CLASS(id, Math);
+
+	REGISTER_GLOBAL_METHOD(id, Math, sqrt, double (*)(double x));
+	REGISTER_GLOBAL_METHOD(id, Math, pow, double (*)(double b, double e));
+	REGISTER_GLOBAL_METHOD(id, Math, exp, double (*)(double x));
+	REGISTER_GLOBAL_METHOD(id, Math, ln, double (*)(double x));
+	REGISTER_GLOBAL_METHOD(id, Math, log, double (*)(double b, double x));
+	REGISTER_GLOBAL_METHOD(id, Math, log2, double (*)(double x));
+	REGISTER_GLOBAL_METHOD(id, Math, log10, double (*)(double x));
+
+	REGISTER_GLOBAL_METHOD(id, Math, sin, double (*)(double x));
+	REGISTER_GLOBAL_METHOD(id, Math, cos, double (*)(double x));
+	REGISTER_GLOBAL_METHOD(id, Math, tan, double (*)(double x));
+	REGISTER_GLOBAL_METHOD(id, Math, asin, double (*)(double x));
+	REGISTER_GLOBAL_METHOD(id, Math, acos, double (*)(double x));
+	REGISTER_GLOBAL_METHOD(id, Math, atan, double (*)(double x));
+	
+	REGISTER_GLOBAL_METHOD(id, Math, max, double (*)(double a, double b));
+	REGISTER_GLOBAL_METHOD(id, Math, max, long (*)(int a, int b));
+	REGISTER_GLOBAL_METHOD(id, Math, min, double (*)(double a, double b));
+	REGISTER_GLOBAL_METHOD(id, Math, min, int (*)(int a, int b));
+	REGISTER_GLOBAL_METHOD(id, Math, wrap, double (*)(double x, double from, double t));
+	REGISTER_GLOBAL_METHOD(id, Math, wrap, int (*)(int x, int from, int to));
+	REGISTER_GLOBAL_METHOD(id, Math, clamp, double (*)(double x, double from, double to));
+	REGISTER_GLOBAL_METHOD(id, Math, clamp, int (*)(int x, int from, int to));
+}
+
 double Math::sqrt(double x) {
-    return std::sqrt(x);
+	return std::sqrt(x);
 }
 
 // pow

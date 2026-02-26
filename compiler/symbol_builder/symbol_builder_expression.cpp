@@ -7,6 +7,8 @@
 #include "load_const_expression.hpp"
 #include "primitive_type.hpp"
 #include "tuple_expression.hpp"
+#include "string.hpp"
+#include "string_literal_expression.hpp"
 #include <iostream>
 #include <cassert>
 
@@ -185,11 +187,10 @@ ExprPtr SymbolBuilder::parse_primary(ParserInfo& parser_info) {
 	}
 
     if (match(TokenType::STRING_LITERAL)) {
-        vm::Value8* value8 = new vm::Value8();
-        value8->i64 = std::stoi(next().value);
-        auto value = reinterpret_cast<vm::Value*>(value8);
-        auto load_expr = std::make_shared<LoadConstExpression>(PrimitiveType::TYPE_INT, value);
-        return load_expr;
+		std::string value = next().value;
+		auto it = parser_info.symbol_table.native_types.find("String");
+		auto result = std::make_shared<StringLiteralExpression>(it->second, value.substr(1, value.size() - 2));
+		return result;
     }
 
     if (match(TokenType::IDENTIFIER)) {
@@ -233,7 +234,7 @@ ExprPtr SymbolBuilder::parse_call(ParserInfo& parser_info) {
     }
     next(); // consume )
 
-    return std::make_shared<CallExpression>(name, args);
+    return std::make_shared<CallExpression>(name, args, nullptr);
 }
 
 ExprPtr SymbolBuilder::parse_tuple(ParserInfo &parser_info) {

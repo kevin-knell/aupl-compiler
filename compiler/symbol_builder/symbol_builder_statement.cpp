@@ -8,6 +8,7 @@
 #include "label.hpp"
 #include "conditional_jump_statement.hpp"
 #include "block_statement.hpp"
+#include "call_expression.hpp"
 #include <iostream>
 
 namespace cmp {
@@ -68,7 +69,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
     }
     std::string var_name = next().value;
 
-    std::shared_ptr<Expression> expr = nullptr;
+    ExprPtr expr = nullptr;
     // Expect '=' operator
     if (expect("=")) {
         next(); // consume '='
@@ -77,7 +78,31 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
         if (!expr) {
             std::cout << "error: invalid expression" << std::endl;
         }
-    }
+    } else if (expect("(") && !peek().is_new_line) {
+		std::cout << peek().value << std::endl;
+		next(); // consume '('
+
+		ExprVec args;
+
+		while (!expect(")")) {
+			if (!args.empty()) {
+				if (expect(",")) {
+					next(); // consume ';'
+				}
+			}
+
+			ExprPtr arg = parse_expression(parser_info);
+			if (arg) {
+				args.push_back(arg);
+			} else {
+				std:: cout << "error parsing decl constructor: " << peek().value << std::endl;
+				next();
+			}
+		}
+		next(); // consume ')'
+		
+		expr = std::make_shared<CallExpression>(type->to_string(), args, nullptr);
+	}
     VarPtr var = std::make_shared<VariableSymbol>(type, var_name, expr);
     parser_info.scope->variables[var_name] = var;
     var->scope = parser_info.scope;
@@ -98,7 +123,7 @@ std::shared_ptr<BlockStatement> SymbolBuilder::parse_block(ParserInfo& parser_in
     parser_info.scope->lower_scopes.push_back(std::weak_ptr<Scope>(scope));
     scope->name = "block";
 
-    auto parser_info_sub = ParserInfo{.cls = parser_info.cls, .func = parser_info.func, .scope = scope};
+    auto parser_info_sub = ParserInfo{.symbol_table = symbol_table, .cls = parser_info.cls, .func = parser_info.func, .scope = scope};
 
     while (!expect("}")) {
         bool is_volatile = false;

@@ -2,6 +2,7 @@
 #include "instructions.hpp"
 #include "vec2.hpp"
 #include "vm.hpp"
+#include "string.hpp"
 #include <cstring>
 
 namespace vm {
@@ -75,6 +76,15 @@ namespace vm {
 
         OP_LOAD_CONST_VAR: {
             ERROR();
+        }
+
+        OP_LOAD_STRING: {
+			uint16_t& offset = FETCH(uint16_t);
+			uint16_t& string_pos = FETCH(uint16_t);
+			const char* c = (char*)&vm.const_memory[string_pos];
+            String& s = STACK_REF(String, fp + offset);
+			s = String(c);
+			ADVANCE();
         }
         
         OP_COPY_1: ERROR();
@@ -380,7 +390,9 @@ namespace vm {
             uint16_t class_id = FETCH(uint16_t);
             uint16_t method_id = FETCH(uint16_t);
             void* obj = STACK_REF(void*, fp + FETCH(uint16_t));
-            vm.db->classes[class_id].methods[method_id].value_call(sp, obj);
+			Value* args = fp + FETCH(uint16_t);
+			Value* ret = fp + FETCH(uint16_t);
+            vm.db->classes[class_id].methods[method_id].value_call(args, obj, ret);
             ADVANCE();
         }
 

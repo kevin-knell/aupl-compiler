@@ -14,6 +14,8 @@
     _(LOAD_CONST_8, s(1, 2, 8)) \
     _(LOAD_CONST_16, s(1, 2, 16)) \
     _(LOAD_CONST_VAR, s(1, 2, 2)) \
+	\
+	_(LOAD_STRING, s(1, 2, 2)) \
     \
     _(COPY_1, s(1, 2, 2)) \
     _(COPY_2, s(1, 2, 2)) \
@@ -223,7 +225,7 @@
     _(CALL_VAR, s(1, 4, 1)) \
     _(RET, s(1, 2, 2, 2)) \
     \
-    _(CALL_NATIVE, s(1, 2, 2, 2)) \
+    _(CALL_NATIVE, s(1, 2, 2, 2, 2, 2)) \
     \
     _(GOTO, s(1, 4)) \
     \
@@ -234,7 +236,7 @@
     _(DIRECT_THREADED, s(1)) \
     \
     _(ERR, s(1)) \
-    _(HALT, s(1, 2, 2, 2))
+    _(HALT, s(1))
 
 
 namespace vm {

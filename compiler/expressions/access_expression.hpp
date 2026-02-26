@@ -18,7 +18,7 @@ struct AccessExpression : public Expression {
     bool is_unresolved_symbol() const override;
     void resolve(NameAnalysisInfo& name_analysis_info) override;
     TypePtr get_type() const override;
-    KIND get_kind() const override { return ACCESS; }
+	KIND get_kind() const override { return ACCESS; }
 };
 
 } // namespace cmp

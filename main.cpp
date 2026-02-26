@@ -21,6 +21,11 @@
 #include "const_folding_optimizer.hpp"
 #include "erase_unused_variable_optimizer.hpp"
 #include "color.hpp"
+#include "vec2.hpp"
+#include "string.hpp"
+#include "console.hpp"
+#include "list.hpp"
+#include "math.hpp"
 #include <iomanip>
 
 #define SET_STRING(ins, size) strings[static_cast<uint8_t>(vm::Instruction::ins)] = #ins;
@@ -37,11 +42,17 @@ int main() {
     // create class db
     vm::ClassDB db;
 
+	vec2::register_to_db(db);
+	String::register_to_db(db);
+	Console::register_to_db(db);
+	Math::register_to_db(db);
+	List<int>::register_to_db(db);
+
+	cmp::SymbolTable symbol_table(db);
+
     // parse user source code
     std::string folder_path = "./source"; // Replace with your folder path
     auto files = cmp::get_all_files_in_folder(folder_path);
-
-    cmp::SymbolTable symbol_table;
 
     for (const auto& file : files) {
         std::cout << "Tokenizing file: " << file << std::endl;
@@ -236,6 +247,7 @@ int main() {
 
     vm.code = reinterpret_cast<vm::Instruction*>(bytecode.data());
     vm.main_start = main_start;
+	vm.const_memory = symbol_table.const_memory.data();
 	vm.static_memory = new vm::Value[256];
     
     std::cout << "\nprocessing" << std::endl;
@@ -252,5 +264,6 @@ int main() {
     std::cout << "vm::run_vm execution time: " << duration << " microseconds" << std::endl;
     
     std::cout << "\nprocess finished" << std::endl;
+	
     return 0;
 }

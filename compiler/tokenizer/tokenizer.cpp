@@ -4,6 +4,7 @@
 #include <unordered_set>
 #include <string>
 #include <vector>
+#include <iostream>
 
 namespace {
 
@@ -60,6 +61,8 @@ namespace {
 namespace cmp {
 
 std::vector<Token> tokenize(const std::string& source) {
+	std::cout << source << std::endl;
+
     std::vector<Token> tokens;
 
     // Regex parts:
@@ -71,7 +74,7 @@ std::vector<Token> tokenize(const std::string& source) {
     const std::string int_number = R"([+-]?\d+)";
     // Multi-char operators first, then single-char
     const std::string special = R"(>=|<=|==|!=|[{}()\[\]:;,=+\-*/<>!&|.@%])";
-    const std::string string_literal = R"(^\"(.*)\"$)";
+    const std::string string_literal = R"(\"(.*)\")";
     const std::string char_literal = R"('(\\.|[^'\\])')";
 
     // Master regex: all pieces combined
@@ -91,10 +94,16 @@ std::vector<Token> tokenize(const std::string& source) {
     auto begin = std::sregex_iterator(source.begin(), source.end(), token_pattern);
     auto end = std::sregex_iterator();
 
+	bool is_newline = true;
+
     for (std::sregex_iterator i = begin; i != end; ++i) {
         std::smatch match = *i;
         std::string token_text = match.str();
         size_t start_pos = match.position();
+
+		if (token_text.find('\n') != std::string::npos) {
+			is_newline = true;
+		}
 
         // Skip whitespace and comments
         if (std::regex_match(token_text, std::regex(whitespace)) ||
@@ -104,7 +113,9 @@ std::vector<Token> tokenize(const std::string& source) {
         }
 
         TokenType type = get_token_type(token_text);
-        tokens.push_back(Token(type, token_text, start_pos, false));
+        tokens.push_back(Token(type, token_text, start_pos, is_newline));
+
+		is_newline = false;
     }
 
     return tokens;

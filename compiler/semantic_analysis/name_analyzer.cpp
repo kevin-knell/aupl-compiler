@@ -6,6 +6,7 @@
 #include "expression.hpp"
 #include "color.hpp"
 #include "assign_statement.hpp"
+#include "access_expression.hpp"
 
 namespace cmp {
 
@@ -15,13 +16,19 @@ static void resolve_expressions(NameAnalysisInfo& name_analysis_info, std::vecto
         if (expr->is_unresolved_symbol()) {
             std::cout << expr->to_string() << std::endl;
             NameAnalysisInfo name_analysis_info_base = name_analysis_info;
-            expr->resolve(name_analysis_info_base);
-            if (expr->is_unresolved_symbol()) {
-                std::cout << "cannot resolve: " << expr->to_string() << std::endl;
-            }
-        } else {
-            resolve_expressions(name_analysis_info, expr->get_expressions());
+
+			if (expr->get_kind() == Expression::ACCESS) {
+				auto access_expr = std::dynamic_pointer_cast<AccessExpression>(expr);
+
+			}
+			
+			expr->resolve(name_analysis_info_base);
+			if (expr->is_unresolved_symbol()) {
+				std::cout << "cannot resolve: " << expr->to_string() << std::endl;
+			}
         }
+        
+		resolve_expressions(name_analysis_info, expr->get_expressions());
     }
 }
 

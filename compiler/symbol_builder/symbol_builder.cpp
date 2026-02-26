@@ -109,9 +109,9 @@ void SymbolBuilder::parse_class() {
     // parse members / functions
     // ==============================================================
     while (has_more_tokens()) {
-        if (parse_constructor(ParserInfo{this_class, nullptr, this_class->static_scope})) continue;
-        if (parse_function(ParserInfo{this_class, nullptr, this_class->static_scope})) continue;
-        if (parse_variable(ParserInfo{this_class, nullptr, this_class->static_scope})) continue;
+        if (parse_constructor(ParserInfo{symbol_table, this_class, nullptr, this_class->static_scope})) continue;
+        if (parse_function(ParserInfo{symbol_table, this_class, nullptr, this_class->static_scope})) continue;
+        if (parse_variable(ParserInfo{symbol_table, this_class, nullptr, this_class->static_scope})) continue;
 
         // no match
         std::cout << "no match: " << peek().value << std::endl;
@@ -145,7 +145,7 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
 
     ScopePtr scope = std::make_shared<Scope>(Scope::FUNCTION);
     scope->upper_scope = parser_info.cls->scope;
-    ParserInfo parser_info_header{.cls = parser_info.cls, .func = nullptr, .scope = scope};
+    ParserInfo parser_info_header{.symbol_table = symbol_table, .cls = parser_info.cls, .func = nullptr, .scope = scope};
 
     scope->name = "(new)";
 
@@ -204,7 +204,7 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
     FuncPtr constructor_symbol = std::make_shared<FunctionSymbol>(return_type, parser_info.cls->name, parameters, scope);
     constructor_symbol->is_static = true; // treat constructor as static
 
-    ParserInfo parser_info_body{parser_info.cls, constructor_symbol, scope};
+    ParserInfo parser_info_body{symbol_table, parser_info.cls, constructor_symbol, scope};
 
     if (expect("=")) {
         next(); // consume =
@@ -273,7 +273,7 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
     ScopePtr scope = std::make_shared<Scope>(Scope::FUNCTION);
     ScopePtr upper_scope = is_static ? parser_info.cls->static_scope : parser_info.cls->scope;
     scope->upper_scope = upper_scope;
-    ParserInfo parser_info_header{.cls = parser_info.cls, .func = nullptr, .scope = scope};
+    ParserInfo parser_info_header{.symbol_table = symbol_table, .cls = parser_info.cls, .func = nullptr, .scope = scope};
 
     // return type
     TypePtr return_type = parse_type(parser_info_header);
@@ -352,7 +352,7 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
     bool is_abstract = false;
 
     FuncPtr function_symbol = std::make_shared<FunctionSymbol>(return_type, name, parameters, scope);
-    ParserInfo parser_info_body{parser_info.cls, function_symbol, scope};
+    ParserInfo parser_info_body{symbol_table, parser_info.cls, function_symbol, scope};
 
     if (expect("=")) {
         next(); // consume =
@@ -382,7 +382,7 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
 			StmtVec statements = parse_statement(parser_info_body);
 
             if (statements.empty()) {
-                std::cout << "no statement in constructor: " << peek().value << std::endl;
+                std::cout << "no statement in function: " << peek().value << std::endl;
                 next();
             } else {
 				for (auto st : statements) {

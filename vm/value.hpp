@@ -33,6 +33,10 @@ namespace vm {
                 return Value{.i8 = v};
             else if constexpr (std::is_same_v<T, uint8_t>)
                 return Value{.u8 = v};
+            else if constexpr (std::is_same_v<T, unsigned char>)
+                return Value{.u8 = v};
+            else if constexpr (std::is_same_v<T, char>)
+                return Value{.i8 = v};
             else if constexpr (std::is_same_v<T, bool>)
                 return Value{.b = v};
             else

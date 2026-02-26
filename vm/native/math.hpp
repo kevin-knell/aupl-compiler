@@ -1,10 +1,13 @@
 #pragma once
 #include "native.hpp"
+#include "class_db.hpp"
 
 
 class Math {
 public:
     DECLARE_UTILITY_CLASS(Math)
+
+	static void register_to_db(vm::ClassDB& db);
     
     static constexpr double TAU = 6.28318530717958647692;
     static constexpr double PI  = 3.14159265358979323846;
@@ -37,8 +40,8 @@ public:
     static double min(double a, double b);
     static int min(int a, int b);
     
-    double wrap(double x, double from, double to);
-    int wrap(int x, int from, int to);
+    static double wrap(double x, double from, double to);
+    static int wrap(int x, int from, int to);
 
     static double clamp(double x, double from, double to);
     static int clamp(int x, int from, int to);

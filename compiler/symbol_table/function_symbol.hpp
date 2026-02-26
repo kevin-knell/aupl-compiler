@@ -8,6 +8,14 @@
 #include <vector>
 #include <map>
 
+namespace vm
+{
+
+class MethodPair;
+
+} // namespace vm
+
+
 namespace cmp {
 
 struct FunctionSymbol {
@@ -15,6 +23,7 @@ struct FunctionSymbol {
 	std::string name;
 	std::vector<VarPtr> parameters;
 	ScopePtr scope;
+	vm::MethodPair* method_pair = nullptr;
 
 	bool is_public = false;
 	bool is_static = false;
@@ -31,6 +40,8 @@ struct FunctionSymbol {
 		const std::vector<VarPtr>& parameters,
 		const ScopePtr& scope)
 		: return_type(std::move(return_type)), name(name), parameters(parameters), scope(std::move(scope)) {}
+	
+	FunctionSymbol(vm::MethodPair& method_pair);
 
 	std::string head_to_string();
 	std::string to_string();

@@ -5,8 +5,15 @@
 #include "declare_statement.hpp"
 #include "symbol_table.hpp"
 #include "assign_statement.hpp"
+#include "expression_statement.hpp"
+#include "call_expression.hpp"
 #include <color.hpp>
 
+#ifndef DEBUG
+#define RF_DEBUG_PRINT(m_text) std::cout << m_text << std::endl
+#else
+#define RF_DEBUG_PRINT(m_text)
+#endif
 
 namespace cmp {
 
@@ -15,7 +22,7 @@ void RegisterFormatConverter::convert_to_register_format(RegisterFormatInfo& rfi
         auto& sub_expr = *p;
         if (!sub_expr) std::cerr << "invalid sub_expr in " << expr->to_string() << std::endl;
         if (sub_expr->get_level() == 0) continue;
-        std::cout << "replacing level " << sub_expr->get_level() << ": " << sub_expr->to_string() << std::endl;
+        RF_DEBUG_PRINT("\treplacing level " << sub_expr->get_level() << ": " << sub_expr->to_string());
 
         // create temp
         TypePtr type = sub_expr->get_type();
@@ -24,11 +31,13 @@ void RegisterFormatConverter::convert_to_register_format(RegisterFormatInfo& rfi
         StmtPtr tmp_decl = std::make_shared<DeclareStatement>(tmp);
 		tmp_decl->is_volatile = is_volatile;
 		tmp->scope = rfi.scope;
+		RF_DEBUG_PRINT("\tcreated temp: " << tmp->name_to_string());
 
         // recursion
         convert_to_register_format(rfi, sub_expr, is_volatile);
 
         // replace
+		RF_DEBUG_PRINT("\treplacing " << sub_expr->to_string() << " with " << tmp_expr->to_string());
         sub_expr = tmp_expr;
         rfi.statements.push_back(tmp_decl);
     }
@@ -36,14 +45,18 @@ void RegisterFormatConverter::convert_to_register_format(RegisterFormatInfo& rfi
 
 void RegisterFormatConverter::convert_to_register_format(SymbolTable &symbol_table) {
     for (auto& [class_name, cls] : symbol_table.classes) {
-        std::cout << C_KEYWORD("Class ") << cls->name << std::endl;
+        RF_DEBUG_PRINT(C_KEYWORD("Class ") << cls->name);
         for (auto& [func_name, f] : cls->functions) {
-            std::cout << class_name << "." << f->name << "(...)" << std::endl;
+            RF_DEBUG_PRINT(class_name << "." << f->name << "(...)");
             for (size_t i = 0; i < f->scope->body.size(); ++i) {
                 auto stmt = f->scope->body[i];
 
+				RF_DEBUG_PRINT("statement: " << stmt->to_string());
+
                 for (auto p : stmt->get_expressions()) {
                     auto& expr = *p;
+
+					RF_DEBUG_PRINT("expression: " << expr->to_string());
 
                     RegisterFormatInfo rfi{.statements = {}, .scope = f->scope};
 
@@ -65,6 +78,8 @@ void RegisterFormatConverter::convert_to_register_format(SymbolTable &symbol_tab
 						}
 					}
 
+					RF_DEBUG_PRINT((requires_variable ? "requires variable" : "does not require variable"));
+
                     if (requires_variable) {
                         TypePtr type = expr->get_type();
                         VarPtr tmp = rfi.scope->get_temp(type, expr);
@@ -81,24 +96,22 @@ void RegisterFormatConverter::convert_to_register_format(SymbolTable &symbol_tab
                         convert_to_register_format(rfi, expr, stmt->is_volatile);
                     }
 
-                    // std::cout << expr->to_string() << std::endl;
-
-                    std::cout << std::endl;
-                    for (auto s : rfi.statements) {
-                        std::cout << s->to_string() << std::endl;
+                    RF_DEBUG_PRINT("set to expression: " << expr->to_string() << std::endl);
+                    RF_DEBUG_PRINT(rfi.statements.size() << " new statements:");
+					for (auto s : rfi.statements) {
+                        RF_DEBUG_PRINT("\t" << s->to_string());
                     }
 
                     // Insert rfi.statements before stmt (i.e., at position i)
                     f->scope->body.insert(f->scope->body.begin() + i, rfi.statements.begin(), rfi.statements.end());
-
                     // Move the index past the inserted statements
                     i += rfi.statements.size();
                 }
-                std::cout << "\t" << stmt->to_string() << std::endl;
+                RF_DEBUG_PRINT("statement changed to: " << stmt->to_string());
             }
-            std::cout << f->to_string() << std::endl;
+            RF_DEBUG_PRINT("function changed to: " << f->to_string());
         }
-        std::cout << std::endl;
+        RF_DEBUG_PRINT("");
     }
 }
 
