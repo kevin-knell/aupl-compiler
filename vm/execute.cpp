@@ -55,7 +55,7 @@ namespace vm {
 				LoadStruct& load = FETCH(LoadStruct);                                   		\
 				TYPE& v = STACK_REF(TYPE, fp + load.dest_addr);									\
 				v = load.value;																	\
-				std::cout << "load: " << (int)load.dest_addr << " <- " << (uint64_t)v << std::endl;		\
+				/*std::cout << "load: " << (int)load.dest_addr << " <- " << (uint64_t)v << std::endl;*/		\
 			} while(0);
 
         
@@ -82,8 +82,8 @@ namespace vm {
 			uint16_t& offset = FETCH(uint16_t);
 			uint16_t& string_pos = FETCH(uint16_t);
 			const char* c = (char*)&vm.const_memory[string_pos];
-            String& s = STACK_REF(String, fp + offset);
-			s = String(c);
+            void* addr = (void*)(fp + offset);
+			new (addr) String(c);
 			ADVANCE();
         }
         
@@ -133,7 +133,7 @@ namespace vm {
             const TYPE& operand_a = STACK_REF(TYPE, fp + operands.a_addr);      \
             const TYPE& operand_b = STACK_REF(TYPE, fp + operands.b_addr);      \
             if (operand_a OP operand_b) ip = code + operands.jump_addr;			\
-			std::cout << "jump at: " << operands.jump_addr << std::endl;		\
+			/*std::cout << "jump at: " << operands.jump_addr << std::endl;*/		\
             } while (0);
 
         #define COMPARE_CONST_OP(TYPE, OP)                                      \
@@ -148,7 +148,7 @@ namespace vm {
             const TYPE& operand_b = operands.b;                                	\
             if (operand_a OP operand_b) {										\
 				ip = code + operands.jump_addr;									\
-				std::cout << "cjump at: " << (int)(ip - code) << std::endl;		\
+				/*std::cout << "cjump at: " << (int)(ip - code) << std::endl;*/		\
 			}																	\
             } while (0);
         
@@ -362,19 +362,22 @@ namespace vm {
         OP_IF_EGT_CONST_DOUBLE: COMPARE_CONST_OP(double, >=); ADVANCE();
 
         OP_CALL_1: {
-            Instruction*& func_addr = FETCH(Instruction*);
+			Instruction* func_addr = code + FETCH(uint32_t);
 
             Instruction*& return_address = STACK_REF(Instruction*, sp);
             return_address = ip;
-            
-            ip = func_addr;
+			
+			sp += sizeof(return_address);
 
             Value*& last_frame = STACK_REF(Value*, sp);
             last_frame = fp;
+
+			sp += sizeof(last_frame);
             
+			ip = func_addr;
             fp = sp;
 
-            DISPATCH();
+            ADVANCE();
         }
 
 		OP_CALL_2: ERROR();
@@ -383,7 +386,18 @@ namespace vm {
 		OP_CALL_VAR: ERROR();
 
         OP_RET: {
-            ERROR();
+			sp -= sizeof(Value*);
+
+            Value*& last_frame = STACK_REF(Value*, sp);
+            fp = last_frame;
+
+			sp -= sizeof(Instruction*);
+
+            Instruction*& return_address = STACK_REF(Instruction*, sp);
+            ip = return_address;
+
+
+			ADVANCE();
         }
 
         OP_CALL_NATIVE: {
@@ -400,7 +414,7 @@ namespace vm {
 		do {
 			auto jump_addr = FETCH(uint32_t);
             ip = code + jump_addr;
-			std::cout << "jump at: " << (int)(ip - code) << std::endl;
+			//std::cout << "jump at: " << (int)(ip - code) << std::endl;
         } while(0); ADVANCE();
 
         OP_IF_FALSE_GOTO: {

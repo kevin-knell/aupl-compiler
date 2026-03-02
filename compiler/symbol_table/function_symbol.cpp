@@ -63,12 +63,25 @@ std::string FunctionSymbol::to_string() {
     } else if (scope->body.size() == 1 && std::dynamic_pointer_cast<ReturnStatement>(scope->body.front())) {
         code = " = " + scope->body.front()->to_string();
     } else {
-        code = " " + C_BRACE_L + "\n";
-        for (StmtPtr& s : scope->body) {
-            code += s->to_string();
-            code += "\n";
-        }
-        code += C_BRACE_R;
+        code = " ";
+		std::function<void(ScopePtr sc)> add_code_str = [&](ScopePtr sc) {
+        	code += C_BRACE_L + "\n";
+			for (StmtPtr& s : sc->body) {
+        	    code += s->to_string();
+        	    code += "\n";
+        	}
+        	code += C_BRACE_R;
+
+			for (auto lower : sc->lower_scopes) {
+				if (auto lower_scope = lower.lock()) {
+					code += "\n" + lower_scope->name + " ";
+					add_code_str(lower_scope);
+				} else {
+					std::cerr << "scope is not valid" << std::endl;
+				}
+			}
+		};
+		add_code_str(scope);
     }
 
     return head + code;

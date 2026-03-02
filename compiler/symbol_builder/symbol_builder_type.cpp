@@ -89,7 +89,10 @@ TypePtr SymbolBuilder::parse_tuple_type(ParserInfo& parser_info) {
     while (!expect(")")) {
         if (expect(",")) {
             if (!types.empty()) next(); // consume ,
-            else return nullptr;
+            else {
+				index = idx;
+				return nullptr;
+			}
         }
 
         TypePtr t = parse_type(parser_info);
@@ -100,6 +103,11 @@ TypePtr SymbolBuilder::parse_tuple_type(ParserInfo& parser_info) {
         types.push_back(t);
     }
     next(); // consume )
+
+	if (types.empty()) {
+		index = idx;
+		return nullptr;
+	}
 
     return std::make_shared<TupleType>(types);
 }

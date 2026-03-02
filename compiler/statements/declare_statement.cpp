@@ -29,39 +29,14 @@ namespace {
     std::vector<uint8_t> generate_binary_bytecode(const BinaryExpression& binary_expr, const VarPtr& variable_symbol, BytecodeGenerationInfo& bgi) {
         auto left_op = std::dynamic_pointer_cast<VariableExpression>(binary_expr.left);
         auto right_op = std::dynamic_pointer_cast<VariableExpression>(binary_expr.right);
-        vm::Value2 dest{ .u16 = static_cast<uint16_t>(bgi.scope->variable_indices[variable_symbol->name]) };
-        vm::Value2 left{ .u16 = static_cast<uint16_t>(bgi.scope->variable_indices[left_op->var->name]) };
-        vm::Value2 right{ .u16 = static_cast<uint16_t>(bgi.scope->variable_indices[right_op->var->name]) };
+        vm::Value2 dest{ .u16 = static_cast<uint16_t>(Scope::get_variable_index(bgi.scope, variable_symbol->name)) };
+        vm::Value2 left{ .u16 = static_cast<uint16_t>(Scope::get_variable_index(bgi.scope, left_op->var->name)) };
+        vm::Value2 right{ .u16 = static_cast<uint16_t>(Scope::get_variable_index(bgi.scope, right_op->var->name)) };
 		uint8_t op_code = 0;
 
 		//bool has_const = left_op->var->initial_value->is_constexpr() || right_op->var->initial_value->is_constexpr();
 
-		vm::BinType bin_type;
-
-		if (variable_symbol->type == PrimitiveType::TYPE_U8) {
-			bin_type = vm::BinType::UINT8;
-		} else if (variable_symbol->type == PrimitiveType::TYPE_I8) {
-			bin_type = vm::BinType::INT8;
-		} else if (variable_symbol->type == PrimitiveType::TYPE_U16) {
-			bin_type = vm::BinType::UINT16;
-		} else if (variable_symbol->type == PrimitiveType::TYPE_I16) {
-			bin_type = vm::BinType::INT16;
-		} else if (variable_symbol->type == PrimitiveType::TYPE_U32) {
-			bin_type = vm::BinType::UINT32;
-		} else if (variable_symbol->type == PrimitiveType::TYPE_I32) {
-			bin_type = vm::BinType::INT32;
-		} else if (variable_symbol->type == PrimitiveType::TYPE_U64) {
-			bin_type = vm::BinType::UINT64;
-		} else if (variable_symbol->type == PrimitiveType::TYPE_INT) {
-			bin_type = vm::BinType::INT64;
-		} else if (variable_symbol->type == PrimitiveType::TYPE_F32) {
-			bin_type = vm::BinType::FLOAT;
-		} else if (variable_symbol->type == PrimitiveType::TYPE_FLOAT) {
-			bin_type = vm::BinType::DOUBLE;
-		} else {
-			std::cerr << "Unsupported type for binary operation: " << variable_symbol->type->to_string() << std::endl;
-			return { static_cast<uint8_t>(vm::Instruction::ERR) };
-		}
+		vm::BinType bin_type = std::dynamic_pointer_cast<PrimitiveType>(variable_symbol->type)->vm_bin_type;
 
 		op_code = static_cast<uint8_t>(vm::get_binary_opcode(
 			bin_type,
@@ -83,7 +58,7 @@ namespace {
         if (size == 0) return {};
 		
         vm::Value* v = value->eval_constexpr();
-        vm::Value2 dest{ .u16 = static_cast<uint16_t>(bgi.scope->variable_indices[variable_symbol->name]) };
+        vm::Value2 dest{ .u16 = static_cast<uint16_t>(Scope::get_variable_index(bgi.scope, variable_symbol->name)) };
         switch (size) {
             case 1: result.push_back((uint8_t)vm::Instruction::LOAD_CONST_1); break;
             case 2: result.push_back((uint8_t)vm::Instruction::LOAD_CONST_2); break;
@@ -117,8 +92,8 @@ namespace {
 		vm::Value2 class_id = vm::Value2::from<uint16_t>(method_pair.class_id); // Math
 		vm::Value2 method_id = vm::Value2::from<uint16_t>(method_pair.method_id); // sqrt()
 		vm::Value2 obj_address = vm::Value2::from<uint16_t>(0); // static -> don't care
-		vm::Value2 args_address = vm::Value2::from<uint16_t>(arg0 ? bgi.scope->variable_indices[arg0->var->name] : 0);
-		vm::Value2 ret_address = vm::Value2::from<uint16_t>(bgi.scope->variable_indices[variable_symbol->name]);
+		vm::Value2 args_address = vm::Value2::from<uint16_t>(arg0 ? Scope::get_variable_index(bgi.scope, arg0->var->name) : 0);
+		vm::Value2 ret_address = vm::Value2::from<uint16_t>(Scope::get_variable_index(bgi.scope, variable_symbol->name));
 
 		result.push_back(class_id.v[0].u8);
 		result.push_back(class_id.v[1].u8);
@@ -151,7 +126,7 @@ std::vector<uint8_t> DeclareStatement::generate_bytecode(BytecodeGenerationInfo&
             return generate_load_const_bytecode(value, variable_symbol, bgi);
 		case Expression::STRING_LIT: {
 			auto string_lit_expr = std::dynamic_pointer_cast<StringLiteralExpression>(value);
-			vm::Value2 dest{ .u16 = static_cast<uint16_t>(bgi.scope->variable_indices[variable_symbol->name]) };
+			vm::Value2 dest{ .u16 = static_cast<uint16_t>(Scope::get_variable_index(bgi.scope, variable_symbol->name)) };
 			vm::Value2 string_pos = vm::Value2::from<uint16_t>(bgi.symbol_table.const_memory.size());
 			for (char c : string_lit_expr->value) {
 				bgi.symbol_table.const_memory.emplace_back(vm::Value::from(c));

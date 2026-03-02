@@ -17,6 +17,7 @@ namespace cmp {
 std::vector<StmtPtr> SymbolBuilder::parse_statement(ParserInfo& parser_info) {
     std::vector<StmtPtr> result;
     auto if_stmts = parse_if(parser_info); if (!if_stmts.empty()) return if_stmts;
+    auto while_stmts = parse_while(parser_info); if (!while_stmts.empty()) return while_stmts;
     auto declare_stmts = parse_declare_statement(parser_info); if (!declare_stmts.empty()) return declare_stmts;
     auto assign_stmts = parse_assign(parser_info); if (!assign_stmts.empty()) return assign_stmts;
     auto return_stmts = parse_return(parser_info); if (!return_stmts.empty()) return return_stmts;
@@ -197,9 +198,11 @@ std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
 		std::make_shared<ConditionalJumpStatement>(nullptr, return_label, nullptr)
 	);
 
-	else_block->scope->body.push_back(
-		std::make_shared<ConditionalJumpStatement>(nullptr, return_label, nullptr)
-	);
+	if (else_block) {
+		else_block->scope->body.push_back(
+			std::make_shared<ConditionalJumpStatement>(nullptr, return_label, nullptr)
+		);
+	}
 
     return result;
 }
@@ -211,9 +214,47 @@ std::vector<StmtPtr> SymbolBuilder::parse_for(ParserInfo& parser_info) {
 }
 
 std::vector<StmtPtr> SymbolBuilder::parse_while(ParserInfo& parser_info) {
-    (void)parser_info;
-    //size_t start_idx = index;
-    return {};
+    size_t start_idx = index;
+
+    if (!expect("while")) {
+        index = start_idx;
+        return {};
+    }
+    next(); // consume if
+
+    std::cout << "while" << std::endl;
+
+    ExprPtr condition_expr = parse_expression(parser_info);
+    if (!condition_expr) {
+        index = start_idx;
+        return {};
+    }
+
+	std::string while_condition_name = parser_info.scope->get_label_name("while_condition");
+	//std::string while_ret_name = parser_info.scope->get_label_name("while_return");
+	std::string while_name = parser_info.scope->get_label_name("while");
+
+    std::shared_ptr<BlockStatement> block = parse_block(parser_info);
+    std::shared_ptr<Label> while_label = std::make_shared<Label>(block->scope, while_name);
+
+	StmtVec result;
+
+	std::shared_ptr<LabelStatement> condition_label_stmt = std::make_shared<LabelStatement>(while_condition_name);
+	//std::shared_ptr<LabelStatement> return_label_stmt = std::make_shared<LabelStatement>(while_ret_name);
+
+	//std::shared_ptr<Label> return_label = std::make_shared<Label>(parser_info.scope, while_ret_name, return_label_stmt);
+	
+	result.push_back(condition_label_stmt);
+	result.push_back(std::make_shared<ConditionalJumpStatement>(condition_expr, while_label, nullptr));
+	//result.push_back(return_label_stmt);
+
+	std::shared_ptr<Label> condition_label = std::make_shared<Label>(parser_info.scope, while_condition_name, condition_label_stmt);
+
+	block->scope->body.push_back(
+		std::make_shared<ConditionalJumpStatement>(nullptr, condition_label, nullptr)
+	);
+
+    return result;
 }
 
 std::vector<StmtPtr> SymbolBuilder::parse_return(ParserInfo& parser_info) {

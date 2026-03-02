@@ -22,7 +22,11 @@ public:
     KIND get_kind() const override { return KIND::IF; } // Or add JUMP if you want a new kind
     std::string to_string() const override;
     std::vector<ExprPtr*> get_expressions() override {
-        return { &condition };
+		if (condition) {
+        	return { &condition };
+		} else {
+			return {};
+		}
     }
 };
 

@@ -11,6 +11,8 @@ void cmp::ConstFoldingOptimizer::optimize(SymbolTable& st) const {
     std::cout << "\n" << "constant folding" << std::endl;
 
     for (auto [cn, cls] : st.classes) {
+		if (cls->is_native) continue;
+		
         for (auto [fn, f] : cls->functions) {
             for (auto stmt : f->scope->body) {
 				if (stmt->is_volatile) continue;

@@ -19,6 +19,10 @@ std::shared_ptr<Scope> Scope::find_scope(const std::shared_ptr<Scope>& scope, co
     }
 }
 
+int Scope::get_variable_index(const ScopePtr& scope, const std::string &name) {
+	return find_scope(scope, name)->variable_indices[name];
+}
+
 void Scope::generate_structure(int offset) {
     variable_indices.clear();
     for (auto& [name, var] : variables) {
@@ -73,5 +77,4 @@ VarPtr Scope::get_temp(TypePtr type, ExprPtr init_val, std::string temp_name) {
 std::string Scope::get_label_name(std::string name) const {
 	return name + std::to_string(label_count++);
 }
-
 }

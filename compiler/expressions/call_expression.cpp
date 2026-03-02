@@ -7,11 +7,14 @@
 #include "symbol_table.hpp"
 #include "native_class_type.hpp"
 #include "variable_expression.hpp"
+#include "static_class_type.hpp"
 
 namespace cmp {
 
 std::vector<uint8_t> CallExpression::generate_bytecode(BytecodeGenerationInfo& bgi) const {
     (void)bgi;
+
+	if (!f) return { (uint8_t)vm::Instruction::ERR };
 
 	if (f->method_pair) {
 		std::shared_ptr<VariableExpression> arg0 = nullptr;
@@ -25,7 +28,7 @@ std::vector<uint8_t> CallExpression::generate_bytecode(BytecodeGenerationInfo& b
 		vm::Value2 class_id = vm::Value2::from<uint16_t>(method_pair.class_id); // Console
 		vm::Value2 method_id = vm::Value2::from<uint16_t>(method_pair.method_id); // print()
 		vm::Value2 obj_address = vm::Value2::from<uint16_t>(0); // static -> don't care
-		vm::Value2 args_address = vm::Value2::from<uint16_t>(arg0 ? bgi.scope->variable_indices[arg0->var->name] : 0);
+		vm::Value2 args_address = vm::Value2::from<uint16_t>(arg0 ? Scope::get_variable_index(bgi.scope, arg0->var->name) : 0);
 		vm::Value2 ret_address = vm::Value2::from<uint16_t>(0); // no ret
 
 		return {
@@ -38,6 +41,13 @@ std::vector<uint8_t> CallExpression::generate_bytecode(BytecodeGenerationInfo& b
 		};
 	} else {
 		std::cout << to_string() << " is not native" << std::endl;
+
+		auto func_address = vm::Value4::from<uint32_t>(f->scope->starting_address);
+
+		return {
+			(uint8_t)vm::Instruction::CALL_1,
+			func_address.v[0].u8, func_address.v[1].u8, func_address.v[2].u8, func_address.v[3].u8,
+		};
 	}
 
     return {};
@@ -45,10 +55,12 @@ std::vector<uint8_t> CallExpression::generate_bytecode(BytecodeGenerationInfo& b
 
 size_t CallExpression::get_bytecode_size(BytecodeGenerationInfo &bgi) const {
     (void)bgi;
+	if (!f) return 1; // ERR
+
     if (f->method_pair) {
 		return 1 + 2 + 2 + 2 + 2 + 2;
 	} else {
-		return 0;
+		return 1 + 4;
 	}
 
     return 0;
@@ -57,7 +69,7 @@ size_t CallExpression::get_bytecode_size(BytecodeGenerationInfo &bgi) const {
 std::string CallExpression::to_string() const {
     std::string result;
 
-	result += obj_expr ? obj_expr->to_string() : "";
+	result += obj_expr ? obj_expr->to_string() + "." : "";
 	
 	result += f ? C_IDENTIFIER(f->name) : C_UNRES(name);
 
@@ -77,58 +89,99 @@ std::string CallExpression::to_string() const {
 }
 
 bool CallExpression::is_unresolved_symbol() const {
-    return f == nullptr;
+    return !f;
 }
 
 void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
-	auto native_types = name_analysis_info.symbol_table.native_types;
-	auto it = native_types.find(name);
-	if (it != native_types.end()) {
-		std::cout << "function is type: " << it->second->to_string() << std::endl;
-		auto nat = std::dynamic_pointer_cast<NativeClassType>(it->second);
-		for (auto nat_func : nat->functions) {
+	if (!obj_expr) {
+		// native constructor
+		auto native_types = name_analysis_info.symbol_table.native_types;
+		auto it = native_types.find(name);
+		if (it != native_types.end()) {
+			std::cout << "function is type: " << it->second->to_string() << std::endl;
+			auto nat = std::dynamic_pointer_cast<NativeClassType>(it->second);
+			for (auto nat_func : nat->functions) {
+				if (nat_func->name == name
+						&& nat_func->method_pair->arg_count == arguments.size()) {
+					f = nat_func;
+					std::cout << "function is: " << f->to_string() << std::endl;
+					return;
+				}
+
+				std::cout << nat_func->name << " " << nat_func->method_pair->arg_count << std::endl;
+			}
+
+			std::cout << "no valid constructor!" << std::endl;
+			return;
+		}
+
+		// global native func
+		auto global_native_functions = name_analysis_info.symbol_table.global_native_functions;
+		std::cout << arguments.size() << std::endl;
+		for (auto nat_func : global_native_functions) {
+			std::cout << nat_func->to_string() << nat_func->method_pair->arg_count << std::endl;
 			if (nat_func->name == name
 					&& nat_func->method_pair->arg_count == arguments.size()) {
 				f = nat_func;
-				std::cout << "function is: " << f->to_string() << std::endl;
+				std::cout << "global function is: " << f->to_string() << std::endl;
 				return;
 			}
-
-			std::cout << nat_func->name << " " << nat_func->method_pair->arg_count << std::endl;
 		}
 
-        std::cout << "no valid constructor!" << std::endl;
-		return;
-	}
-
-	auto global_native_functions = name_analysis_info.symbol_table.global_native_functions;
-	std::cout << arguments.size() << std::endl;
-	for (auto nat_func : global_native_functions) {
-		std::cout << nat_func->to_string() << nat_func->method_pair->arg_count << std::endl;
-		if (nat_func->name == name
-				&& nat_func->method_pair->arg_count == arguments.size()) {
-			f = nat_func;
-			std::cout << "global function is: " << f->to_string() << std::endl;
+		// call function in same class
+		if (!name_analysis_info.cls) {
+			std::cout << "no class" << std::endl;
 			return;
 		}
+
+		for (auto [n2, f2] : name_analysis_info.cls->functions) {
+			if (n2 == name) {
+				f = f2;
+				return;
+			}
+		}
+	} else {
+		obj_expr->resolve(name_analysis_info);
+
+		switch (obj_expr->get_kind()) {
+			case Expression::VARIABLE: {
+				auto var_expr = std::dynamic_pointer_cast<VariableExpression>(obj_expr);
+				auto var = var_expr->var;
+				auto obj_type = var_expr->get_type();
+				switch (obj_type->get_kind()) {
+					case Type::STATIC_CLASS: {
+						std::cout << "is static class" << std::endl;
+						auto static_class_type = std::dynamic_pointer_cast<StaticClassType>(obj_type);
+						auto it = name_analysis_info.symbol_table.classes.find(static_class_type->name);
+						if (it != name_analysis_info.symbol_table.classes.end()) {
+							auto class_ptr = it->second;
+							auto func_it = class_ptr->functions.find(name);
+							if (func_it != class_ptr->functions.end()) {
+								f = func_it->second;
+							}
+						}
+						break;
+					}
+					case Type::NATIVE_CLASS: {
+						std::cout << "is native class" << std::endl;
+						auto native_class_type = std::dynamic_pointer_cast<NativeClassType>(obj_type);
+						for (auto f2 : native_class_type->functions) {
+							if (f2->name == name
+									&& f2->method_pair->arg_count == arguments.size()) {
+								f = f2;
+							}
+						}
+						break;
+					}
+					default: {}
+				}
+			}
+			case Expression::CALL: {
+
+			}
+			default: {}
+		}
 	}
-
-    if (!name_analysis_info.cls) {
-        std::cout << "no class" << std::endl;
-        return;
-    }
-
-    for (auto [n2, f2] : name_analysis_info.cls->functions) {
-        if (n2 == name) {
-            f = f2;
-
-            for (auto expr : arguments) {
-                expr->resolve(name_analysis_info);
-            }
-
-            return;
-        }
-    }
 }
 
 std::vector<ExprPtr *> CallExpression::get_expressions() {

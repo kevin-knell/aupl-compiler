@@ -23,8 +23,8 @@ namespace {
         auto left_op = std::dynamic_pointer_cast<VariableExpression>(binary_expr.left);
         auto right_op = std::dynamic_pointer_cast<VariableExpression>(binary_expr.right);
         vm::Value2 dest{ .u16 = offset };
-        vm::Value2 left{ .u16 = static_cast<uint16_t>(bgi.scope->variable_indices[left_op->var->name]) };
-        vm::Value2 right{ .u16 = static_cast<uint16_t>(bgi.scope->variable_indices[right_op->var->name]) };
+        vm::Value2 left{ .u16 = static_cast<uint16_t>(Scope::get_variable_index(bgi.scope, left_op->var->name)) };
+        vm::Value2 right{ .u16 = static_cast<uint16_t>(Scope::get_variable_index(bgi.scope, right_op->var->name)) };
 		uint8_t op_code = 0;
 
 		//bool has_const = left_op->var->initial_value->is_constexpr() || right_op->var->initial_value->is_constexpr();
@@ -142,7 +142,7 @@ std::vector<uint8_t> AssignmentStatement::generate_bytecode(BytecodeGenerationIn
 							auto binary_expr = std::dynamic_pointer_cast<BinaryExpression>(expr_right);
 							return generate_binary_bytecode(
 								*binary_expr,
-								var->scope->variable_indices[var->name],
+								Scope::get_variable_index(var->scope, var->name),
 								var->type,
 								bgi
 							);
@@ -150,7 +150,7 @@ std::vector<uint8_t> AssignmentStatement::generate_bytecode(BytecodeGenerationIn
 						case Expression::LOAD_CONST: {
 							return generate_load_const_bytecode(
 								expr_right,
-								var->scope->variable_indices[var->name],
+								Scope::get_variable_index(var->scope, var->name),
 								var->type->get_size(),
 								bgi
 							);
@@ -171,8 +171,8 @@ std::vector<uint8_t> AssignmentStatement::generate_bytecode(BytecodeGenerationIn
 							assert(local_var);
 							assert(local_var->scope);
 							return generate_copy_to_static_bytecode(
-								var->scope->variable_indices[var->name],
-								local_var->scope->variable_indices[local_var->name],
+								Scope::get_variable_index(var->scope, var->name),
+								Scope::get_variable_index(local_var->scope, local_var->name),
 								var->type->get_size(),
 								bgi
 							);

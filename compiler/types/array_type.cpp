@@ -10,4 +10,7 @@ std::string ArrayType::to_string() const {
 			+ "]";
 }
 
+Type::KIND ArrayType::get_kind() const {
+	return ARRAY;
+}
 }

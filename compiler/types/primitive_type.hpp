@@ -1,5 +1,6 @@
 #pragma once
 #include "type.hpp"
+#include "instructions.hpp"
 
 namespace cmp
 {
@@ -22,15 +23,19 @@ public:
     static const TypePtr TYPE_BOOL;
     static const TypePtr TYPE_VOID;
 
+	const vm::BinType vm_bin_type;
+
     std::string to_string() const override;
     int get_size() const override;
+
+	KIND get_kind() const override;
 private:
     const std::string name; // "int", "bool", etc.
     const int size;
 
-    explicit PrimitiveType(const std::string& n, int s) : name(n), size(s) {}
+    explicit PrimitiveType(const std::string& n, int s, vm::BinType bin_type) : vm_bin_type(bin_type), name(n), size(s) {}
 
-    friend TypePtr create(std::string n, int s);
+    friend TypePtr create(std::string n, int s, vm::BinType bin_type);
 };
 
 } // namespace cmp

@@ -23,6 +23,8 @@ struct GenericType : public Type {
     }
 
     int get_size() { return 1; };
+
+	KIND get_kind() const override { return INVALID; };
 };
 
 } // namespace cmp

@@ -11,6 +11,10 @@ int NativeClassType::get_size() const {
 	return cls.size;
 }
 
+Type::KIND NativeClassType::get_kind() const {
+	return NATIVE_CLASS;
+}
+
 NativeClassType::NativeClassType(const vm::ClassBind& cls) : cls(cls) {}
 
 } // namespace cmp

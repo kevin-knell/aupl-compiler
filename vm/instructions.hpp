@@ -135,95 +135,95 @@
     _(IF_GT_CONST_I8, s(1, 2, 1, 4)) \
     _(IF_EGT_CONST_I8, s(1, 2, 1, 4)) \
     \
-    _(IF_EQ_I16, s(1, 2, 2, 2)) \
-    _(IF_NEQ_I16, s(1, 2, 2, 2)) \
-    _(IF_LT_I16, s(1, 2, 2, 2)) \
-    _(IF_ELT_I16, s(1, 2, 2, 2)) \
-    _(IF_EQ_CONST_I16, s(1, 2, 2, 2)) \
-    _(IF_NEQ_CONST_I16, s(1, 2, 2, 2)) \
-    _(IF_LT_CONST_I16, s(1, 2, 2, 2)) \
-    _(IF_ELT_CONST_I16, s(1, 2, 2, 2)) \
-    _(IF_GT_CONST_I16, s(1, 2, 2, 2)) \
-    _(IF_EGT_CONST_I16, s(1, 2, 2, 2)) \
+    _(IF_EQ_I16, s(1, 2, 2, 4)) \
+    _(IF_NEQ_I16, s(1, 2, 2, 4)) \
+    _(IF_LT_I16, s(1, 2, 2, 4)) \
+    _(IF_ELT_I16, s(1, 2, 2, 4)) \
+    _(IF_EQ_CONST_I16, s(1, 2, 2, 4)) \
+    _(IF_NEQ_CONST_I16, s(1, 2, 2, 4)) \
+    _(IF_LT_CONST_I16, s(1, 2, 2, 4)) \
+    _(IF_ELT_CONST_I16, s(1, 2, 2, 4)) \
+    _(IF_GT_CONST_I16, s(1, 2, 2, 4)) \
+    _(IF_EGT_CONST_I16, s(1, 2, 2, 4)) \
     \
-    _(IF_EQ_I32, s(1, 2, 2, 2)) \
-    _(IF_NEQ_I32, s(1, 2, 2, 2)) \
-    _(IF_LT_I32, s(1, 2, 2, 2)) \
-    _(IF_ELT_I32, s(1, 2, 2, 2)) \
-    _(IF_EQ_CONST_I32, s(1, 2, 2, 2)) \
-    _(IF_NEQ_CONST_I32, s(1, 2, 2, 2)) \
-    _(IF_LT_CONST_I32, s(1, 2, 2, 2)) \
-    _(IF_ELT_CONST_I32, s(1, 2, 2, 2)) \
-    _(IF_GT_CONST_I32, s(1, 2, 2, 2)) \
-    _(IF_EGT_CONST_I32, s(1, 2, 2, 2)) \
+    _(IF_EQ_I32, s(1, 2, 2, 4)) \
+    _(IF_NEQ_I32, s(1, 2, 2, 4)) \
+    _(IF_LT_I32, s(1, 2, 2, 4)) \
+    _(IF_ELT_I32, s(1, 2, 2, 4)) \
+    _(IF_EQ_CONST_I32, s(1, 2, 2, 4)) \
+    _(IF_NEQ_CONST_I32, s(1, 2, 2, 4)) \
+    _(IF_LT_CONST_I32, s(1, 2, 2, 4)) \
+    _(IF_ELT_CONST_I32, s(1, 2, 2, 4)) \
+    _(IF_GT_CONST_I32, s(1, 2, 2, 4)) \
+    _(IF_EGT_CONST_I32, s(1, 2, 2, 4)) \
     \
-    _(IF_EQ_I64, s(1, 2, 2, 2)) \
-    _(IF_NEQ_I64, s(1, 2, 2, 2)) \
-    _(IF_LT_I64, s(1, 2, 2, 2)) \
-    _(IF_ELT_I64, s(1, 2, 2, 2)) \
-    _(IF_EQ_CONST_I64, s(1, 2, 2, 2)) \
-    _(IF_NEQ_CONST_I64, s(1, 2, 2, 2)) \
-    _(IF_LT_CONST_I64, s(1, 2, 2, 2)) \
-    _(IF_ELT_CONST_I64, s(1, 2, 2, 2)) \
-    _(IF_GT_CONST_I64, s(1, 2, 2, 2)) \
-    _(IF_EGT_CONST_I64, s(1, 2, 2, 2)) \
+    _(IF_EQ_I64, s(1, 2, 2, 4)) \
+    _(IF_NEQ_I64, s(1, 2, 2, 4)) \
+    _(IF_LT_I64, s(1, 2, 2, 4)) \
+    _(IF_ELT_I64, s(1, 2, 2, 4)) \
+    _(IF_EQ_CONST_I64, s(1, 2, 2, 4)) \
+    _(IF_NEQ_CONST_I64, s(1, 2, 2, 4)) \
+    _(IF_LT_CONST_I64, s(1, 2, 2, 4)) \
+    _(IF_ELT_CONST_I64, s(1, 2, 2, 4)) \
+    _(IF_GT_CONST_I64, s(1, 2, 2, 4)) \
+    _(IF_EGT_CONST_I64, s(1, 2, 2, 4)) \
     \
-    _(IF_LT_U8, s(1, 2, 2, 2)) \
-    _(IF_ELT_U8, s(1, 2, 2, 2)) \
-    _(IF_LT_CONST_U8, s(1, 2, 2, 2)) \
-    _(IF_ELT_CONST_U8, s(1, 2, 2, 2)) \
-    _(IF_GT_CONST_U8, s(1, 2, 2, 2)) \
-    _(IF_EGT_CONST_U8, s(1, 2, 2, 2)) \
+    _(IF_LT_U8, s(1, 2, 2, 4)) \
+    _(IF_ELT_U8, s(1, 2, 2, 4)) \
+    _(IF_LT_CONST_U8, s(1, 2, 2, 4)) \
+    _(IF_ELT_CONST_U8, s(1, 2, 2, 4)) \
+    _(IF_GT_CONST_U8, s(1, 2, 2, 4)) \
+    _(IF_EGT_CONST_U8, s(1, 2, 2, 4)) \
     \
-    _(IF_LT_U16, s(1, 2, 2, 2)) \
-    _(IF_ELT_U16, s(1, 2, 2, 2)) \
-    _(IF_LT_CONST_U16, s(1, 2, 2, 2)) \
-    _(IF_ELT_CONST_U16, s(1, 2, 2, 2)) \
-    _(IF_GT_CONST_U16, s(1, 2, 2, 2)) \
-    _(IF_EGT_CONST_U16, s(1, 2, 2, 2)) \
+    _(IF_LT_U16, s(1, 2, 2, 4)) \
+    _(IF_ELT_U16, s(1, 2, 2, 4)) \
+    _(IF_LT_CONST_U16, s(1, 2, 2, 4)) \
+    _(IF_ELT_CONST_U16, s(1, 2, 2, 4)) \
+    _(IF_GT_CONST_U16, s(1, 2, 2, 4)) \
+    _(IF_EGT_CONST_U16, s(1, 2, 2, 4)) \
     \
-    _(IF_LT_U32, s(1, 2, 2, 2)) \
-    _(IF_ELT_U32, s(1, 2, 2, 2)) \
-    _(IF_LT_CONST_U32, s(1, 2, 2, 2)) \
-    _(IF_ELT_CONST_U32, s(1, 2, 2, 2)) \
-    _(IF_GT_CONST_U32, s(1, 2, 2, 2)) \
-    _(IF_EGT_CONST_U32, s(1, 2, 2, 2)) \
+    _(IF_LT_U32, s(1, 2, 2, 4)) \
+    _(IF_ELT_U32, s(1, 2, 2, 4)) \
+    _(IF_LT_CONST_U32, s(1, 2, 2, 4)) \
+    _(IF_ELT_CONST_U32, s(1, 2, 2, 4)) \
+    _(IF_GT_CONST_U32, s(1, 2, 2, 4)) \
+    _(IF_EGT_CONST_U32, s(1, 2, 2, 4)) \
     \
-    _(IF_LT_U64, s(1, 2, 2, 2)) \
-    _(IF_ELT_U64, s(1, 2, 2, 2)) \
-    _(IF_LT_CONST_U64, s(1, 2, 2, 2)) \
-    _(IF_ELT_CONST_U64, s(1, 2, 2, 2)) \
-    _(IF_GT_CONST_U64, s(1, 2, 2, 2)) \
-    _(IF_EGT_CONST_U64, s(1, 2, 2, 2)) \
+    _(IF_LT_U64, s(1, 2, 2, 4)) \
+    _(IF_ELT_U64, s(1, 2, 2, 4)) \
+    _(IF_LT_CONST_U64, s(1, 2, 2, 4)) \
+    _(IF_ELT_CONST_U64, s(1, 2, 2, 4)) \
+    _(IF_GT_CONST_U64, s(1, 2, 2, 4)) \
+    _(IF_EGT_CONST_U64, s(1, 2, 2, 4)) \
     \
-    _(IF_EQ_FLOAT, s(1, 2, 2, 2)) \
-    _(IF_NEQ_FLOAT, s(1, 2, 2, 2)) \
-    _(IF_LT_FLOAT, s(1, 2, 2, 2)) \
-    _(IF_ELT_FLOAT, s(1, 2, 2, 2)) \
-    _(IF_EQ_CONST_FLOAT, s(1, 2, 2, 2)) \
-    _(IF_NEQ_CONST_FLOAT, s(1, 2, 2, 2)) \
-    _(IF_LT_CONST_FLOAT, s(1, 2, 2, 2)) \
-    _(IF_ELT_CONST_FLOAT, s(1, 2, 2, 2)) \
-    _(IF_GT_CONST_FLOAT, s(1, 2, 2, 2)) \
-    _(IF_EGT_CONST_FLOAT, s(1, 2, 2, 2)) \
+    _(IF_EQ_FLOAT, s(1, 2, 2, 4)) \
+    _(IF_NEQ_FLOAT, s(1, 2, 2, 4)) \
+    _(IF_LT_FLOAT, s(1, 2, 2, 4)) \
+    _(IF_ELT_FLOAT, s(1, 2, 2, 4)) \
+    _(IF_EQ_CONST_FLOAT, s(1, 2, 2, 4)) \
+    _(IF_NEQ_CONST_FLOAT, s(1, 2, 2, 4)) \
+    _(IF_LT_CONST_FLOAT, s(1, 2, 2, 4)) \
+    _(IF_ELT_CONST_FLOAT, s(1, 2, 2, 4)) \
+    _(IF_GT_CONST_FLOAT, s(1, 2, 2, 4)) \
+    _(IF_EGT_CONST_FLOAT, s(1, 2, 2, 4)) \
     \
-    _(IF_EQ_DOUBLE, s(1, 2, 2, 2)) \
-    _(IF_NEQ_DOUBLE, s(1, 2, 2, 2)) \
-    _(IF_LT_DOUBLE, s(1, 2, 2, 2)) \
-    _(IF_ELT_DOUBLE, s(1, 2, 2, 2)) \
-    _(IF_EQ_CONST_DOUBLE, s(1, 2, 2, 2)) \
-    _(IF_NEQ_CONST_DOUBLE, s(1, 2, 2, 2)) \
-    _(IF_LT_CONST_DOUBLE, s(1, 2, 2, 2)) \
-    _(IF_ELT_CONST_DOUBLE, s(1, 2, 2, 2)) \
-    _(IF_GT_CONST_DOUBLE, s(1, 2, 2, 2)) \
-    _(IF_EGT_CONST_DOUBLE, s(1, 2, 2, 2)) \
+    _(IF_EQ_DOUBLE, s(1, 2, 2, 4)) \
+    _(IF_NEQ_DOUBLE, s(1, 2, 2, 4)) \
+    _(IF_LT_DOUBLE, s(1, 2, 2, 4)) \
+    _(IF_ELT_DOUBLE, s(1, 2, 2, 4)) \
+    _(IF_EQ_CONST_DOUBLE, s(1, 2, 2, 4)) \
+    _(IF_NEQ_CONST_DOUBLE, s(1, 2, 2, 4)) \
+    _(IF_LT_CONST_DOUBLE, s(1, 2, 2, 4)) \
+    _(IF_ELT_CONST_DOUBLE, s(1, 2, 2, 4)) \
+    _(IF_GT_CONST_DOUBLE, s(1, 2, 2, 4)) \
+    _(IF_EGT_CONST_DOUBLE, s(1, 2, 2, 4)) \
     \
-    _(CALL_1, s(1, 4, 2)) \
+    _(CALL_1, s(1, 4)) \
     _(CALL_2, s(1, 4, 2, 2)) \
     _(CALL_3, s(1, 4, 2, 2, 2)) \
     _(CALL_4, s(1, 4, 2, 2, 2, 2)) \
     _(CALL_VAR, s(1, 4, 1)) \
-    _(RET, s(1, 2, 2, 2)) \
+    _(RET, s(1)) \
     \
     _(CALL_NATIVE, s(1, 2, 2, 2, 2, 2)) \
     \
@@ -301,6 +301,12 @@ namespace vm {
                     case BinOp::MUL: return is_const ? Instruction::MUL_CONST_I8 : Instruction::MUL_I8;
                     case BinOp::DIV: return is_const ? Instruction::DIV_CONST_I8 : Instruction::DIV_I8;
                     case BinOp::MOD: return is_const ? Instruction::MOD_CONST_I8 : Instruction::MOD_I8;
+					case BinOp::EQ: return is_const ? Instruction::IF_EQ_CONST_I8 : Instruction::IF_EQ_I8;
+					case BinOp::NEQ: return is_const ? Instruction::IF_NEQ_CONST_I8 : Instruction::IF_EQ_I8;
+					case BinOp::GT: return is_const ? Instruction::IF_GT_CONST_I8 : Instruction::ERR;
+					case BinOp::LT: return is_const ? Instruction::IF_LT_CONST_I8 : Instruction::IF_LT_I8;
+					case BinOp::GE: return is_const ? Instruction::IF_EGT_CONST_I8 : Instruction::ERR;
+					case BinOp::LE: return is_const ? Instruction::IF_ELT_CONST_I8 : Instruction::IF_ELT_I8;
                 }
                 break;
             case BinType::UINT8:
@@ -316,6 +322,12 @@ namespace vm {
                     case BinOp::MUL: return is_const ? Instruction::MUL_CONST_I16 : Instruction::MUL_I16;
                     case BinOp::DIV: return is_const ? Instruction::DIV_CONST_I16 : Instruction::DIV_I16;
                     case BinOp::MOD: return is_const ? Instruction::MOD_CONST_I16 : Instruction::MOD_I16;
+					case BinOp::EQ: return is_const ? Instruction::IF_EQ_CONST_I16 : Instruction::IF_EQ_I16;
+					case BinOp::NEQ: return is_const ? Instruction::IF_NEQ_CONST_I16 : Instruction::IF_EQ_I16;
+					case BinOp::GT: return is_const ? Instruction::IF_GT_CONST_I16 : Instruction::ERR;
+					case BinOp::LT: return is_const ? Instruction::IF_LT_CONST_I16 : Instruction::IF_LT_I16;
+					case BinOp::GE: return is_const ? Instruction::IF_EGT_CONST_I16 : Instruction::ERR;
+					case BinOp::LE: return is_const ? Instruction::IF_ELT_CONST_I16 : Instruction::IF_ELT_I16;
                 }
                 break;
             case BinType::UINT16:
@@ -331,6 +343,12 @@ namespace vm {
                     case BinOp::MUL: return is_const ? Instruction::MUL_CONST_I32 : Instruction::MUL_I32;
                     case BinOp::DIV: return is_const ? Instruction::DIV_CONST_I32 : Instruction::DIV_I32;
                     case BinOp::MOD: return is_const ? Instruction::MOD_CONST_I32 : Instruction::MOD_I32;
+					case BinOp::EQ: return is_const ? Instruction::IF_EQ_CONST_I32 : Instruction::IF_EQ_I32;
+					case BinOp::NEQ: return is_const ? Instruction::IF_NEQ_CONST_I32 : Instruction::IF_EQ_I32;
+					case BinOp::GT: return is_const ? Instruction::IF_GT_CONST_I32 : Instruction::ERR;
+					case BinOp::LT: return is_const ? Instruction::IF_LT_CONST_I32 : Instruction::IF_LT_I32;
+					case BinOp::GE: return is_const ? Instruction::IF_EGT_CONST_I32 : Instruction::ERR;
+					case BinOp::LE: return is_const ? Instruction::IF_ELT_CONST_I32 : Instruction::IF_ELT_I32;
                 }
                 break;
             case BinType::UINT32:
@@ -346,6 +364,12 @@ namespace vm {
                     case BinOp::MUL: return is_const ? Instruction::MUL_CONST_I64 : Instruction::MUL_I64;
                     case BinOp::DIV: return is_const ? Instruction::DIV_CONST_I64 : Instruction::DIV_I64;
                     case BinOp::MOD: return is_const ? Instruction::MOD_CONST_I64 : Instruction::MOD_I64;
+					case BinOp::EQ: return is_const ? Instruction::IF_EQ_CONST_I64 : Instruction::IF_EQ_I64;
+					case BinOp::NEQ: return is_const ? Instruction::IF_NEQ_CONST_I64 : Instruction::IF_EQ_I64;
+					case BinOp::GT: return is_const ? Instruction::IF_GT_CONST_I64 : Instruction::ERR;
+					case BinOp::LT: return is_const ? Instruction::IF_LT_CONST_I64 : Instruction::IF_LT_I64;
+					case BinOp::GE: return is_const ? Instruction::IF_EGT_CONST_I64 : Instruction::ERR;
+					case BinOp::LE: return is_const ? Instruction::IF_ELT_CONST_I64 : Instruction::IF_ELT_I64;
                 }
                 break;
             case BinType::UINT64:
@@ -361,6 +385,12 @@ namespace vm {
                     case BinOp::MUL: return is_const ? Instruction::MUL_CONST_FLOAT : Instruction::MUL_FLOAT;
                     case BinOp::DIV: return is_const ? Instruction::DIV_CONST_FLOAT : Instruction::DIV_FLOAT;
                     // No MOD for float
+					case BinOp::EQ: return is_const ? Instruction::IF_EQ_CONST_FLOAT : Instruction::IF_EQ_FLOAT;
+					case BinOp::NEQ: return is_const ? Instruction::IF_NEQ_CONST_FLOAT : Instruction::IF_EQ_FLOAT;
+					case BinOp::GT: return is_const ? Instruction::IF_GT_CONST_FLOAT : Instruction::ERR;
+					case BinOp::LT: return is_const ? Instruction::IF_LT_CONST_FLOAT : Instruction::IF_LT_FLOAT;
+					case BinOp::GE: return is_const ? Instruction::IF_EGT_CONST_FLOAT : Instruction::ERR;
+					case BinOp::LE: return is_const ? Instruction::IF_ELT_CONST_FLOAT : Instruction::IF_ELT_FLOAT;
                 }
                 break;
             case BinType::DOUBLE:
@@ -370,6 +400,12 @@ namespace vm {
                     case BinOp::MUL: return is_const ? Instruction::MUL_CONST_DOUBLE : Instruction::MUL_DOUBLE;
                     case BinOp::DIV: return is_const ? Instruction::DIV_CONST_DOUBLE : Instruction::DIV_DOUBLE;
                     // No MOD for double
+					case BinOp::EQ: return is_const ? Instruction::IF_EQ_CONST_DOUBLE : Instruction::IF_EQ_DOUBLE;
+					case BinOp::NEQ: return is_const ? Instruction::IF_NEQ_CONST_DOUBLE : Instruction::IF_EQ_DOUBLE;
+					case BinOp::GT: return is_const ? Instruction::IF_GT_CONST_DOUBLE : Instruction::ERR;
+					case BinOp::LT: return is_const ? Instruction::IF_LT_CONST_DOUBLE : Instruction::IF_LT_DOUBLE;
+					case BinOp::GE: return is_const ? Instruction::IF_EGT_CONST_DOUBLE : Instruction::ERR;
+					case BinOp::LE: return is_const ? Instruction::IF_ELT_CONST_DOUBLE : Instruction::IF_ELT_DOUBLE;
                 }
                 break;
         }

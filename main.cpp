@@ -110,14 +110,17 @@ int main() {
     std::cout << "\ngenerating scope structures" << std::endl;
 
     for (auto [n, cls] : symbol_table.classes) {
+		if (cls->is_native) continue;
         cls->static_scope->generate_structure();
     }
 
     for (auto [n, cls] : symbol_table.classes) {
+		if (cls->is_native) continue;
         cls->scope->generate_structure();
     }
 
     for (auto [n, cls] : symbol_table.classes) {
+		if (cls->is_native) continue;
         for (auto [fn, f] : cls->functions) {
             f->scope->generate_structure();
         }
@@ -135,6 +138,7 @@ int main() {
     size_t bytecode_size = 0;
 
     for (auto [cn, cls] : symbol_table.classes) {
+		if (cls->is_native) continue;
         std::cout << cn << std::endl;
 
         for (auto [fn, f] : cls->functions) {
@@ -173,6 +177,7 @@ int main() {
     bool has_main = false;
 
     for (auto [cn, cls] : symbol_table.classes) {
+		if (cls->is_native) continue;
         std::cout << cn << std::endl;
 
         for (auto [fn, f] : cls->functions) {
@@ -219,7 +224,8 @@ int main() {
 
 				std::cout << "}" << std::endl;
 
-				bytecode.push_back(static_cast<uint8_t>(vm::Instruction::HALT));
+				if (fn == "main") bytecode.push_back(static_cast<uint8_t>(vm::Instruction::HALT));
+				else bytecode.push_back(static_cast<uint8_t>(vm::Instruction::RET));
                 
 				for (auto& lower : scope->lower_scopes) {
 					if (auto lower_scope = lower.lock())
@@ -247,10 +253,15 @@ int main() {
 
     vm.code = reinterpret_cast<vm::Instruction*>(bytecode.data());
     vm.main_start = main_start;
-	vm.const_memory = symbol_table.const_memory.data();
+	vm.const_memory = new vm::Value[symbol_table.const_memory.size()];
+
+	for (size_t i = 0; i < symbol_table.const_memory.size(); i++) {
+		vm.const_memory[i] = symbol_table.const_memory[i];
+	}
+
 	vm.static_memory = new vm::Value[256];
     
-    std::cout << "\nprocessing" << std::endl;
+    std::cout << "\nprocessing" << std::dec << std::endl;
 
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -260,8 +271,9 @@ int main() {
 
     // Calculate the duration in microseconds
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+	auto duration_msec = (double)duration / 1000.0;
 
-    std::cout << "vm::run_vm execution time: " << duration << " microseconds" << std::endl;
+    std::cout << "vm::run_vm execution time: " << duration_msec << " miliseconds" << std::endl;
     
     std::cout << "\nprocess finished" << std::endl;
 	

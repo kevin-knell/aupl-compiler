@@ -144,7 +144,14 @@ ExprPtr SymbolBuilder::parse_access(ParserInfo& parser_info) {
         next(); // consume .
         ExprPtr right = parse_primary(parser_info);
         if (!right) return nullptr;
-        left = std::make_shared<AccessExpression>(left, right);
+
+		if (right->get_kind() == Expression::CALL) {
+			auto call_expr = std::dynamic_pointer_cast<CallExpression>(right);
+			call_expr->obj_expr = left;
+			return call_expr;
+		} else {
+			left = std::make_shared<AccessExpression>(left, right);
+		}
     }
 
     return left;

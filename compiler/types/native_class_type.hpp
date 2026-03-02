@@ -19,6 +19,8 @@ struct NativeClassType : public Type {
     std::string to_string() const override;
     int get_size() const override;
 	FuncVec functions;
+
+	KIND get_kind() const override;
 };
 
 } // namespace cmp

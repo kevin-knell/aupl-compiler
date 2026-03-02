@@ -7,7 +7,8 @@ std::string ReturnStatement::to_string() const {
 }
 
 std::vector<ExprPtr*> ReturnStatement::get_expressions() {
-    return {&return_value};
+    if (return_value) return {&return_value};
+	else return {};
 }
 
 std::vector<uint8_t> ReturnStatement::generate_bytecode(BytecodeGenerationInfo& bgi) const {
@@ -16,7 +17,7 @@ std::vector<uint8_t> ReturnStatement::generate_bytecode(BytecodeGenerationInfo& 
     //std::vector<uint8_t> result_value = return_value->generate_bytecode(bgi);
     //result.insert(result.end(), result_value.begin(), result_value.end());
 
-    result.push_back((uint8_t)vm::Instruction::ERR);
+    result.push_back((uint8_t)vm::Instruction::RET);
 
     return result;
 }

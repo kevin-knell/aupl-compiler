@@ -24,4 +24,8 @@ int TupleType::get_size() const {
     return result;
 }
 
+Type::KIND TupleType::get_kind() const {
+	return TUPLE;
+}
+
 } // namespace cmp

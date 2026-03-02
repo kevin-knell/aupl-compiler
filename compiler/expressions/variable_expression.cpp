@@ -4,6 +4,7 @@
 #include "symbol_table.hpp"
 #include "variable_symbol.hpp"
 #include "invalid_type.hpp"
+#include "native_class_type.hpp"
 #include "color.hpp"
 
 namespace cmp {

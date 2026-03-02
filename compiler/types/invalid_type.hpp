@@ -15,6 +15,8 @@ struct InvalidType : public Type {
 
     std::string to_string() const override { return "(invalid)" + name; }
     int get_size() const { return 16; };
+
+	KIND get_kind() const override { return INVALID; };
 };
 
 } // namespace cmp

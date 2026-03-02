@@ -32,7 +32,8 @@ struct Scope {
     int temp_count = 0;
 	mutable int label_count = 0;
 
-    static std::shared_ptr<Scope> find_scope(const std::shared_ptr<Scope>& scope, const std::string& name);
+    static std::shared_ptr<Scope> find_scope(const ScopePtr& scope, const std::string& name);
+	static int get_variable_index(const ScopePtr& scope, const std::string& name);
 
     Scope(SCOPE_TYPE type) : type(type) {};
     void generate_structure(int offset = 0);
