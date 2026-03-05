@@ -403,7 +403,7 @@ namespace vm {
         OP_CALL_NATIVE: {
             uint16_t class_id = FETCH(uint16_t);
             uint16_t method_id = FETCH(uint16_t);
-            void* obj = STACK_REF(void*, fp + FETCH(uint16_t));
+            void* obj = fp + FETCH(uint16_t);
 			Value* args = fp + FETCH(uint16_t);
 			Value* ret = fp + FETCH(uint16_t);
             vm.db->classes[class_id].methods[method_id].value_call(args, obj, ret);

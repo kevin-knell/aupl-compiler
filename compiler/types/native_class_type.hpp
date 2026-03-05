@@ -21,6 +21,8 @@ struct NativeClassType : public Type {
 	FuncVec functions;
 
 	KIND get_kind() const override;
+
+	bool is_cpp_type(const std::string& cpp_type) const override;
 };
 
 } // namespace cmp

@@ -1,5 +1,6 @@
 #pragma once
 #include "primitive.hpp"
+#include <iostream>
 
 namespace vm {
     class ClassDB;

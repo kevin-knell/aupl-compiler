@@ -17,6 +17,7 @@ struct SymbolTable {
 	std::unordered_map<std::string, TypePtr> native_types;
 	std::vector<FuncPtr> global_native_functions;
 	std::vector<vm::Value> const_memory;
+	ScopePtr global_scope;
 
 	SymbolTable(vm::ClassDB& db);
 };

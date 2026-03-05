@@ -51,7 +51,7 @@ void NameAnalyzer::resolve_variables() const {
 				for (auto& stmt : scope->body) {
 					std::cout << stmt->to_string() << std::endl;
 
-					NameAnalysisInfo name_analysis_info{.symbol_table = symbol_table, .cls = cls, .f = f};
+					NameAnalysisInfo name_analysis_info{.symbol_table = symbol_table, .cls = cls, .f = f, .scope = scope};
 					resolve_expressions(name_analysis_info, stmt->get_expressions());
 					
 					if (stmt->get_kind() == Statement::ASSIGN) {

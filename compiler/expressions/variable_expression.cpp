@@ -29,7 +29,7 @@ bool VariableExpression::is_unresolved_symbol() const {
 }
 
 void VariableExpression::resolve(NameAnalysisInfo& name_analysis_info) {
-    ScopePtr scope = Scope::find_scope(name_analysis_info.f->scope, name);
+    ScopePtr scope = Scope::find_scope(name_analysis_info.scope, name);
     if (scope) {
         var = scope->variables[name];
         name_analysis_info.cls = nullptr;

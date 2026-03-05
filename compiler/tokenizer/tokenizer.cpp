@@ -73,7 +73,7 @@ std::vector<Token> tokenize(const std::string& source) {
     const std::string double_number = R"([+-]?\d+\.\d+)";
     const std::string int_number = R"([+-]?\d+)";
     // Multi-char operators first, then single-char
-    const std::string special = R"(>=|<=|==|!=|[{}()\[\]:;,=+\-*/<>!&|.@%])";
+    const std::string special = R"(>=|<=|==|!=|\+=|[{}()\[\]:;,=+\-*/<>!&|.@%])";
     const std::string string_literal = R"(\"(.*)\")";
     const std::string char_literal = R"('(\\.|[^'\\])')";
 

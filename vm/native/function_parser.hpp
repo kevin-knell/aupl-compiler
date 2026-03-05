@@ -6,6 +6,7 @@
 
 struct FunctionSignature {
     std::string return_type;
+    std::vector<std::string> parameter_types;
     std::vector<std::string> parameters;
     bool is_const;
 };

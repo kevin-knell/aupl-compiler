@@ -269,7 +269,9 @@ namespace vm {
         LE,
 
         AND,
-        OR
+        OR,
+
+		NONE
     };
 	
     enum class Instruction : uint8_t {

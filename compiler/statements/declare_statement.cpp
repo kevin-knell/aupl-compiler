@@ -89,11 +89,18 @@ namespace {
 
 		auto method_pair = *value.f->method_pair;
 
-		vm::Value2 class_id = vm::Value2::from<uint16_t>(method_pair.class_id); // Math
-		vm::Value2 method_id = vm::Value2::from<uint16_t>(method_pair.method_id); // sqrt()
-		vm::Value2 obj_address = vm::Value2::from<uint16_t>(0); // static -> don't care
+		vm::Value2 class_id = vm::Value2::from<uint16_t>(method_pair.class_id);
+		vm::Value2 method_id = vm::Value2::from<uint16_t>(method_pair.method_id);
+
+		auto obj_var_expr = std::dynamic_pointer_cast<VariableExpression>(value.obj_expr);
+		
+		vm::Value2 obj_address = vm::Value2::from<uint16_t>(value.obj_expr ? Scope::get_variable_index(bgi.scope, obj_var_expr->name) : 0);
 		vm::Value2 args_address = vm::Value2::from<uint16_t>(arg0 ? Scope::get_variable_index(bgi.scope, arg0->var->name) : 0);
 		vm::Value2 ret_address = vm::Value2::from<uint16_t>(Scope::get_variable_index(bgi.scope, variable_symbol->name));
+
+		if (method_pair.is_constructor) {
+			obj_address = ret_address;
+		}
 
 		result.push_back(class_id.v[0].u8);
 		result.push_back(class_id.v[1].u8);

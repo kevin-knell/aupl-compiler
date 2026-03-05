@@ -16,6 +16,8 @@ struct TupleType : public Type {
     int get_size() const override;
 
 	KIND get_kind() const override;
+
+	bool is_cpp_type(const std::string& cpp_type) const override { return false; }
 };
 
 } // namespace cmp

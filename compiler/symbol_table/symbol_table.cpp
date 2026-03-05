@@ -6,6 +6,11 @@
 namespace cmp {
 
 SymbolTable::SymbolTable(vm::ClassDB &db) {
+	global_scope = std::make_shared<Scope>(Scope::SCOPE_TYPE::GLOBAL);
+	global_scope->name = "global";
+
+	// TODO: add global scope
+
 	for (auto& cls : db.classes) {
 		auto class_symbol = std::make_shared<ClassSymbol>(cls);
 		class_symbol->static_var = std::make_shared<VariableSymbol>(std::make_shared<StaticClassType>(cls.name), cls.name, nullptr);

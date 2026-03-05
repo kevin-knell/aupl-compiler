@@ -17,6 +17,8 @@ struct InvalidType : public Type {
     int get_size() const { return 16; };
 
 	KIND get_kind() const override { return INVALID; };
+
+	bool is_cpp_type(const std::string& cpp_type) const override { return false; }
 };
 
 } // namespace cmp

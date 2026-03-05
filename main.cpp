@@ -36,6 +36,43 @@ void init_strings() {
     OPCODES(SET_STRING, _)
 }
 
+/*
+void primes() {
+	std::cout << "c++ processing" << std::endl;
+
+	auto start = std::chrono::high_resolution_clock::now();
+
+	int64_t current = 2;
+
+	while (current < 10000) {
+		int64_t compare = 2;
+		bool is_prime = true;
+		
+		while (compare < current) {
+			if (current % compare == 0) {
+				is_prime = false;
+			}
+
+			compare += 1;
+		}
+
+		if (is_prime) {
+			Console::print(current);
+		}
+
+		current += 1;
+	}
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    // Calculate the duration in microseconds
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+	auto duration_msec = (double)duration / 1000.0;
+
+    std::cout << "c++ execution time: " << duration_msec << " miliseconds" << std::endl;
+}
+*/
+
 int main() {
     init_strings();
     
@@ -46,7 +83,7 @@ int main() {
 	String::register_to_db(db);
 	Console::register_to_db(db);
 	Math::register_to_db(db);
-	List<int>::register_to_db(db);
+	register_list8_to_db(db);
 
 	cmp::SymbolTable symbol_table(db);
 

@@ -9,6 +9,7 @@
 #include "conditional_jump_statement.hpp"
 #include "block_statement.hpp"
 #include "call_expression.hpp"
+#include "binary_op_expression.hpp"
 #include <iostream>
 
 namespace cmp {
@@ -31,17 +32,34 @@ std::vector<StmtPtr> SymbolBuilder::parse_assign(ParserInfo& parser_info) {
 
     // Expect identifier for variable name
     auto expr_left = parse_expression(parser_info);
+
+	std::cout << expr_left << std::endl;
+
     if (!expr_left) {
         index = start_idx;
         return {};
     }
 
+	BinaryExpression::OPERATOR op = BinaryExpression::OPERATOR::NONE;
+
     // Expect '=' operator
-    if (!expect("=")) {
-        index = start_idx;
-        return {};
-    }
-    next(); // consume '='
+	if (expect("+=")) {
+		op = BinaryExpression::OPERATOR::ADD;
+	} else if (expect("-=")) {
+		op = BinaryExpression::OPERATOR::SUB;
+	} else if (expect("*=")) {
+		op = BinaryExpression::OPERATOR::MUL;
+	} else if (expect("/=")) {
+		op = BinaryExpression::OPERATOR::DIV;
+	} else if (expect("%=")) {
+		op = BinaryExpression::OPERATOR::MOD;
+	} else if (!expect("=")) {
+		index = start_idx;
+		return {};
+	}
+	next(); // consume =
+
+	std::cout << "found =" << std::endl;
 
     // Parse the assigned expression
     auto expr_right = parse_expression(parser_info);
@@ -50,7 +68,17 @@ std::vector<StmtPtr> SymbolBuilder::parse_assign(ParserInfo& parser_info) {
         return {};
     }
 
-    return { std::make_shared<AssignmentStatement>(expr_left, expr_right) };
+	std::cout << expr_right->to_string() << std::endl;
+
+	ExprPtr bin_expr;
+	
+	if (op != BinaryExpression::OPERATOR::NONE) {
+		bin_expr = std::make_shared<BinaryExpression>(expr_left, expr_right, op);
+	} else {
+		bin_expr = expr_right;
+	}
+
+    return { std::make_shared<AssignmentStatement>(expr_left, bin_expr) };
 }
 
 std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_info) {
@@ -104,6 +132,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
 		
 		expr = std::make_shared<CallExpression>(type->to_string(), args, nullptr);
 	}
+
     VarPtr var = std::make_shared<VariableSymbol>(type, var_name, expr);
     parser_info.scope->variables[var_name] = var;
     var->scope = parser_info.scope;

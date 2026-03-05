@@ -29,13 +29,17 @@ public:
     int get_size() const override;
 
 	KIND get_kind() const override;
+
+	bool is_cpp_type(const std::string& cpp_type) const override;
 private:
     const std::string name; // "int", "bool", etc.
     const int size;
+	const std::vector<std::string> cpp_types;
 
-    explicit PrimitiveType(const std::string& n, int s, vm::BinType bin_type) : vm_bin_type(bin_type), name(n), size(s) {}
+    explicit PrimitiveType(const std::string& n, int s, vm::BinType bin_type, std::vector<std::string> cpp_types)
+		: vm_bin_type(bin_type), name(n), size(s), cpp_types(cpp_types) {}
 
-    friend TypePtr create(std::string n, int s, vm::BinType bin_type);
+    friend TypePtr create(std::string n, int s, vm::BinType bin_type, std::vector<std::string> cpp_types);
 };
 
 } // namespace cmp

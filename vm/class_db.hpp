@@ -22,9 +22,11 @@ struct MethodPair {
     MethodFunc value_call;
     MethodFunc pointer_call;
 	bool is_global = false;
+	std::vector<std::string> arg_types;
 	size_t arg_count;
 	uint16_t class_id;
 	uint16_t method_id;
+	bool is_constructor;
 };
 
 class ClassBind {
@@ -77,12 +79,14 @@ public:
         pair.pointer_call = bind_constructor<Constructor>();
 
 		auto parsed = FunctionParser::parse(signature);
+		pair.arg_types = parsed.parameter_types;
 		pair.arg_count = parsed.parameters.size();
 
 		pair.class_id = class_id;
 		pair.method_id = classes[class_id].methods.size();
 
 		pair.is_global = false;
+		pair.is_constructor = true;
 
         classes[class_id].methods.push_back(std::move(pair));
     }
@@ -96,12 +100,14 @@ public:
         pair.pointer_call = bind_method(method); //bind_method_ptr_args(method);
 
 		auto parsed = FunctionParser::parse(signature);
+		pair.arg_types = parsed.parameter_types;
 		pair.arg_count = parsed.parameters.size();
 
 		pair.class_id = class_id;
 		pair.method_id = classes[class_id].methods.size();
 
 		pair.is_global = false;
+		pair.is_constructor = false;
 
 		classes[class_id].methods.push_back(std::move(pair));
     }
@@ -115,12 +121,14 @@ public:
         pair.pointer_call = bind_static_method(method); //bind_method_ptr_args(method);
 
 		auto parsed = FunctionParser::parse(signature);
+		pair.arg_types = parsed.parameter_types;
 		pair.arg_count = parsed.parameters.size();
 
 		pair.class_id = class_id;
 		pair.method_id = classes[class_id].methods.size();
 
 		pair.is_global = is_global;
+		pair.is_constructor = false;
 
 		classes[class_id].methods.push_back(std::move(pair));
     }

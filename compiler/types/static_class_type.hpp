@@ -13,6 +13,8 @@ struct StaticClassType : public Type {
 
 	KIND get_kind() const override { return STATIC_CLASS; };
     StaticClassType(const std::string& n) : name(n) {}
+
+	bool is_cpp_type(const std::string& cpp_type) const override { return false; }
 };
 
 } // namespace cmp

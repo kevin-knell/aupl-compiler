@@ -13,6 +13,7 @@ class LabelStatement;
 
 struct Scope {
     enum SCOPE_TYPE {
+		GLOBAL,
         STATIC_CLASS,
         CLASS,
         FUNCTION,

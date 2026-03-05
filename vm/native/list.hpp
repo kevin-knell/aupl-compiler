@@ -11,13 +11,7 @@ namespace vm {
 template<typename T>
 class List : public Object {
 public:
-	static void register_to_db(vm::ClassDB& db) {
-		REGISTER_CLASS(4, List<vm::Value>);
-		REGISTER_CLASS(5, List<vm::Value2>);
-		REGISTER_CLASS(6, List<vm::Value4>);
-		REGISTER_CLASS(7, List<vm::Value8>);
-		REGISTER_CLASS(8, List<vm::Value16>);
-	}
+	static void register_to_db(vm::ClassDB& db);
 
 private:
 	std::vector<T> data;
@@ -32,4 +26,42 @@ public:
 		data.pop_back();
 		return back;
 	}
+
+	T get(int64_t idx) {
+		return data[idx];
+	}
+
+	void set(int64_t idx, T value) {
+		data[idx] = value;
+	}
+
+	int64_t size() {
+		return data.size();
+	}
+
+	bool empty() {
+		return data.empty();
+	}
+
+	void clear() {
+		data.clear();
+	}
 };
+
+using List8 = List<int64_t>;
+
+void register_list8_to_db(vm::ClassDB &db) {
+	const int ID = 4;
+
+	REGISTER_CLASS(ID, List8);
+
+	REGISTER_CONSTRUCTOR(ID, List8());
+	
+	REGISTER_METHOD(ID, List8, push, void (List8::*)(int64_t value));
+	REGISTER_METHOD(ID, List8, pop, int64_t (List8::*)());
+	REGISTER_METHOD(ID, List8, get, int64_t (List8::*)(int64_t idx));
+	REGISTER_METHOD(ID, List8, set, void (List8::*)(int64_t idx, int64_t value));
+	REGISTER_METHOD(ID, List8, size, int64_t (List8::*)());
+	REGISTER_METHOD(ID, List8, empty, bool (List8::*)());
+	REGISTER_METHOD(ID, List8, clear, void (List8::*)());
+}

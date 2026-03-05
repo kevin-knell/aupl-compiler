@@ -25,6 +25,8 @@ struct GenericType : public Type {
     int get_size() { return 1; };
 
 	KIND get_kind() const override { return INVALID; };
+
+	bool is_cpp_type(const std::string& cpp_type) const override { return false; }
 };
 
 } // namespace cmp

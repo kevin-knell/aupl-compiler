@@ -16,6 +16,8 @@ struct ArrayType : public Type {
 
 	KIND get_kind() const override;
 
+	bool is_cpp_type(const std::string& cpp_type) const override { return false; }
+
 	ArrayType(TypePtr base_type, ExprPtr size_expr, bool is_const)
 			: base_type(base_type), size_expr(size_expr), is_const(is_const) {};
 };

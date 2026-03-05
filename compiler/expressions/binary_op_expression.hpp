@@ -12,7 +12,7 @@ struct BinaryExpression : public Expression {
     OPERATOR op;
 
     BinaryExpression(ExprPtr left, ExprPtr right, OPERATOR op)
-        : left(std::move(left)), right(std::move(right)), op(op) {}
+        : left(left), right(right), op(op) {}
 
     std::string to_string() const override;
     std::vector<uint8_t> generate_bytecode(BytecodeGenerationInfo& bgi) const override;

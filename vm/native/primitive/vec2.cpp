@@ -56,8 +56,8 @@ void vec2::register_to_db(vm::ClassDB& db) {
         REGISTER_METHOD(id, vec2, get_yy, vec2 (vec2::*)() const);
 
         REGISTER_METHOD(id, vec2, dot);
-        REGISTER_METHOD(id, vec2, length_squared);
-        REGISTER_METHOD(id, vec2, length);
+        REGISTER_METHOD(id, vec2, length_squared, double (vec2::*)() const);
+        REGISTER_METHOD(id, vec2, length, double (vec2::*)() const);
 
         REGISTER_METHOD(id, vec2, operator+, vec2 (vec2::*)(const vec2& other) const);
         REGISTER_METHOD(id, vec2, operator-, vec2 (vec2::*)() const);
