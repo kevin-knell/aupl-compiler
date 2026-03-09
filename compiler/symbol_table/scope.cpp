@@ -51,8 +51,9 @@ bool Scope::has(std::string name) {
 }
 
 std::string Scope::get_full_name() {
-    if (auto sp = upper_scope.lock())
-        return sp->get_full_name() + "." + name;
+    if (type == SCOPE_TYPE::FUNCTION || type == SCOPE_TYPE::FUNCTION_SUB)
+		if (auto sp = upper_scope.lock())
+        	return sp->get_full_name() + "." + name;
     return name;
 }
 

@@ -24,7 +24,7 @@ TypePtr StringLiteralExpression::get_type() const {
 bool StringLiteralExpression::is_constexpr() const {
 	return true;
 }
-vm::Value *StringLiteralExpression::eval_constexpr() const {
+vm::Value* StringLiteralExpression::eval_constexpr() const {
 	String* s = new String(value);
 	return reinterpret_cast<vm::Value*>(s);
 }

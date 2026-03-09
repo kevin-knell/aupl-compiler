@@ -5,6 +5,7 @@
 #include "array_type.hpp"
 #include "load_const_expression.hpp"
 #include "value.hpp"
+#include <map>
 
 namespace cmp {
 
@@ -16,9 +17,9 @@ TypePtr SymbolBuilder::parse_type(ParserInfo& parser_info) {
 
 TypePtr SymbolBuilder::parse_base_type(ParserInfo& parser_info) {
 	if (auto result = parse_native_type(parser_info)) return result;
+    if (auto result = parse_class_type(parser_info)) return result;
     if (auto result = parse_tuple_type(parser_info)) return result;
     if (auto result = parse_primitive_type(parser_info)) return result;
-    if (auto result = parse_class_type(parser_info)) return result;
 
     return nullptr;
 }
@@ -27,12 +28,13 @@ TypePtr SymbolBuilder::parse_native_type(ParserInfo& parser_info) {
 	if (!match(TokenType::IDENTIFIER)) {
 		return nullptr;
 	}
-	std::string id = next().value;
+	std::string id = peek().value;
 
 	auto native_types = parser_info.symbol_table.native_types;
 	auto it = native_types.find(id);
 
 	if (it != native_types.end()) {
+		next(); // consume identifier
 		return it->second;
 	}
 
@@ -67,7 +69,15 @@ TypePtr SymbolBuilder::parse_class_type(ParserInfo& parser_info) {
     (void)parser_info;
 
     if (match(TokenType::IDENTIFIER)) {
-        //return std::make_shared<ClassType>(next().value);
+		auto class_name = next().value;
+
+		auto& classes = parser_info.symbol_table.classes;
+		auto it = classes.find(class_name);
+		if (it == classes.end()) {
+			return std::make_shared<ClassType>(class_name);
+		} else {
+			return it->second->type;
+		}
         // TODO: MyClass<T>
     }
 

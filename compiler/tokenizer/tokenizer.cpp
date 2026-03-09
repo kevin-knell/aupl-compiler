@@ -61,9 +61,7 @@ namespace {
 namespace cmp {
 
 std::vector<Token> tokenize(const std::string& source) {
-	std::cout << source << std::endl;
-
-    std::vector<Token> tokens;
+	std::vector<Token> tokens;
 
     // Regex parts:
     const std::string single_line_comment = R"(//[^\n]*)";
@@ -73,7 +71,7 @@ std::vector<Token> tokenize(const std::string& source) {
     const std::string double_number = R"([+-]?\d+\.\d+)";
     const std::string int_number = R"([+-]?\d+)";
     // Multi-char operators first, then single-char
-    const std::string special = R"(>=|<=|==|!=|\+=|[{}()\[\]:;,=+\-*/<>!&|.@%])";
+    const std::string special = R"(>=|<=|==|!=|\+=|-=|\*=|/=|[{}()\[\]:;,=+\-*/<>!&|.@%])";
     const std::string string_literal = R"(\"(.*)\")";
     const std::string char_literal = R"('(\\.|[^'\\])')";
 
@@ -113,6 +111,7 @@ std::vector<Token> tokenize(const std::string& source) {
         }
 
         TokenType type = get_token_type(token_text);
+
         tokens.push_back(Token(type, token_text, start_pos, is_newline));
 
 		is_newline = false;

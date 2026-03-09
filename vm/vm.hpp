@@ -8,15 +8,14 @@
 
 namespace vm {
     struct VirtualMachine {
-        Instruction* code;
-        size_t main_start;
+        const ClassDB& db;
 
+        Instruction* code;
         Value* const_memory;
-        Value* static_memory;
-        Value* stack;
-        bool finished = false;
         
-        std::vector<VMClass> user_classes;
-        ClassDB* db;
+		size_t main_start;
+
+		VirtualMachine(const ClassDB& db)
+			: db(db) {}
     };
 }

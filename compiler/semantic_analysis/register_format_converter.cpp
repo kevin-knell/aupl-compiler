@@ -10,7 +10,7 @@
 #include "conditional_jump_statement.hpp"
 #include <color.hpp>
 
-#ifndef DEBUG
+#ifdef DEBUG
 #define RF_DEBUG_PRINT(m_text) std::cout << m_text << std::endl
 #else
 #define RF_DEBUG_PRINT(m_text)
@@ -46,7 +46,7 @@ void RegisterFormatConverter::convert_to_register_format(RegisterFormatInfo& rfi
 
 void RegisterFormatConverter::convert_to_register_format(SymbolTable &symbol_table) {
     for (auto& [class_name, cls] : symbol_table.classes) {
-		if (cls->is_native) continue;
+		if (cls->native_class_bind) continue;
 		
         RF_DEBUG_PRINT(C_KEYWORD("Class ") << cls->name);
         for (auto& [func_name, f] : cls->functions) {

@@ -33,8 +33,6 @@ std::vector<StmtPtr> SymbolBuilder::parse_assign(ParserInfo& parser_info) {
     // Expect identifier for variable name
     auto expr_left = parse_expression(parser_info);
 
-	std::cout << expr_left << std::endl;
-
     if (!expr_left) {
         index = start_idx;
         return {};
@@ -59,16 +57,12 @@ std::vector<StmtPtr> SymbolBuilder::parse_assign(ParserInfo& parser_info) {
 	}
 	next(); // consume =
 
-	std::cout << "found =" << std::endl;
-
     // Parse the assigned expression
     auto expr_right = parse_expression(parser_info);
     if (!expr_right) {
         index = start_idx;
         return {};
     }
-
-	std::cout << expr_right->to_string() << std::endl;
 
 	ExprPtr bin_expr;
 	
@@ -108,7 +102,6 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
             std::cout << "error: invalid expression" << std::endl;
         }
     } else if (expect("(") && !peek().is_new_line) {
-		std::cout << peek().value << std::endl;
 		next(); // consume '('
 
 		ExprVec args;
@@ -148,10 +141,9 @@ std::shared_ptr<BlockStatement> SymbolBuilder::parse_block(ParserInfo& parser_in
     }
     next(); // consume {
 
-    ScopePtr scope = std::make_shared<Scope>(Scope::FUNCTION_SUB);
+    ScopePtr scope = std::make_shared<Scope>(Scope::FUNCTION_SUB, "block");
     scope->upper_scope = parser_info.scope;
     parser_info.scope->lower_scopes.push_back(std::weak_ptr<Scope>(scope));
-    scope->name = "block";
 
     auto parser_info_sub = ParserInfo{.symbol_table = symbol_table, .cls = parser_info.cls, .func = parser_info.func, .scope = scope};
 

@@ -11,7 +11,7 @@ void cmp::ConstFoldingOptimizer::optimize(SymbolTable& st) const {
     std::cout << "\n" << "constant folding" << std::endl;
 
     for (auto [cn, cls] : st.classes) {
-		if (cls->is_native) continue;
+		if (cls->native_class_bind) continue;
 		
         for (auto [fn, f] : cls->functions) {
             for (auto stmt : f->scope->body) {
@@ -24,6 +24,7 @@ void cmp::ConstFoldingOptimizer::optimize(SymbolTable& st) const {
                     auto& expr = *p;
                     
                     if (expr->get_kind() == Expression::LOAD_CONST) continue;
+                    if (expr->get_kind() == Expression::STRING_LIT) continue;
 					
                     if (expr->is_constexpr()) {
                         vm::Value* eval = expr->eval_constexpr();

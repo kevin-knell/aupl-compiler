@@ -3,6 +3,7 @@
 #include "statement.hpp"
 #include <color.hpp>
 #include "class_db.hpp"
+#include "bytecode_generator.hpp"
 
 #define TAG(s, b) std::string(b ? s : "")
 

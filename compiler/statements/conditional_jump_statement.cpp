@@ -3,6 +3,7 @@
 #include "label.hpp"
 #include "binary_op_expression.hpp"
 #include "primitive_type.hpp"
+#include "bytecode_generator.hpp"
 
 namespace cmp {
 

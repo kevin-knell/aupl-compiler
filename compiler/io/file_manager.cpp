@@ -7,7 +7,7 @@ namespace cmp {
 std::vector<std::string> get_all_files_in_folder(const std::string& folder_path) {
     std::vector<std::string> files;
     for (const auto& entry : std::filesystem::directory_iterator(folder_path)) {
-        if (entry.is_regular_file()) {
+        if (entry.is_regular_file() && entry.path().extension() == ".aupl") {
             files.push_back(entry.path().string());
         }
     }

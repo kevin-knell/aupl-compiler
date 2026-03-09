@@ -4,117 +4,83 @@
 #include <assert.h>
 #include <chrono>
 
+#ifdef COMPILER
 #include "file_manager.hpp"
 #include "tokenizer.hpp"
 #include "symbol_builder.hpp"
 #include "symbol_table.hpp"
+#include "class_parser.hpp"
 #include "statement.hpp"
 #include "class.hpp"
-#include "vm.hpp"
-#include "instructions.hpp"
-#include "class_db.hpp"
-#include "execute.hpp"
 #include "name_analyzer.hpp"
-#include "bytecode_generation_info.hpp"
 #include "expression.hpp"
 #include "register_format_converter.hpp"
 #include "const_folding_optimizer.hpp"
 #include "erase_unused_variable_optimizer.hpp"
 #include "color.hpp"
-#include "vec2.hpp"
-#include "string.hpp"
-#include "console.hpp"
-#include "list.hpp"
-#include "math.hpp"
+#include "bytecode_generator.hpp"
+#endif
+
+#include "vm.hpp"
+#include "instructions.hpp"
+#include "class_db.hpp"
+#include "execute.hpp"
+#include "class_registrator.hpp"
 #include <iomanip>
 
-#define SET_STRING(ins, size) strings[static_cast<uint8_t>(vm::Instruction::ins)] = #ins;
 
-std::string strings[256] = { "" };
-    
-void init_strings() {
-    OPCODES(SET_STRING, _)
+void print_help() {
+	std::cout <<
+		"Usage: aupl [options] folder..." << std::endl <<
+		"-h, --help             Display this message" << std::endl <<
+		"-v, --version          Display version" << std::endl;
 }
 
-/*
-void primes() {
-	std::cout << "c++ processing" << std::endl;
 
-	auto start = std::chrono::high_resolution_clock::now();
+#ifdef COMPILER
+int main(int argc, char** argv) {
+	// print help
+	for (int i = 1; i < argc; ++i) {
+		std::string arg = argv[i];
 
-	int64_t current = 2;
-
-	while (current < 10000) {
-		int64_t compare = 2;
-		bool is_prime = true;
-		
-		while (compare < current) {
-			if (current % compare == 0) {
-				is_prime = false;
-			}
-
-			compare += 1;
+		if (arg == "--help" || arg == "-h") {
+			print_help();
+			return 0;
 		}
-
-		if (is_prime) {
-			Console::print(current);
-		}
-
-		current += 1;
 	}
 
-    auto end = std::chrono::high_resolution_clock::now();
+	// print version
+	for (int i = 1; i < argc; ++i) {
+		std::string arg = argv[i];
 
-    // Calculate the duration in microseconds
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-	auto duration_msec = (double)duration / 1000.0;
+		if (arg == "--version" || arg == "-v") {
+			std::cout << "Version: 0.1" << std::endl;
+			return 0;
+		}
+	}
 
-    std::cout << "c++ execution time: " << duration_msec << " miliseconds" << std::endl;
-}
-*/
+	// compile
 
-int main() {
-    init_strings();
-    
     // create class db
     vm::ClassDB db;
-
-	vec2::register_to_db(db);
-	String::register_to_db(db);
-	Console::register_to_db(db);
-	Math::register_to_db(db);
-	register_list8_to_db(db);
+	vm::register_classes(db);
 
 	cmp::SymbolTable symbol_table(db);
 
     // parse user source code
-    std::string folder_path = "./source"; // Replace with your folder path
+    std::string folder_path = argc == 1 ? "." : argv[argc - 1]; // Replace with your folder path
     auto files = cmp::get_all_files_in_folder(folder_path);
+
+	if (files.empty()) {
+		std::cerr << "no files in folder!" << std::endl;
+		return 1;
+	}
 
     for (const auto& file : files) {
         std::cout << "Tokenizing file: " << file << std::endl;
         std::string content = cmp::get_text_from_file(file);
-        auto tokens = cmp::tokenize(content);
-
-        for (cmp::Token t : tokens) {
-            //std::cout << (int)t.type << " " << t.value << " " << t.pos << std::endl;
-        }
-
-        // Parse tokens using SymbolBuilder
-        cmp::SymbolBuilder builder(tokens, symbol_table);
-
-        // Attempt to parse class definitions
-        try {
-            size_t i = 0;
-            while (i < tokens.size()) {
-                if (tokens[i].value == "class") {
-                    builder.parse_class();
-                }
-                ++i;
-            }
-        } catch (const std::exception& ex) {
-            std::cerr << "Error during parsing: " << ex.what() << std::endl;
-        }
+		
+		cmp::parse_file(content, symbol_table);
     }
 
     std::cout << "\nsemantic analysis" << std::endl;
@@ -130,7 +96,6 @@ int main() {
 
     cmp::RegisterFormatConverter::convert_to_register_format(symbol_table);
 
-#ifdef OPTIMIZE
     std::cout << "\noptimizing code" << std::endl;
 
     std::vector<cmp::Optimizer*> optimizers;
@@ -142,161 +107,42 @@ int main() {
             p->optimize(symbol_table);
         }
     }
-#endif // OPTIMIZE
 
     std::cout << "\ngenerating scope structures" << std::endl;
-
-    for (auto [n, cls] : symbol_table.classes) {
-		if (cls->is_native) continue;
-        cls->static_scope->generate_structure();
-    }
-
-    for (auto [n, cls] : symbol_table.classes) {
-		if (cls->is_native) continue;
-        cls->scope->generate_structure();
-    }
-
-    for (auto [n, cls] : symbol_table.classes) {
-		if (cls->is_native) continue;
-        for (auto [fn, f] : cls->functions) {
-            f->scope->generate_structure();
-        }
-    }
-
-    //return 0;
-    
-    std::cout << "\ncreating vm" << std::endl;
-
-    vm::VirtualMachine vm;
-    vm.db = &db;
+	symbol_table.generate_scope_structures();
 
     std::cout << "\ngenerating bytecode layout" << std::endl;
-
-    size_t bytecode_size = 0;
-
-    for (auto [cn, cls] : symbol_table.classes) {
-		if (cls->is_native) continue;
-        std::cout << cn << std::endl;
-
-        for (auto [fn, f] : cls->functions) {
-        	std::function<void(cmp::ScopePtr)> accumulate_scope_sizes = [&](cmp::ScopePtr scope) {
-				scope->starting_address = bytecode_size;
-
-				std::cout << scope->get_full_name() << ": " << std::hex << (int)(bytecode_size) << std::dec << std::endl;
-
-				for (auto stmt : scope->body) {
-					cmp::BytecodeGenerationInfo bgi(symbol_table, cls, f, scope);
-					bgi.bytecode_size = bytecode_size;
-					std::cout << "\t" << stmt->to_string() << ": " << std::hex << bytecode_size << std::dec << std::endl;
-					bytecode_size += stmt->get_bytecode_size(bgi);
-				}
-            	
-				std::cout << std::endl;
-
-				bytecode_size += 1; // HALT
-                
-				for (auto& lower : scope->lower_scopes) {
-					if (auto lower_scope = lower.lock())
-						accumulate_scope_sizes(lower_scope);
-					else
-						std::cout << "Warning: lower scope is expired" << std::endl;
-                }
-            };
-            accumulate_scope_sizes(f->scope);
-        }
-    }
+    size_t bytecode_size = cmp::generate_bytecode_layout(symbol_table);
 
     std::cout << "\ngenerating bytecode" << std::endl;
+	auto bpi = cmp::generate_bytecode(symbol_table, bytecode_size);
 
-    std::vector<uint8_t> bytecode;
-    bytecode.reserve(bytecode_size);
-    size_t main_start;
-    bool has_main = false;
-
-    for (auto [cn, cls] : symbol_table.classes) {
-		if (cls->is_native) continue;
-        std::cout << cn << std::endl;
-
-        for (auto [fn, f] : cls->functions) {
-            if (fn == "main") {
-                main_start = bytecode.size();
-                has_main = true;
-            }
-
-            std::cout << "\n" << f->to_string() << std::endl;
-
-			std::function<void(cmp::ScopePtr)> generate_bytecode = [&](cmp::ScopePtr scope) {
-				std::cout << scope->get_full_name() << " " << (int)scope->starting_address << " {" << std::endl;
-
-				for (auto stmt : scope->body) {
-					cmp::BytecodeGenerationInfo bgi(symbol_table, cls, f, scope);
-				
-					std::vector<uint8_t> bytecode_new = stmt->generate_bytecode(bgi);
-					bytecode.insert(bytecode.end(), bytecode_new.begin(), bytecode_new.end());
-
-					if (stmt->get_kind() != cmp::Statement::LABEL && bytecode_new.size() != stmt->get_bytecode_size(bgi)) {
-						std::cout << "wrong bytecode size: " << stmt->to_string() << std::endl;
-					}
-
-					for (size_t i = 0; i < bytecode_new.size(); ++i) {
-						uint8_t opcode = bytecode_new[i];
-						auto op_sizes = vm::OP_SIZES[opcode];
-
-						std::cout << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << (int)opcode << " " << C_KEYWORD(strings[opcode]) << " ";
-
-						size_t offset = i + 1;
-						for (size_t j = 1; j < op_sizes.size(); ++j) {
-							size_t size = op_sizes[j];
-							for (size_t k = 0; k < size; ++k) {
-								std::cout << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << (int)bytecode_new[offset + k];
-							}
-							std::cout << " ";
-							offset += size;
-						}
-
-						i = offset - 1;
-						std::cout << std::endl;
-					}
-				}
-
-				std::cout << "}" << std::endl;
-
-				if (fn == "main") bytecode.push_back(static_cast<uint8_t>(vm::Instruction::HALT));
-				else bytecode.push_back(static_cast<uint8_t>(vm::Instruction::RET));
-                
-				for (auto& lower : scope->lower_scopes) {
-					if (auto lower_scope = lower.lock())
-						generate_bytecode(lower_scope);
-					else
-						std::cout << "Warning: lower scope is expired" << std::endl;
-                }
-            };
-
-			generate_bytecode(f->scope);
-        }
-    }
-
-    if (!has_main) {
+    if (!bpi.has_main) {
         std::cout << "no main function!" << std::endl;
         return 1;
     }
 
-    if (bytecode.size() != bytecode_size) {
-        std::cout << std::dec << "bytecode size is wrong:" << bytecode.size() << " / " << bytecode_size << std::endl;
+    if (bpi.bytecode.size() != bytecode_size) {
+        std::cout << std::dec << "bytecode size is wrong:" << bpi.bytecode.size() << " / " << bytecode_size << std::endl;
         return 1;
     }
 
-	//return 0;
+	// TODO: save to file
+    
+    std::cout << "\ncreating vm" << std::endl;
 
-    vm.code = reinterpret_cast<vm::Instruction*>(bytecode.data());
-    vm.main_start = main_start;
+	// TODO: load from file
+
+    vm::VirtualMachine vm(db);
+
+    vm.code = reinterpret_cast<vm::Instruction*>(bpi.bytecode.data());
 	vm.const_memory = new vm::Value[symbol_table.const_memory.size()];
+
+	vm.main_start = bpi.main_start;
 
 	for (size_t i = 0; i < symbol_table.const_memory.size(); i++) {
 		vm.const_memory[i] = symbol_table.const_memory[i];
 	}
-
-	vm.static_memory = new vm::Value[256];
     
     std::cout << "\nprocessing" << std::dec << std::endl;
 
@@ -316,3 +162,45 @@ int main() {
 	
     return 0;
 }
+#endif
+
+#ifdef VM_ONLY
+int main() {
+	std::cout << "start vm only" << std::endl;
+
+    vm::ClassDB db;
+	vm::register_classes(db);
+
+	/*
+
+	std::cout << "\ncreating vm" << std::endl;
+    vm::VirtualMachine vm;
+    vm.db = &db;
+    vm.code = reinterpret_cast<vm::Instruction*>(bytecode.data());
+    vm.main_start = main_start;
+	vm.const_memory = new vm::Value[symbol_table.const_memory.size()];
+
+	for (size_t i = 0; i < symbol_table.const_memory.size(); i++) {
+		vm.const_memory[i] = symbol_table.const_memory[i];
+	}
+    
+    std::cout << "\nprocessing" << std::dec << std::endl;
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    vm::run_vm(vm);
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    // Calculate the duration in microseconds
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+	auto duration_msec = (double)duration / 1000.0;
+
+    std::cout << "vm::run_vm execution time: " << duration_msec << " miliseconds" << std::endl;
+    
+    std::cout << "\nprocess finished" << std::endl;
+	*/
+
+	return 0;
+}
+#endif

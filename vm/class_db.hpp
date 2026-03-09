@@ -29,13 +29,15 @@ struct MethodPair {
 	bool is_constructor;
 };
 
-class ClassBind {
-public:
-    std::string name;
-    int id;
-	size_t size;
+struct ClassBind {
+    const std::string name;
+    const int id;
+	const size_t size;
     std::vector<MethodPair> static_methods;
     std::vector<MethodPair> methods;
+
+	ClassBind(const std::string& name, size_t id, size_t size)
+		: name(name), id(id), size(size) {}
 };
 
 template<typename Constructor>
@@ -61,12 +63,9 @@ public:
     std::vector<ClassBind> classes;
 
 	template<typename ClassType>
-    void register_class(int id, std::string name) {
-        ClassBind class_bind;
-        class_bind.id = id;
-        class_bind.name = name;
-		class_bind.size = sizeof(ClassType);
-        classes.push_back(class_bind);
+    size_t register_class(std::string name) {
+        classes.push_back(ClassBind(name, classes.size(), sizeof(ClassType)));
+		return classes.back().id;
     }
 
     template<typename Constructor>
@@ -255,13 +254,17 @@ MethodFunc bind_method(Method method) {
     using T = typename Traits::ClassType;
     using Ret = typename Traits::ReturnType;
     using ArgTuple = typename Traits::ArgTuple;
-    using ArgStorage = typename ArgStorageTuple<ArgTuple>::type;
+    using ArgStorage = typename ArgPtrTupleHelper<ArgTuple>::type;
 
     return [method](Value* args, void* raw_obj, void* ret_ptr) {
         ArgStorage arg_storage;
 
+        // For each tuple element: point it at the stack slot
         auto pop_any = [&](auto& slot) {
-            get_from_array(args, &slot, sizeof(slot));
+            using Obj = std::remove_pointer_t<std::decay_t<decltype(*slot)>>;
+
+            slot = reinterpret_cast<Obj*>(args);
+            args += sizeof(Obj);
         };
 
         std::apply([&](auto&... unpacked) {

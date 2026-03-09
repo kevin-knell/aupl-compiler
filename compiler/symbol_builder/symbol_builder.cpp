@@ -42,7 +42,7 @@ void SymbolBuilder::parse_class() {
     if (!expect("class")) {
         throw std::runtime_error("Expected 'class'");
     }
-    next(); // consume class
+    next(); // consume 'class'
 
     if (!match(TokenType::IDENTIFIER)) {
         throw std::runtime_error("Expected class name identifier");
@@ -51,10 +51,10 @@ void SymbolBuilder::parse_class() {
     std::string class_name = next().value;
 
     std::string parent_name;
-    std::shared_ptr<ClassSymbol> parent = nullptr;
+    std::shared_ptr<ClassSymbol> parent;
 
     if (expect(":")) {
-        next(); // consume :
+        next(); // consume ':'
 
         if (!match(TokenType::IDENTIFIER)) {
             throw std::runtime_error("Expected parent class identifier after 'extends'");
@@ -66,10 +66,6 @@ void SymbolBuilder::parse_class() {
             parent = std::make_shared<ClassSymbol>(parent_name);
             symbol_table.classes[parent_name] = parent;
             parent->is_declared = false;
-            TypePtr static_type = std::make_shared<StaticClassType>(StaticClassType(parent_name));
-            VarPtr static_var = std::make_shared<VariableSymbol>(static_type, "(static)" + parent_name, nullptr);
-            parent->static_var = static_var;
-            parent->type = std::make_shared<ClassType>(ClassType(parent_name));
         } else {
             parent = symbol_table.classes[parent_name];
         }
@@ -84,10 +80,6 @@ void SymbolBuilder::parse_class() {
         this_class = std::make_shared<ClassSymbol>(class_name);
         symbol_table.classes[class_name] = this_class;
         this_class->is_declared = true;
-        TypePtr static_type = std::make_shared<StaticClassType>(StaticClassType(class_name));
-        VarPtr static_var = std::make_shared<VariableSymbol>(static_type, "(static)" + class_name, nullptr);
-        this_class->static_var = static_var;
-        this_class->type = std::make_shared<ClassType>(ClassType(class_name));
     } else if (!it->second->is_declared) {
         // Forward-declared; complete it
         this_class = it->second;
@@ -97,11 +89,9 @@ void SymbolBuilder::parse_class() {
         throw std::runtime_error("Class '" + class_name + "' is already declared");
     }
 
-    this_class->static_scope = std::make_shared<Scope>(Scope::STATIC_CLASS);
-    this_class->static_scope->name = "(static)" + this_class->name;
+    this_class->static_scope = std::make_shared<Scope>(Scope::STATIC_CLASS, "(static)" + this_class->name);
 
-    this_class->scope = std::make_shared<Scope>(Scope::CLASS);
-    this_class->scope->name = this_class->name;
+    this_class->scope = std::make_shared<Scope>(Scope::CLASS, this_class->name);
     
     this_class->scope->upper_scope = this_class->static_scope;
 
@@ -143,11 +133,9 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
     }
     next(); // consume constructor name
 
-    ScopePtr scope = std::make_shared<Scope>(Scope::FUNCTION);
+    ScopePtr scope = std::make_shared<Scope>(Scope::FUNCTION, "(constructor)");
     scope->upper_scope = parser_info.cls->scope;
     ParserInfo parser_info_header{.symbol_table = symbol_table, .cls = parser_info.cls, .func = nullptr, .scope = scope};
-
-    scope->name = "(new)";
 
     // args
     if (!expect("(")) {
@@ -190,14 +178,16 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
             initial_value = parse_expression(parser_info_header);
         }
 
-        parameters.push_back(std::make_shared<VariableSymbol>(arg_type, arg_name, initial_value));
+		auto param = std::make_shared<VariableSymbol>(arg_type, arg_name, initial_value);
+		scope->variables[arg_name] = param;
+        parameters.push_back(param);
     }
     next(); // consume )
 
     // body
     bool is_abstract = false;
 
-    std::cout << "parse body" << std::endl;
+    //std::cout << "parse body" << std::endl;
 
     TypePtr return_type = PrimitiveType::TYPE_VOID;
     assert(return_type);
@@ -270,7 +260,7 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
         next(); // consume static
     }
 
-    ScopePtr scope = std::make_shared<Scope>(Scope::FUNCTION);
+	ScopePtr scope = std::make_shared<Scope>(Scope::FUNCTION, "(currently parsed)");
     ScopePtr upper_scope = is_static ? parser_info.cls->static_scope : parser_info.cls->scope;
     scope->upper_scope = upper_scope;
     ParserInfo parser_info_header{.symbol_table = symbol_table, .cls = parser_info.cls, .func = nullptr, .scope = scope};
@@ -288,8 +278,6 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
         return false;
     }
     std::string name = next().value;
-
-    scope->name = name;
 
     // TODO f<T>(...)
 
@@ -463,7 +451,7 @@ bool SymbolBuilder::parse_variable(ParserInfo parser_info) {
     variable_symbol->is_static = is_static;
     variable_symbol->is_const = is_const;
 
-    std::cout << variable_symbol->to_string() << std::endl;
+    //std::cout << variable_symbol->to_string() << std::endl;
     
     scope->variables.insert(std::pair(name, variable_symbol));
 

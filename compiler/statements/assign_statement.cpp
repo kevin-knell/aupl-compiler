@@ -3,6 +3,7 @@
 #include "primitive_type.hpp"
 #include "variable_expression.hpp"
 #include "binary_op_expression.hpp"
+#include "bytecode_generator.hpp"
 #include <assert.h>
 
 namespace cmp {
@@ -29,28 +30,10 @@ namespace {
 
 		//bool has_const = left_op->var->initial_value->is_constexpr() || right_op->var->initial_value->is_constexpr();
 
-		vm::BinType bin_type;
+		vm::BinType bin_type = std::dynamic_pointer_cast<PrimitiveType>(type)->vm_bin_type;
 
-		if (type == PrimitiveType::TYPE_U8) {
-			bin_type = vm::BinType::UINT8;
-		} else if (type == PrimitiveType::TYPE_I8) {
-			bin_type = vm::BinType::INT8;
-		} else if (type == PrimitiveType::TYPE_U16) {
-			bin_type = vm::BinType::UINT16;
-		} else if (type == PrimitiveType::TYPE_I16) {
-			bin_type = vm::BinType::INT16;
-		} else if (type == PrimitiveType::TYPE_U32) {
-			bin_type = vm::BinType::UINT32;
-		} else if (type == PrimitiveType::TYPE_I32) {
-			bin_type = vm::BinType::INT32;
-		} else if (type == PrimitiveType::TYPE_U64) {
-			bin_type = vm::BinType::UINT64;
-		} else if (type == PrimitiveType::TYPE_INT) {
-			bin_type = vm::BinType::INT64;
-		} else if (type == PrimitiveType::TYPE_F32) {
-			bin_type = vm::BinType::FLOAT;
-		} else if (type == PrimitiveType::TYPE_FLOAT) {
-			bin_type = vm::BinType::DOUBLE;
+		if (type->get_kind() == Type::PRIMITIVE) {
+			bin_type = std::dynamic_pointer_cast<PrimitiveType>(type)->vm_bin_type;
 		} else {
 			std::cerr << "Unsupported type for binary operation: " << type->to_string() << std::endl;
 			return { static_cast<uint8_t>(vm::Instruction::ERR) };
@@ -137,6 +120,7 @@ std::vector<uint8_t> AssignmentStatement::generate_bytecode(BytecodeGenerationIn
 			switch (var->scope->type) {
 				case Scope::FUNCTION: // fall through
 				case Scope::FUNCTION_SUB: {
+					// left variable is in function
 					switch (expr_right->get_kind()) {
 						case Expression::BINARY: {
 							auto binary_expr = std::dynamic_pointer_cast<BinaryExpression>(expr_right);
@@ -155,16 +139,48 @@ std::vector<uint8_t> AssignmentStatement::generate_bytecode(BytecodeGenerationIn
 								bgi
 							);
 						}
-						default:
+						case Expression::VARIABLE: {
+							auto right_var_expr = std::dynamic_pointer_cast<VariableExpression>(expr_right);
+							auto right_type = right_var_expr->get_type();
+							
+							if (!right_type->get_kind() == Type::KIND::PRIMITIVE) {
+								return {(uint8_t)vm::Instruction::ERR};
+							}
+
+							auto right_primitive_type = std::dynamic_pointer_cast<PrimitiveType>(right_type);
+
+							vm::Value2 dest{ .u16 = Scope::get_variable_index(var->scope, var->name) };
+							vm::Value2 left{ .u16 = static_cast<uint16_t>(Scope::get_variable_index(bgi.scope, right_var_expr->var->name)) };
+							vm::Value4 right{ .u32 = static_cast<uint32_t>(0) };
+							uint8_t op_code = static_cast<uint8_t>(vm::get_binary_opcode(
+								right_primitive_type->vm_bin_type,
+								BinaryExpression::OPERATOR::ADD,
+								true //has_const
+							));
+
+							return {
+								op_code,
+								dest.v[0].u8, dest.v[1].u8,
+								left.v[0].u8, left.v[1].u8,
+								right.v[0].u8, right.v[1].u8, right.v[2].u8, right.v[3].u8,
+							};
+						}
+						default: {
+							std::cerr << "unknown what to do with expr_right: " << expr_right->to_string() << std::endl;
 							return { static_cast<uint8_t>(vm::Instruction::ERR) };
+						}
 					}
 				}
 				case Scope::CLASS: {
+					// left variable is member
+					std::cout << "is member" << std::endl;
 					return { static_cast<uint8_t>(vm::Instruction::ERR) };
 				}
 				case Scope::STATIC_CLASS: {
+					// left variable is static
 					switch (expr_right->get_kind()) {
 						case Expression::VARIABLE: {
+							std::cout << "is sttatic var" << std::endl;
 							auto local_var_expr = std::dynamic_pointer_cast<VariableExpression>(expr_right);
 							assert(local_var_expr);
 							auto local_var = local_var_expr->var;
@@ -218,6 +234,9 @@ size_t AssignmentStatement::get_bytecode_size(BytecodeGenerationInfo &bgi) const
 								default:
 									return 1 + 2 + 2 + 2;
 							}
+						}
+						case Expression::VARIABLE: {
+							return 1 + 2 + 2 + 4;
 						}
 						default:
 							return 1;

@@ -158,9 +158,9 @@ ExprPtr SymbolBuilder::parse_access(ParserInfo& parser_info) {
 }
 
 ExprPtr SymbolBuilder::parse_primary(ParserInfo& parser_info) {
-    if (auto call_expr = parse_call(parser_info)) return call_expr;
+	if (auto call_expr = parse_call(parser_info)) return call_expr;
     if (auto tuple_expr = parse_tuple(parser_info)) return tuple_expr;
-
+	
     if (match(TokenType::INT_LITERAL)) {
         vm::Value8* value8 = new vm::Value8();
         value8->i64 = std::stoi(next().value);
@@ -196,6 +196,7 @@ ExprPtr SymbolBuilder::parse_primary(ParserInfo& parser_info) {
     if (match(TokenType::STRING_LITERAL)) {
 		std::string value = next().value;
 		auto it = parser_info.symbol_table.native_types.find("String");
+		assert(it != parser_info.symbol_table.native_types.end());
 		auto result = std::make_shared<StringLiteralExpression>(it->second, value.substr(1, value.size() - 2));
 		return result;
     }

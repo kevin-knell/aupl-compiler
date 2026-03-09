@@ -33,7 +33,7 @@ void cmp::EraseUnusedVariableOptimizer::optimize(SymbolTable &st) const {
     std::cout << "\n" << "Erasing unused variables" << std::endl;
 
     for (auto [cn, cls] : st.classes) {
-		if (cls->is_native) continue;
+		if (cls->native_class_bind) continue;
 		
         for (auto [fn, f] : cls->functions) {
             std::set<StmtPtr> unread_declarations;

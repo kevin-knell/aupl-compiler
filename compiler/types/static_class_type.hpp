@@ -1,6 +1,5 @@
 #pragma once
 #include "type.hpp"
-#include "symbol_builder.hpp"
 
 namespace cmp
 {

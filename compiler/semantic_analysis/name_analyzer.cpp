@@ -41,7 +41,7 @@ static void resolve_expressions(NameAnalysisInfo& name_analysis_info, std::vecto
 
 void NameAnalyzer::resolve_variables() const {
     for (auto& [class_name, cls] : symbol_table.classes) {
-		if (cls->is_native) continue;
+		if (cls->native_class_bind) continue;
 
         std::cout << C_KEYWORD("Class ") << cls->name << std::endl;
         for (auto& [func_name, f] : cls->functions) {

@@ -20,6 +20,11 @@ struct SymbolTable {
 	ScopePtr global_scope;
 
 	SymbolTable(vm::ClassDB& db);
+
+	SymbolTable(const SymbolTable& other) = delete;
+	SymbolTable& operator= (const SymbolTable& other) = delete;
+
+	void generate_scope_structures() const;
 };
 
 }

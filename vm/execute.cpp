@@ -9,12 +9,11 @@ namespace vm {
     void run_vm(vm::VirtualMachine& vm) {
         constexpr size_t STACK_SIZE = 1024;
 
-        Instruction*& code = vm.code;
+        Instruction* code = vm.code;
         Instruction* ip = code + vm.main_start;
 
-        Value* static_memory = vm.static_memory;
-        //Value* const_memory = vm.const_memory;
-        //(void) const_memory;
+        Value* static_memory = new vm::Value[256];
+        Value* const_memory = vm.const_memory;
         
         Value* stack = new Value[STACK_SIZE];
         Value* sp = stack;
@@ -81,7 +80,7 @@ namespace vm {
         OP_LOAD_STRING: {
 			uint16_t& offset = FETCH(uint16_t);
 			uint16_t& string_pos = FETCH(uint16_t);
-			const char* c = (char*)&vm.const_memory[string_pos];
+			const char* c = (char*)&const_memory[string_pos];
             void* addr = (void*)(fp + offset);
 			new (addr) String(c);
 			ADVANCE();
@@ -361,8 +360,10 @@ namespace vm {
         OP_IF_GT_CONST_DOUBLE: COMPARE_CONST_OP(double, >); ADVANCE();
         OP_IF_EGT_CONST_DOUBLE: COMPARE_CONST_OP(double, >=); ADVANCE();
 
-        OP_CALL_1: {
+        OP_CALL: {
 			Instruction* func_addr = code + FETCH(uint32_t);
+			Value* args = fp + FETCH(uint16_t);
+			Value* ret = fp + FETCH(uint16_t);
 
             Instruction*& return_address = STACK_REF(Instruction*, sp);
             return_address = ip;
@@ -373,6 +374,12 @@ namespace vm {
             last_frame = fp;
 
 			sp += sizeof(last_frame);
+
+            STACK_REF(Value*, sp) = args;
+			sp += sizeof(args);
+
+            STACK_REF(Value*, sp) = ret;
+			sp += sizeof(ret);
             
 			ip = func_addr;
             fp = sp;
@@ -380,12 +387,13 @@ namespace vm {
             ADVANCE();
         }
 
-		OP_CALL_2: ERROR();
-		OP_CALL_3: ERROR();
-		OP_CALL_4: ERROR();
-		OP_CALL_VAR: ERROR();
-
         OP_RET: {
+			sp -= sizeof(Value*);
+			//Value*& args = STACK_REF(Value*, sp);
+
+			sp -= sizeof(Value*);
+			//Value*& ret = STACK_REF(Value*, sp);
+
 			sp -= sizeof(Value*);
 
             Value*& last_frame = STACK_REF(Value*, sp);
@@ -406,7 +414,7 @@ namespace vm {
             void* obj = fp + FETCH(uint16_t);
 			Value* args = fp + FETCH(uint16_t);
 			Value* ret = fp + FETCH(uint16_t);
-            vm.db->classes[class_id].methods[method_id].value_call(args, obj, ret);
+            vm.db.classes[class_id].methods[method_id].value_call(args, obj, ret);
             ADVANCE();
         }
 
@@ -420,8 +428,6 @@ namespace vm {
         OP_IF_FALSE_GOTO: {
             ERROR();
         }
-
-        OP_PRINT: ERROR();
         
         OP_ALT: ERROR();
 

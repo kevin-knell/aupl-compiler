@@ -2,6 +2,9 @@
 #include <iostream>
 #include <ncurses.h>
 
+int64_t Console::x = 0;
+int64_t Console::y = 0;
+
 void Console::print(){
 	print("");
 }
@@ -43,6 +46,12 @@ double Console::scan_double() {
 
 void Console::initscr() {
 	::initscr();
+	::noecho();
+	::cbreak();
+	::keypad(stdscr, true);
+	::nodelay(stdscr, true);
+	::curs_set(0);
+	x = y = 0;
 }
 
 void Console::endwin() {
@@ -53,12 +62,14 @@ void Console::clear() {
 	::clear();
 }
 
-void Console::move(int64_t x, int64_t y) {
+void Console::move(int64_t _x, int64_t _y) {
+	x = _x;
+	y = _y;
 	::move(y, x);
 }
 
 void Console::printw(String s) {
-	::printw("%s", s.str().c_str());
+	::mvprintw(y, x, "%s", s.str().c_str());
 }
 
 void Console::refresh() {
@@ -70,9 +81,7 @@ int64_t Console::get_char() {
 }
 
 void Console::register_to_db(vm::ClassDB& db) {
-		constexpr int id = 2;
-
-		REGISTER_CLASS(id, Console);
+		const int id = REGISTER_CLASS(id, Console);
 
 		REGISTER_GLOBAL_METHOD(id, Console, print, void (*)());
 		REGISTER_GLOBAL_METHOD(id, Console, print, void (*)(const String& text));

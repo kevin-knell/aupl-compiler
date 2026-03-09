@@ -1,4 +1,5 @@
 #include "label_statement.hpp"
+#include "bytecode_generator.hpp"
 
 #include <iostream>
 

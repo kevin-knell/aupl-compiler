@@ -6,7 +6,6 @@
 #include <cstdint>
 #include "instructions.hpp"
 #include "name_analysis_info.hpp"
-#include "bytecode_generation_info.hpp"
 #include "forward_declarations.hpp"
 #include <value.hpp>
 

@@ -3,9 +3,7 @@
 #include <algorithm>
 
 void Math::register_to_db(vm::ClassDB &db) {
-	constexpr int id = 3;
-
-	REGISTER_CLASS(id, Math);
+	const int id = REGISTER_CLASS(id, Math);
 
 	REGISTER_GLOBAL_METHOD(id, Math, sqrt, double (*)(double x));
 	REGISTER_GLOBAL_METHOD(id, Math, pow, double (*)(double b, double e));

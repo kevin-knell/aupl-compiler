@@ -3,7 +3,6 @@
 #include "type.hpp"
 #include "variable_symbol.hpp"
 #include "scope.hpp"
-#include "bytecode_generation_info.hpp"
 #include <string>
 #include <vector>
 #include <map>
@@ -39,7 +38,9 @@ struct FunctionSymbol {
 		const std::string& name,
 		const std::vector<VarPtr>& parameters,
 		const ScopePtr& scope)
-		: return_type(std::move(return_type)), name(name), parameters(parameters), scope(std::move(scope)) {}
+		: return_type(std::move(return_type)), name(name), parameters(parameters), scope(std::move(scope)) {
+			scope->name = head_to_string();
+		}
 	
 	FunctionSymbol(vm::MethodPair& method_pair);
 

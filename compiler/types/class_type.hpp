@@ -13,10 +13,8 @@ struct ClassType : public Type {
 	KIND get_kind() const override { return CLASS; };
 
 	bool is_cpp_type(const std::string& cpp_type) const override { return false; }
-private:
-    ClassType(const std::string& n) : name(n) {}
 
-    friend void SymbolBuilder::parse_class();
+    ClassType(const std::string& n) : name(n) {}
 };
 
 } // namespace cmp

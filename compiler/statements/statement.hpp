@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include "function_symbol.hpp"
-#include "bytecode_generation_info.hpp"
 #include "forward_declarations.hpp"
 
 

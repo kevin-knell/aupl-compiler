@@ -5,7 +5,6 @@
 #include <map>
 #include <memory>
 #include "forward_declarations.hpp"
-#include "bytecode_generation_info.hpp"
 
 namespace cmp {
 
@@ -36,7 +35,7 @@ struct Scope {
     static std::shared_ptr<Scope> find_scope(const ScopePtr& scope, const std::string& name);
 	static int get_variable_index(const ScopePtr& scope, const std::string& name);
 
-    Scope(SCOPE_TYPE type) : type(type) {};
+    Scope(SCOPE_TYPE type, const std::string& name) : name(name), type(type) {};
     void generate_structure(int offset = 0);
     bool has(std::string name);
     std::string get_full_name();

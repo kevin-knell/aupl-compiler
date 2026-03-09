@@ -10,7 +10,7 @@
 namespace cmp {
 
 struct ParserInfo {
-	const SymbolTable symbol_table;
+	SymbolTable& symbol_table;
     const ClassPtr cls;
     const FuncPtr func;
     const ScopePtr scope;

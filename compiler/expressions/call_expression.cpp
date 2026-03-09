@@ -8,6 +8,7 @@
 #include "native_class_type.hpp"
 #include "variable_expression.hpp"
 #include "static_class_type.hpp"
+#include "bytecode_generator.hpp"
 
 namespace cmp {
 
@@ -49,11 +50,21 @@ std::vector<uint8_t> CallExpression::generate_bytecode(BytecodeGenerationInfo& b
 	} else {
 		std::cout << to_string() << " is not native" << std::endl;
 
+		std::shared_ptr<VariableExpression> arg0 = nullptr;
+
+		if (!arguments.empty()) {
+			arg0 = std::dynamic_pointer_cast<VariableExpression>(arguments[0]);
+		}
+
 		auto func_address = vm::Value4::from<uint32_t>(f->scope->starting_address);
+		vm::Value2 args_address = vm::Value2::from<uint16_t>(arg0 ? Scope::get_variable_index(bgi.scope, arg0->var->name) : 0);
+		vm::Value2 ret_address = vm::Value2::from<uint16_t>(256); // no ret
 
 		return {
-			(uint8_t)vm::Instruction::CALL_1,
+			(uint8_t)vm::Instruction::CALL,
 			func_address.v[0].u8, func_address.v[1].u8, func_address.v[2].u8, func_address.v[3].u8,
+			args_address.v[0].u8, args_address.v[1].u8,
+			ret_address.v[0].u8, ret_address.v[0].u8,
 		};
 	}
 
@@ -67,7 +78,7 @@ size_t CallExpression::get_bytecode_size(BytecodeGenerationInfo &bgi) const {
     if (f->method_pair) {
 		return 1 + 2 + 2 + 2 + 2 + 2;
 	} else {
-		return 1 + 4;
+		return 1 + 4 + 2 + 2;
 	}
 
     return 0;
@@ -109,7 +120,7 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 		auto native_types = name_analysis_info.symbol_table.native_types;
 		auto it = native_types.find(name);
 		if (it != native_types.end()) {
-			std::cout << "function is type: " << it->second->to_string() << std::endl;
+			//std::cout << "function is type: " << it->second->to_string() << std::endl;
 			auto nat = std::dynamic_pointer_cast<NativeClassType>(it->second);
 
 			// add candidates
@@ -118,7 +129,7 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 				if (nat_func->name == name
 						&& nat_func->method_pair->arg_count == arguments.size()) {
 					candidates.push_back(nat_func);
-					std::cout << "candidate: " << nat_func->to_string() << std::endl;
+					//std::cout << "candidate: " << nat_func->to_string() << std::endl;
 				}
 			}
 
@@ -153,7 +164,7 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 			if (nat_func->name == name
 					&& nat_func->method_pair->arg_count == arguments.size()) {
 				candidates.push_back(nat_func);
-				std::cout << "candidate: " << nat_func->to_string() << std::endl;
+				//std::cout << "candidate: " << nat_func->to_string() << std::endl;
 			}
 		}
 
@@ -174,6 +185,26 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 				f = nat_func;
 				return;
 			}
+		}
+
+		// constructor
+		auto classes = name_analysis_info.symbol_table.classes;
+		auto class_it = classes.find(name);
+		if (class_it != classes.end()) {
+			auto constructed_class = class_it->second;
+			auto functions = constructed_class->functions;
+			for (auto func_it = functions.begin(); func_it != functions.end(); func_it++) {
+				if (func_it->first != "(constructor)") continue;
+				
+				auto func = func_it->second;
+				if (func->parameters.size() == arguments.size()) {
+					f = func;
+					return;
+				}
+			}
+
+			std::cerr << "no valid constructor found!" << std::endl;
+			return;
 		}
 
 		// call function in same class
@@ -198,7 +229,7 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 				auto obj_type = var_expr->get_type();
 				switch (obj_type->get_kind()) {
 					case Type::STATIC_CLASS: {
-						std::cout << "is static class" << std::endl;
+						//std::cout << "is static class" << std::endl;
 						auto static_class_type = std::dynamic_pointer_cast<StaticClassType>(obj_type);
 						auto it = name_analysis_info.symbol_table.classes.find(static_class_type->name);
 						if (it != name_analysis_info.symbol_table.classes.end()) {
@@ -214,7 +245,7 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 						return;
 					}
 					case Type::NATIVE_CLASS: {
-						std::cout << "is native class" << std::endl;
+						//std::cout << "is native class" << std::endl;
 						auto native_class_type = std::dynamic_pointer_cast<NativeClassType>(obj_type);
 						for (auto f2 : native_class_type->functions) {
 							if (f2->name == name

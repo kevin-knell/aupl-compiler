@@ -7,6 +7,9 @@
 
 
 class Console {
+private:
+	static int64_t x;
+	static int64_t y;
 public:
     DECLARE_UTILITY_CLASS(Console);
 

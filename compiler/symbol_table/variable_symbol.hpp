@@ -24,7 +24,7 @@ struct VariableSymbol {
 
     VariableSymbol() {};
 
-    VariableSymbol(TypePtr type, const std::string& name, ExprPtr initial_value)
+    VariableSymbol(TypePtr type, const std::string& name, ExprPtr initial_value = nullptr)
         : type(std::move(type)), name(name), initial_value(std::move(initial_value)) {}
     
     std::string to_string() const;
