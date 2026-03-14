@@ -8,9 +8,8 @@ struct BlockStatement : Statement {
     ScopePtr scope;
 
     BlockStatement(ScopePtr scope) : scope(scope) {}
-
-    std::vector<uint8_t> generate_bytecode(BytecodeGenerationInfo&) const override;
-    size_t get_bytecode_size(BytecodeGenerationInfo&) const override;
+	
+	OVERRIDE_ACCEPT_STATMENT_VISITOR
 
     KIND get_kind() const override;
 

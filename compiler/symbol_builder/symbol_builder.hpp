@@ -42,7 +42,7 @@ public:
     std::vector<StmtPtr> parse_assign(ParserInfo& parser_info);
     std::vector<StmtPtr> parse_declare_statement(ParserInfo& parser_info);
 
-    std::shared_ptr<BlockStatement> parse_block(ParserInfo& parser_info);
+    std::shared_ptr<BlockStatement> parse_block(ParserInfo& parser_info, const std::string& block_name);
 
     std::vector<StmtPtr> parse_if(ParserInfo& parser_info);
     std::vector<StmtPtr> parse_for(ParserInfo& parser_info);
@@ -57,6 +57,7 @@ public:
 
     ExprPtr parse_or(ParserInfo& parser_info);
     ExprPtr parse_and(ParserInfo& parser_info);
+    ExprPtr parse_not(ParserInfo& parser_info);
     ExprPtr parse_equality(ParserInfo& parser_info);
     ExprPtr parse_comparison(ParserInfo& parser_info);
     ExprPtr parse_add(ParserInfo& parser_info);

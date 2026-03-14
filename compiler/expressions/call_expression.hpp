@@ -12,10 +12,10 @@ struct CallExpression : public Expression {
 
     CallExpression(std::string name, const std::vector<ExprPtr>& arguments, ExprPtr obj_expr)
         : name(name), arguments(arguments), obj_expr(obj_expr) {}
+	
+	OVERRIDE_ACCEPT_EXPRESSION_VISITOR
 
     std::string to_string() const override;
-    std::vector<uint8_t> generate_bytecode(BytecodeGenerationInfo& bgi) const override;
-    size_t get_bytecode_size(BytecodeGenerationInfo& bgi) const override;
     TypePtr get_type() const override;
     bool is_unresolved_symbol() const override;
     void resolve(NameAnalysisInfo& name_analysis_info) override;

@@ -10,6 +10,7 @@
 #include "conditional_jump_statement.hpp"
 #include <color.hpp>
 
+#define DEBUG
 #ifdef DEBUG
 #define RF_DEBUG_PRINT(m_text) std::cout << m_text << std::endl
 #else
@@ -68,9 +69,7 @@ void RegisterFormatConverter::convert_to_register_format(SymbolTable &symbol_tab
 
 						if (expr->get_kind() != Expression::VARIABLE) {
 							if (stmt->get_kind() == Statement::IF) {
-								if (expr->get_kind() == Expression::BINARY) {
-									
-								} else {
+								if (expr->get_kind() != Expression::BINARY) {
 									requires_variable = true;
 								}
 							} else if (stmt->get_kind() == Statement::RETURN) {

@@ -9,8 +9,7 @@ struct LabelStatement : Statement {
 
 	LabelStatement(const std::string& id) : identifier(id) {}
 
-    std::vector<uint8_t> generate_bytecode(BytecodeGenerationInfo& bgi) const override;
-    size_t get_bytecode_size(BytecodeGenerationInfo& bgi) const override;
+	OVERRIDE_ACCEPT_STATMENT_VISITOR
 
     KIND get_kind() const override;
 

@@ -7,7 +7,12 @@
 #include "instructions.hpp"
 #include "name_analysis_info.hpp"
 #include "forward_declarations.hpp"
+#include "expression_visitor.hpp"
 #include <value.hpp>
+
+#define OVERRIDE_ACCEPT_EXPRESSION_VISITOR \
+	void accept(ExpressionVisitor& visitor) override { visitor.visit(*this); } \
+	void accept(ExpressionVisitor& visitor, VarExprPtr var_expr) override { visitor.visit(*this, var_expr); }
 
 namespace cmp {
 
@@ -32,9 +37,9 @@ struct Expression {
     virtual ~Expression() = default;
 
     virtual std::string to_string() const = 0;
-    
-    virtual std::vector<uint8_t> generate_bytecode(BytecodeGenerationInfo& bgi) const { return { (uint8_t)vm::Instruction::ERR }; };
-    virtual size_t get_bytecode_size(BytecodeGenerationInfo& bgi) const { return 1; };
+
+	virtual void accept(ExpressionVisitor& visitor) { visitor.visit(*this); }
+	virtual void accept(ExpressionVisitor& visitor, VarExprPtr var_expr) { visitor.visit(*this, var_expr); }
     
     virtual std::vector<ExprPtr*> get_expressions();
     virtual int get_level();

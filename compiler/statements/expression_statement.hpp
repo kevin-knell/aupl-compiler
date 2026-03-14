@@ -14,13 +14,8 @@ struct ExpressionStatement : public Statement {
     std::string to_string() const override {
         return expression->to_string();
     }
-
-    std::vector<uint8_t> generate_bytecode(BytecodeGenerationInfo& bgi) const override {
-        return expression->generate_bytecode(bgi);
-    }
-    virtual size_t get_bytecode_size(BytecodeGenerationInfo& bgi) const override {
-        return expression->get_bytecode_size(bgi);
-    }
+	
+	OVERRIDE_ACCEPT_STATMENT_VISITOR
 
     std::vector<ExprPtr*> get_expressions() override {
         return {&expression};

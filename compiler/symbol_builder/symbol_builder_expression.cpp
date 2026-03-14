@@ -1,6 +1,7 @@
 // symbol_builder_expression.cpp
 #include "symbol_builder.hpp"
 #include "variable_expression.hpp"
+#include "unary_op_expression.hpp"
 #include "binary_op_expression.hpp"
 #include "access_expression.hpp"
 #include "call_expression.hpp"
@@ -31,14 +32,24 @@ ExprPtr SymbolBuilder::parse_or(ParserInfo& parser_info) {
 }
 
 ExprPtr SymbolBuilder::parse_and(ParserInfo& parser_info) {
-    ExprPtr left = parse_equality(parser_info);
+    ExprPtr left = parse_not(parser_info);
     while (expect("and")) {
         next(); // consume 'and'
-        ExprPtr right = parse_equality(parser_info);
+        ExprPtr right = parse_not(parser_info);
         if (!right) return nullptr;
         left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::AND);
     }
     return left;
+}
+
+ExprPtr SymbolBuilder::parse_not(ParserInfo& parser_info) {
+    if (expect("not")) {
+        next(); // consume 'not'
+        ExprPtr expr = parse_equality(parser_info);
+        if (!expr) return nullptr;
+        return std::make_shared<UnaryExpression>(expr, UnaryExpression::OPERATOR::NOT);
+    }
+    return parse_equality(parser_info);
 }
 
 ExprPtr SymbolBuilder::parse_equality(ParserInfo& parser_info) {

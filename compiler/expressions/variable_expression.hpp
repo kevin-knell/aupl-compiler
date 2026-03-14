@@ -11,9 +11,9 @@ struct VariableExpression : public Expression {
     VariableExpression(const std::string& name) : name(name) {}
     VariableExpression(VarPtr var) : var(var), name(var->name) {}
 
+	OVERRIDE_ACCEPT_EXPRESSION_VISITOR
+
     std::string to_string() const override;
-    std::vector<uint8_t> generate_bytecode(BytecodeGenerationInfo& bgi) const override;
-    size_t get_bytecode_size(BytecodeGenerationInfo& bgi) const override;
     bool is_unresolved_symbol() const override;
     void resolve(NameAnalysisInfo& name_analysis_info) override;
     TypePtr get_type() const override;

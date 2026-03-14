@@ -12,8 +12,7 @@ struct DeclareStatement : public Statement {
 
     std::string to_string() const override;
 
-    std::vector<uint8_t> generate_bytecode(BytecodeGenerationInfo& bgi) const override;
-    virtual size_t get_bytecode_size(BytecodeGenerationInfo& bgi) const override;
+	OVERRIDE_ACCEPT_STATMENT_VISITOR
 
     std::vector<ExprPtr*> get_expressions() override;
 

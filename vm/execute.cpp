@@ -74,6 +74,7 @@ namespace vm {
         }
 
         OP_LOAD_CONST_VAR: {
+			std::cerr << "unimplemented!" << std::endl;
             ERROR();
         }
 
@@ -86,7 +87,7 @@ namespace vm {
 			ADVANCE();
         }
         
-        OP_COPY_1: ERROR();
+        OP_COPY_1: { ERROR(); }
         OP_COPY_2: ERROR();
         OP_COPY_4: ERROR();
         OP_COPY_8: ERROR();
@@ -434,7 +435,7 @@ namespace vm {
         OP_DIRECT_THREADED: ERROR();
 
         OP_ERR: {
-            std::cout << "runtime error" << std::endl;
+            std::cout << "runtime error at: " << std::hex << (ip - code) << std::dec << std::endl;
             return;
         }
 

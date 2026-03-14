@@ -2,7 +2,8 @@
 #include <string>
 #include <vector>
 #include <assert.h>
-#include <chrono>
+#include <iomanip>
+#include <fstream>
 
 #ifdef COMPILER
 #include "file_manager.hpp"
@@ -26,14 +27,43 @@
 #include "class_db.hpp"
 #include "execute.hpp"
 #include "class_registrator.hpp"
-#include <iomanip>
 
 
 void print_help() {
 	std::cout <<
 		"Usage: aupl [options] folder..." << std::endl <<
 		"-h, --help             Display this message" << std::endl <<
-		"-v, --version          Display version" << std::endl;
+		"-v, --version          Display version" << std::endl <<
+		"-o [file]              Output file" << std::endl;
+}
+
+
+void create_vm(const vm::ClassDB& db, const std::string& path) {
+	vm::VirtualMachine vm(db);
+
+	{
+		std::ifstream input_file(path, std::ios::binary);
+
+		size_t code_size;
+		size_t const_memory_size;
+		size_t main_start;
+
+		input_file.read(reinterpret_cast<char*>(&code_size), sizeof(code_size));
+		input_file.read(reinterpret_cast<char*>(&const_memory_size), sizeof(const_memory_size));
+		input_file.read(reinterpret_cast<char*>(&main_start), sizeof(main_start));
+
+		vm.code = new vm::Instruction[code_size];
+		input_file.read(reinterpret_cast<char*>(vm.code), sizeof(vm::Instruction) * code_size);
+
+		vm.const_memory = new vm::Value[const_memory_size];
+		input_file.read(reinterpret_cast<char*>(vm.const_memory), sizeof(vm::Value) * const_memory_size);
+
+		vm.main_start = main_start;
+
+		input_file.close();
+	}
+
+    vm::run_vm(vm);
 }
 
 
@@ -56,6 +86,23 @@ int main(int argc, char** argv) {
 		if (arg == "--version" || arg == "-v") {
 			std::cout << "Version: 0.1" << std::endl;
 			return 0;
+		}
+	}
+
+	// output
+	std::string output_path;
+	
+	for (int i = 1; i < argc; ++i) {
+		std::string arg = argv[i];
+
+		if (arg == "-o") {
+			if (i + 1 >= argc) {
+				std::cerr << "no arg for -o!" << std::endl;
+				return 1;
+			}
+
+			output_path = argv[i + 1];
+			break;
 		}
 	}
 
@@ -96,6 +143,7 @@ int main(int argc, char** argv) {
 
     cmp::RegisterFormatConverter::convert_to_register_format(symbol_table);
 
+#ifdef OPTIMIZE
     std::cout << "\noptimizing code" << std::endl;
 
     std::vector<cmp::Optimizer*> optimizers;
@@ -107,15 +155,18 @@ int main(int argc, char** argv) {
             p->optimize(symbol_table);
         }
     }
+#endif
 
     std::cout << "\ngenerating scope structures" << std::endl;
 	symbol_table.generate_scope_structures();
 
     std::cout << "\ngenerating bytecode layout" << std::endl;
-    size_t bytecode_size = cmp::generate_bytecode_layout(symbol_table);
+	auto size_gen = cmp::BytecodeGenerator<true>(symbol_table);
+    size_t bytecode_size = size_gen.generate_bytecode(symbol_table, 0);
 
     std::cout << "\ngenerating bytecode" << std::endl;
-	auto bpi = cmp::generate_bytecode(symbol_table, bytecode_size);
+	auto code_gen = cmp::BytecodeGenerator<false>(symbol_table);
+    auto bpi = code_gen.generate_bytecode(symbol_table, bytecode_size);
 
     if (!bpi.has_main) {
         std::cout << "no main function!" << std::endl;
@@ -127,79 +178,43 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-	// TODO: save to file
-    
-    std::cout << "\ncreating vm" << std::endl;
+	// save to file
+	std::ofstream output_file(output_path, std::ios::binary | std::ios::trunc);
 
-	// TODO: load from file
+	size_t code_size = bytecode_size;
+	size_t const_size = symbol_table.const_memory.size();
+	size_t main_start = bpi.main_start;
 
-    vm::VirtualMachine vm(db);
+	output_file.write(reinterpret_cast<char*>(&code_size), sizeof(code_size));
+	output_file.write(reinterpret_cast<char*>(&const_size), sizeof(const_size));
+	output_file.write(reinterpret_cast<char*>(&main_start), sizeof(main_start));
 
-    vm.code = reinterpret_cast<vm::Instruction*>(bpi.bytecode.data());
-	vm.const_memory = new vm::Value[symbol_table.const_memory.size()];
+	output_file.write(
+		reinterpret_cast<char*>(bpi.bytecode.data()),
+		sizeof(uint8_t) * code_size
+	);
 
-	vm.main_start = bpi.main_start;
-
-	for (size_t i = 0; i < symbol_table.const_memory.size(); i++) {
-		vm.const_memory[i] = symbol_table.const_memory[i];
+	for (auto& v : symbol_table.const_memory) {
+		output_file.write(reinterpret_cast<char*>(&v.u8), sizeof(uint8_t));
 	}
-    
-    std::cout << "\nprocessing" << std::dec << std::endl;
 
-    auto start = std::chrono::high_resolution_clock::now();
-
-    vm::run_vm(vm);
-
-    auto end = std::chrono::high_resolution_clock::now();
-
-    // Calculate the duration in microseconds
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-	auto duration_msec = (double)duration / 1000.0;
-
-    std::cout << "vm::run_vm execution time: " << duration_msec << " miliseconds" << std::endl;
-    
-    std::cout << "\nprocess finished" << std::endl;
+	output_file.close();
 	
     return 0;
 }
 #endif
 
 #ifdef VM_ONLY
-int main() {
-	std::cout << "start vm only" << std::endl;
+int main(int argc, char** argv) {
+	if (argc != 2) {
+		std::cerr << "Only 1 arg for input file expected!" << std::endl;
+		return 1;
+	}
 
     vm::ClassDB db;
 	vm::register_classes(db);
-
-	/*
-
-	std::cout << "\ncreating vm" << std::endl;
-    vm::VirtualMachine vm;
-    vm.db = &db;
-    vm.code = reinterpret_cast<vm::Instruction*>(bytecode.data());
-    vm.main_start = main_start;
-	vm.const_memory = new vm::Value[symbol_table.const_memory.size()];
-
-	for (size_t i = 0; i < symbol_table.const_memory.size(); i++) {
-		vm.const_memory[i] = symbol_table.const_memory[i];
-	}
-    
-    std::cout << "\nprocessing" << std::dec << std::endl;
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    vm::run_vm(vm);
-
-    auto end = std::chrono::high_resolution_clock::now();
-
-    // Calculate the duration in microseconds
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-	auto duration_msec = (double)duration / 1000.0;
-
-    std::cout << "vm::run_vm execution time: " << duration_msec << " miliseconds" << std::endl;
-    
-    std::cout << "\nprocess finished" << std::endl;
-	*/
+	
+	create_vm(db, argv[argc - 1]);
 
 	return 0;
 }

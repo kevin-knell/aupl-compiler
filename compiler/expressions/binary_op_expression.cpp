@@ -4,14 +4,6 @@
 
 namespace cmp {
 
-std::vector<uint8_t> BinaryExpression::generate_bytecode(BytecodeGenerationInfo& bgi) const {
-    return {};
-}
-
-size_t BinaryExpression::get_bytecode_size(BytecodeGenerationInfo &bgi) const {
-    return 0;
-}
-
 std::string BinaryExpression::to_string() const {
 #ifdef DEBUG
     return C_PAREN(left->to_string() + " " + operator_to_string() + " " + right->to_string());

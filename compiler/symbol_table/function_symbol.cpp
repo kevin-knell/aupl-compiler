@@ -9,17 +9,6 @@
 
 namespace cmp {
 
-size_t FunctionSymbol::get_bytecode_size(BytecodeGenerationInfo& bgi) const {
-    size_t result = 0;
-
-    for (auto stmt : scope->body) {
-        BytecodeGenerationInfo bgi_stmt(bgi);
-        result += stmt->get_bytecode_size(bgi_stmt);
-    }
-
-    return result;
-};
-
 FunctionSymbol::FunctionSymbol(vm::MethodPair &method_pair) : name(method_pair.name), method_pair(&method_pair) {}
 
 std::string FunctionSymbol::head_to_string() {

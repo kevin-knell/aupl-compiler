@@ -8,18 +8,6 @@
 #include "color.hpp"
 
 namespace cmp {
-
-std::vector<uint8_t> VariableExpression::generate_bytecode(BytecodeGenerationInfo& bgi) const {
-    return {
-        static_cast<uint8_t>(vm::Instruction::ERR)
-    };
-}
-
-size_t VariableExpression::get_bytecode_size(BytecodeGenerationInfo &bgi) const {
-    (void)bgi;
-    return 1;
-}
-
 std::string VariableExpression::to_string() const {
     return is_unresolved_symbol() == true ? C_UNRES(name) : var->name_to_string();
 }

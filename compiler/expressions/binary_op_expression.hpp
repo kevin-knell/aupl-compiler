@@ -13,10 +13,10 @@ struct BinaryExpression : public Expression {
 
     BinaryExpression(ExprPtr left, ExprPtr right, OPERATOR op)
         : left(left), right(right), op(op) {}
+	
+	OVERRIDE_ACCEPT_EXPRESSION_VISITOR
 
     std::string to_string() const override;
-    std::vector<uint8_t> generate_bytecode(BytecodeGenerationInfo& bgi) const override;
-    size_t get_bytecode_size(BytecodeGenerationInfo& bgi) const override;
     std::vector<ExprPtr*> get_expressions() override;
     TypePtr get_type() const override;
     KIND get_kind() const override { return BINARY; }

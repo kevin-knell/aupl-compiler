@@ -288,6 +288,16 @@ namespace vm {
     #undef OPCODE_SIZE
     #undef OP_SIZE_LIST
 
+    #define OPCODE_NAME(op, size) v.push_back(#op);
+
+	const std::vector<std::string> OP_NAMES = []{
+		std::vector<std::string> v;
+		OPCODES(OPCODE_NAME, _)
+		return v;
+	}();
+
+	#undef OPCODE_NAME
+
     inline Instruction get_binary_opcode(BinType type, BinOp op, bool is_const) {
         switch (type) {
             case BinType::INT8:

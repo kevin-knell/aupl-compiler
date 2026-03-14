@@ -5,8 +5,9 @@
 #include <vector>
 #include "function_symbol.hpp"
 #include "forward_declarations.hpp"
+#include "statement_visitor.hpp"
 
-
+#define OVERRIDE_ACCEPT_STATMENT_VISITOR void accept(StatementVisitor& visitor) override { visitor.visit(*this); }
 
 namespace cmp {
 
@@ -25,8 +26,7 @@ struct Statement {
 
     virtual ~Statement() = default;
 
-    virtual std::vector<uint8_t> generate_bytecode(BytecodeGenerationInfo& bgi) const = 0;
-    virtual size_t get_bytecode_size(BytecodeGenerationInfo& bgi) const = 0;
+	virtual void accept(StatementVisitor& visitor) { visitor.visit(*this); }
 
     virtual std::vector<ExprPtr*> get_expressions() { return {}; };
 

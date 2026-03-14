@@ -132,7 +132,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
     return { std::make_shared<DeclareStatement>(var) };
 }
 
-std::shared_ptr<BlockStatement> SymbolBuilder::parse_block(ParserInfo& parser_info) {
+std::shared_ptr<BlockStatement> SymbolBuilder::parse_block(ParserInfo& parser_info, const std::string& block_name) {
     size_t start_idx = index;
 
     if (!expect("{")) {
@@ -141,7 +141,7 @@ std::shared_ptr<BlockStatement> SymbolBuilder::parse_block(ParserInfo& parser_in
     }
     next(); // consume {
 
-    ScopePtr scope = std::make_shared<Scope>(Scope::FUNCTION_SUB, "block");
+    ScopePtr scope = std::make_shared<Scope>(Scope::FUNCTION_SUB, block_name);
     scope->upper_scope = parser_info.scope;
     parser_info.scope->lower_scopes.push_back(std::weak_ptr<Scope>(scope));
 
@@ -189,7 +189,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
 	std::string if_name = parser_info.scope->get_label_name("if");
 	std::string else_name = parser_info.scope->get_label_name("else");
 
-    std::shared_ptr<BlockStatement> if_block = parse_block(parser_info);
+    std::shared_ptr<BlockStatement> if_block = parse_block(parser_info, "if");
     std::shared_ptr<Label> if_label = std::make_shared<Label>(if_block->scope, if_name);
 
     std::shared_ptr<BlockStatement> else_block = nullptr;
@@ -198,7 +198,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
     if (expect("else")) {
         next(); // consume else
 
-        else_block = parse_block(parser_info);
+        else_block = parse_block(parser_info, "else");
 
         if (!else_block) {
             index = start_idx;
@@ -241,21 +241,22 @@ std::vector<StmtPtr> SymbolBuilder::parse_while(ParserInfo& parser_info) {
         index = start_idx;
         return {};
     }
-    next(); // consume if
-
-    std::cout << "while" << std::endl;
+    next(); // consume while
 
     ExprPtr condition_expr = parse_expression(parser_info);
     if (!condition_expr) {
-        index = start_idx;
-        return {};
+		std::cerr << "no expression after while" << std::endl;
+		exit(1);
+		return {};
     }
+
+	std::cout << condition_expr->to_string() << std::endl;
 
 	std::string while_condition_name = parser_info.scope->get_label_name("while_condition");
 	//std::string while_ret_name = parser_info.scope->get_label_name("while_return");
 	std::string while_name = parser_info.scope->get_label_name("while");
 
-    std::shared_ptr<BlockStatement> block = parse_block(parser_info);
+    std::shared_ptr<BlockStatement> block = parse_block(parser_info, "while");
     std::shared_ptr<Label> while_label = std::make_shared<Label>(block->scope, while_name);
 
 	StmtVec result;

@@ -4,14 +4,6 @@
 
 namespace cmp {
 
-std::vector<uint8_t> BlockStatement::generate_bytecode(BytecodeGenerationInfo &bgi) const {
-    return {};
-}
-
-size_t BlockStatement::get_bytecode_size(BytecodeGenerationInfo &bgi) const {
-    return size_t();
-}
-
 Statement::KIND BlockStatement::get_kind() const {
     return BLOCK;
 }

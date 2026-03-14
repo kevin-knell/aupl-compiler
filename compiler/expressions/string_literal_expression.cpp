@@ -7,14 +7,6 @@ std::string cmp::StringLiteralExpression::to_string() const {
 	return "\"" + value + "\"";
 }
 
-std::vector<uint8_t> StringLiteralExpression::generate_bytecode(BytecodeGenerationInfo &bgi) const {
-	return {};
-}
-
-size_t StringLiteralExpression::get_bytecode_size(BytecodeGenerationInfo &bgi) const {
-	return 0;
-}
-
 std::vector<ExprPtr *> StringLiteralExpression::get_expressions() {
 	return {};
 }

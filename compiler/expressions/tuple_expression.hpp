@@ -8,6 +8,8 @@ struct TupleExpression : public Expression {
 	ExprVec expressions;
 
 	TupleExpression(ExprVec expressions) : expressions(expressions) {}
+
+	OVERRIDE_ACCEPT_EXPRESSION_VISITOR
 	
     std::vector<ExprPtr*> get_expressions() override;
 

@@ -46,8 +46,6 @@ struct FunctionSymbol {
 
 	std::string head_to_string();
 	std::string to_string();
-
-    size_t get_bytecode_size(BytecodeGenerationInfo& bgi) const;
 };
 
 using FuncPtr = std::shared_ptr<FunctionSymbol>;
