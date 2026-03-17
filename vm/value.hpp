@@ -2,9 +2,6 @@
 #include <cstdint>
 #include <memory>
 
-#include "class.hpp"
-#include "function.hpp"
-
 class Object;
 
 namespace vm {

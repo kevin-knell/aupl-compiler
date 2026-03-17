@@ -16,7 +16,7 @@ struct DeclareStatement : public Statement {
 
     std::vector<ExprPtr*> get_expressions() override;
 
-    virtual KIND get_kind() const override { return DECLARE; }
+    KIND get_kind() const override { return DECLARE; }
 };
 
 } // namespace cmp

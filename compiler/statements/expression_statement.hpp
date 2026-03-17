@@ -21,7 +21,7 @@ struct ExpressionStatement : public Statement {
         return {&expression};
     }
 
-    virtual KIND get_kind() const override { return EXPRESSION; }
+    KIND get_kind() const override { return EXPRESSION; }
 };
 
 }

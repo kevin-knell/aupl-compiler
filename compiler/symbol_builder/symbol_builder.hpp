@@ -16,8 +16,6 @@ struct ParserInfo {
     const ScopePtr scope;
 };
 
-class BlockStatement;
-
 class SymbolBuilder {
 public:
     SymbolBuilder(const std::vector<Token>& tokens, SymbolTable& symbol_table);
@@ -42,7 +40,7 @@ public:
     std::vector<StmtPtr> parse_assign(ParserInfo& parser_info);
     std::vector<StmtPtr> parse_declare_statement(ParserInfo& parser_info);
 
-    std::shared_ptr<BlockStatement> parse_block(ParserInfo& parser_info, const std::string& block_name);
+    ScopePtr parse_block(ParserInfo& parser_info, const std::string& block_name);
 
     std::vector<StmtPtr> parse_if(ParserInfo& parser_info);
     std::vector<StmtPtr> parse_for(ParserInfo& parser_info);

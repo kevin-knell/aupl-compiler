@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <vector>
 
 #define OPCODES(_, s) \
     _(NOP, s(1)) \

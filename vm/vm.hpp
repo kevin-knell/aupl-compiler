@@ -1,7 +1,5 @@
 #pragma once
 #include <vector>
-#include "class.hpp"
-#include "function.hpp"
 #include "value.hpp"
 #include "class_db.hpp"
 #include "instructions.hpp"

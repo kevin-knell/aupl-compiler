@@ -16,6 +16,8 @@ std::string FunctionSymbol::head_to_string() {
 		return method_pair->signature;
 	}
 
+	assert(return_type);
+
     std::string begin = TAG("public ", is_public) +
             TAG("static ", is_static) +
             TAG("const ", is_const) +
@@ -25,7 +27,10 @@ std::string FunctionSymbol::head_to_string() {
     std::string args = "(";
 
     for (VarPtr& v : parameters) {
-        if (args.length() > 1) {
+        assert(v);
+		assert(v->type);
+		
+		if (args.length() > 1) {
             args += ", ";
         }
 
@@ -46,17 +51,21 @@ std::string FunctionSymbol::to_string() {
 		return head;
 	}
 
+	assert(scope);
+
     std::string code;
+	assert(scope->body.empty() || scope->body.front());
 
     if (is_abstract) {
         code = " = abstract";
-    } else if (scope->body.size() == 1 && std::dynamic_pointer_cast<ReturnStatement>(scope->body.front())) {
+    } else if (scope->body.size() == 1 && scope->body.front()->get_kind() == Statement::RETURN) {
         code = " = " + scope->body.front()->to_string();
     } else {
         code = " ";
 		std::function<void(ScopePtr sc)> add_code_str = [&](ScopePtr sc) {
         	code += C_BRACE_L + "\n";
 			for (StmtPtr& s : sc->body) {
+				assert(s);
         	    code += s->to_string();
         	    code += "\n";
         	}

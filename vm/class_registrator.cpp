@@ -7,7 +7,7 @@
 #include "file.hpp"
 #include "shared.hpp"
 
-void vm::register_classes(vm::ClassDB &db) {
+void vm::register_classes(vm::ClassDB& db) {
 	// lang-integrated
 	String::register_to_db(db);
 	register_shared_to_db(db);

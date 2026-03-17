@@ -12,7 +12,6 @@
 #include "symbol_table.hpp"
 #include "class_parser.hpp"
 #include "statement.hpp"
-#include "class.hpp"
 #include "name_analyzer.hpp"
 #include "expression.hpp"
 #include "register_format_converter.hpp"
@@ -141,7 +140,8 @@ int main(int argc, char** argv) {
 
     std::cout << "\nconverting to register format" << std::endl;
 
-    cmp::RegisterFormatConverter::convert_to_register_format(symbol_table);
+    cmp::RegisterFormatConverter register_format_converter(symbol_table);
+	register_format_converter.convert_to_register_format();
 
 #ifdef OPTIMIZE
     std::cout << "\noptimizing code" << std::endl;

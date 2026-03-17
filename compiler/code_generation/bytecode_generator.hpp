@@ -16,7 +16,6 @@
 #include "conditional_jump_statement.hpp"
 #include "return_statement.hpp"
 #include "label_statement.hpp"
-#include "block_statement.hpp"
 #include "expression_statement.hpp"
 
 #include "expression.hpp"
@@ -34,6 +33,20 @@
 #include "primitive_type.hpp"
 #include <iomanip>
 #include <functional>
+
+#ifdef BCG_DEBUG_VERBOSE
+#define BCG_DEBUG_PRINT(m_text) std::cout << m_text << std::endl
+#define BCG_DEBUG_PRINT_V(m_text) BCG_DEBUG_PRINT(m_text)
+#define BCG_DEBUG_PRINT_NV(m_text)
+#elifdef BCG_DEBUG
+#define BCG_DEBUG_PRINT(m_text) std::cout << m_text << std::endl
+#define BCG_DEBUG_PRINT_V(m_text)
+#define BCG_DEBUG_PRINT_NV(m_text) BCG_DEBUG_PRINT(m_text)
+#else
+#define BCG_DEBUG_PRINT(m_text)
+#define BCG_DEBUG_PRINT_V(m_text)
+#define BCG_DEBUG_PRINT_NV(m_text)
+#endif
 
 namespace cmp
 {
@@ -81,7 +94,6 @@ private:
 	void generate_bytecode(const ReturnStatement& stmt);
 	void generate_bytecode(const LabelStatement& stmt);
 	void generate_bytecode(const ExpressionStatement& stmt);
-	void generate_bytecode(const BlockStatement& stmt);
 	
 	// expressions
 	// dest <- expr
@@ -102,7 +114,6 @@ private:
 	void visit(ReturnStatement& stmt) override { generate_bytecode(stmt); };
 	void visit(LabelStatement& stmt) override { generate_bytecode(stmt); };
 	void visit(ExpressionStatement& stmt) override { generate_bytecode(stmt); };
-	void visit(BlockStatement& stmt) override { generate_bytecode(stmt); };
 	
 	void visit(VariableExpression& expr) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
 	void visit(UnaryExpression& expr) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
@@ -138,10 +149,8 @@ inline BytecodeGenerator<size_only>::BC_GEN_RES BytecodeGenerator<size_only>::ge
 	// classes
     for (auto [cn, cls] : symbol_table.classes) {
 		if (cls->native_class_bind) continue;
-        std::cout << cn << std::endl;
+        BCG_DEBUG_PRINT(cn);
 		bgi.cls = cls;
-
-
 
 		// functions
         for (auto [fn, f] : cls->functions) {
@@ -152,10 +161,8 @@ inline BytecodeGenerator<size_only>::BC_GEN_RES BytecodeGenerator<size_only>::ge
 				}
 			}
 
-            std::cout << "\n" << f->to_string() << std::endl;
+            BCG_DEBUG_PRINT("\n" << f->to_string());
 			bgi.f = f;
-
-
 
 			// scopes
 			std::function<void(cmp::ScopePtr)> iterate_scopes = [&](cmp::ScopePtr scope) {
@@ -163,15 +170,17 @@ inline BytecodeGenerator<size_only>::BC_GEN_RES BytecodeGenerator<size_only>::ge
 
 				if constexpr(size_only) {
 					scope->starting_address = result;
-					std::cout << scope->get_full_name() << ": " << std::hex << (int)(result) << std::dec << std::endl;
+					BCG_DEBUG_PRINT(scope->get_full_name() << ": " << std::hex << (int)(result) << std::dec);
 				} else {
-					std::cout << scope->get_full_name() << " " << (int)scope->starting_address << " {" << std::endl;
+					BCG_DEBUG_PRINT(scope->get_full_name() << " " << (int)scope->starting_address << " {");
 				}
 
 				for (auto stmt : scope->body) {
 					if constexpr(size_only) {
 						bgi.bytecode_size = result;
-						std::cout << "\t" << stmt->to_string() << ": " << std::hex << result << std::dec << std::endl;
+						BCG_DEBUG_PRINT("\t" << stmt->to_string() << ": " << std::hex << result << std::dec);
+					} else {
+						BCG_DEBUG_PRINT_V("\t" << stmt->to_string() << ": ");
 					}
 
 					stmt->accept(*this);
@@ -186,16 +195,16 @@ inline BytecodeGenerator<size_only>::BC_GEN_RES BytecodeGenerator<size_only>::ge
 				}
 
 				if constexpr(size_only) {
-					std::cout << std::endl;
+					BCG_DEBUG_PRINT("");
 				} else {
-					std::cout << "}" << std::endl;
+					BCG_DEBUG_PRINT("}");
 				}
                 
 				for (auto& lower : scope->lower_scopes) {
 					if (auto lower_scope = lower.lock()) {
 						iterate_scopes(lower_scope);
 					} else {
-						std::cout << "Warning: lower scope is expired" << std::endl;
+						BCG_DEBUG_PRINT("Warning: lower scope is expired");
 					}
                 }
             };
@@ -214,34 +223,34 @@ inline void BytecodeGenerator<size_only>::add_error() {
 
 template <bool size_only>
 inline void BytecodeGenerator<size_only>::append(vm::Instruction op_code, std::vector<uint8_t>&& bytecode) {
+	std::vector<int> op_sizes = vm::OP_SIZES[static_cast<uint8_t>(op_code)];
+	
 	if constexpr(size_only) {
-		for (int s : vm::OP_SIZES[static_cast<uint8_t>(op_code)]) {
-			result += s;
+		size_t sum = 0;
+		for (int s : op_sizes) {
+			sum += s;
 		}
+		result += sum;
+		assert(bytecode.size() + 1 == sum);
 	} else {
-		std::cout <<
-				std::hex << std::uppercase << std::setw(2) << std::setfill('0') <<
+		std::cout << std::hex << std::uppercase << std::setw(2) << std::setfill('0') <<
 				static_cast<int>(op_code) << " " <<
-				C_KEYWORD(vm::OP_NAMES[static_cast<uint8_t>(op_code)]) << " ";
-		
-		for (size_t i = 0; i < bytecode.size(); ++i) {
-			std::vector<int> op_sizes = vm::OP_SIZES[static_cast<uint8_t>(op_code)];
+				C_KEYWORD(vm::OP_NAMES[static_cast<uint8_t>(op_code)]) << std::flush << " ";
 
-			size_t offset = i;
-			for (size_t arg_idx = 1; arg_idx < op_sizes.size(); ++arg_idx) {
-				size_t size = op_sizes[arg_idx];
-				for (size_t byte_idx = 0; byte_idx < size; ++byte_idx) {
-					std::cout <<
-							std::hex << std::uppercase << std::setw(2) << std::setfill('0') <<
-							(int)bytecode[offset + byte_idx];
-				}
-				std::cout << " ";
-				offset += size;
+		size_t offset = 0;
+
+		for (size_t arg_idx = 1; arg_idx < op_sizes.size(); ++arg_idx) {
+			size_t size = op_sizes[arg_idx];
+			for (size_t byte_idx = 0; byte_idx < size; ++byte_idx) {
+				std::cout <<
+						std::hex << std::uppercase << std::setw(2) << std::setfill('0') <<
+						(int)bytecode[offset + byte_idx];
 			}
-
-			i = offset - 1;
+			std::cout << " ";
+			offset += size;
 		}
 		std::cout << std::endl;
+
 		result.bytecode.push_back(static_cast<uint8_t>(op_code));
 		result.bytecode.insert(result.bytecode.end(), bytecode.begin(), bytecode.end());
 	}
@@ -259,7 +268,7 @@ template <bool size_only>
 inline void BytecodeGenerator<size_only>::generate_bytecode(const DeclareStatement& stmt) {
 	if (!stmt.variable_symbol->initial_value) return;
 
-	auto var_expr = std::make_shared<VariableExpression>(stmt.variable_symbol);
+	VarExprPtr var_expr = std::make_shared<VariableExpression>(stmt.variable_symbol);
 	stmt.variable_symbol->initial_value->accept(*this, var_expr);
 }
 
@@ -338,7 +347,7 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const ConditionalJum
 
 			auto instruction = vm::get_binary_opcode(bin_type, expr.op, false);
 
-			std::cout << left_var->name << " ? " << right_var->name << std::endl;
+			BCG_DEBUG_PRINT(left_var->name << " ? " << right_var->name);
 
 			self.append(
 				instruction,
@@ -388,7 +397,8 @@ template <bool size_only>
 inline void BytecodeGenerator<size_only>::generate_bytecode(const LabelStatement &stmt) {
 	if constexpr(size_only) {
 		if (bgi.scope->label_addresses.find(stmt.identifier) != bgi.scope->label_addresses.end()) {
-			std::cout << "ERROR, already has label " << stmt.to_string() << ": " << bgi.scope->label_addresses[stmt.identifier] << std::endl;
+			std::cerr << "ERROR, already has label " << stmt.to_string() << ": " << bgi.scope->label_addresses[stmt.identifier] << std::endl;
+			exit(1);
 		}
 		bgi.scope->label_addresses[stmt.identifier] = bgi.bytecode_size;
 	}
@@ -398,11 +408,6 @@ template <bool size_only>
 inline void BytecodeGenerator<size_only>::generate_bytecode(const ExpressionStatement &stmt) {
 	auto var_expr = std::make_shared<VariableExpression>(bgi.scope->variables.begin()->second);
 	stmt.expression->accept(*this, var_expr);
-}
-
-template <bool size_only>
-inline void BytecodeGenerator<size_only>::generate_bytecode(const BlockStatement &stmt) {
-	add_error();
 }
 
 // ================================================================================================

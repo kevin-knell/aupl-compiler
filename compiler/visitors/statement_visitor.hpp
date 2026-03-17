@@ -10,7 +10,6 @@ class ConditionalJumpStatement;
 class ReturnStatement;
 class LabelStatement;
 class ExpressionStatement;
-class BlockStatement;
 
 class StatementVisitor {
 private:
@@ -21,7 +20,6 @@ private:
 	virtual void visit(ReturnStatement& stmt) = 0;
 	virtual void visit(LabelStatement& stmt) = 0;
 	virtual void visit(ExpressionStatement& stmt) = 0;
-	virtual void visit(BlockStatement& stmt) = 0;
 
 	friend class Statement;
 	friend class DeclareStatement;
@@ -30,7 +28,6 @@ private:
 	friend class ReturnStatement;
 	friend class LabelStatement;
 	friend class ExpressionStatement;
-	friend class BlockStatement;
 };
 
 } // namespace cmp

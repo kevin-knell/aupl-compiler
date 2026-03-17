@@ -7,7 +7,6 @@
 #include "label_statement.hpp"
 #include "label.hpp"
 #include "conditional_jump_statement.hpp"
-#include "block_statement.hpp"
 #include "call_expression.hpp"
 #include "binary_op_expression.hpp"
 #include <iostream>
@@ -132,7 +131,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
     return { std::make_shared<DeclareStatement>(var) };
 }
 
-std::shared_ptr<BlockStatement> SymbolBuilder::parse_block(ParserInfo& parser_info, const std::string& block_name) {
+ScopePtr SymbolBuilder::parse_block(ParserInfo& parser_info, const std::string& block_name) {
     size_t start_idx = index;
 
     if (!expect("{")) {
@@ -165,7 +164,7 @@ std::shared_ptr<BlockStatement> SymbolBuilder::parse_block(ParserInfo& parser_in
     }
     next(); // consume }
 
-    return std::make_shared<BlockStatement>(scope);
+    return scope;
 }
 
 std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
@@ -177,8 +176,6 @@ std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
     }
     next(); // consume if
 
-    std::cout << "if" << std::endl;
-
     ExprPtr condition_expr = parse_expression(parser_info);
     if (!condition_expr) {
         index = start_idx;
@@ -189,22 +186,22 @@ std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
 	std::string if_name = parser_info.scope->get_label_name("if");
 	std::string else_name = parser_info.scope->get_label_name("else");
 
-    std::shared_ptr<BlockStatement> if_block = parse_block(parser_info, "if");
-    std::shared_ptr<Label> if_label = std::make_shared<Label>(if_block->scope, if_name);
+    ScopePtr if_scope = parse_block(parser_info, "if");
+    std::shared_ptr<Label> if_label = std::make_shared<Label>(if_scope, if_name);
 
-    std::shared_ptr<BlockStatement> else_block = nullptr;
+    ScopePtr else_scope = nullptr;
     std::shared_ptr<Label> else_label = nullptr;
 
     if (expect("else")) {
         next(); // consume else
 
-        else_block = parse_block(parser_info, "else");
+        else_scope = parse_block(parser_info, "else");
 
-        if (!else_block) {
+        if (!else_scope) {
             index = start_idx;
             return {};
         }
-        else_label = std::make_shared<Label>(else_block->scope, else_name);
+        else_label = std::make_shared<Label>(else_scope, else_name);
     }
 
 	StmtVec result;
@@ -215,12 +212,12 @@ std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
 
 	std::shared_ptr<Label> return_label = std::make_shared<Label>(parser_info.scope, if_ret_name, return_label_stmt);
 
-	if_block->scope->body.push_back(
+	if_scope->body.push_back(
 		std::make_shared<ConditionalJumpStatement>(nullptr, return_label, nullptr)
 	);
 
-	if (else_block) {
-		else_block->scope->body.push_back(
+	if (else_scope) {
+		else_scope->body.push_back(
 			std::make_shared<ConditionalJumpStatement>(nullptr, return_label, nullptr)
 		);
 	}
@@ -250,14 +247,12 @@ std::vector<StmtPtr> SymbolBuilder::parse_while(ParserInfo& parser_info) {
 		return {};
     }
 
-	std::cout << condition_expr->to_string() << std::endl;
-
 	std::string while_condition_name = parser_info.scope->get_label_name("while_condition");
 	//std::string while_ret_name = parser_info.scope->get_label_name("while_return");
 	std::string while_name = parser_info.scope->get_label_name("while");
 
-    std::shared_ptr<BlockStatement> block = parse_block(parser_info, "while");
-    std::shared_ptr<Label> while_label = std::make_shared<Label>(block->scope, while_name);
+    ScopePtr while_scope = parse_block(parser_info, "while");
+    std::shared_ptr<Label> while_label = std::make_shared<Label>(while_scope, while_name);
 
 	StmtVec result;
 
@@ -272,7 +267,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_while(ParserInfo& parser_info) {
 
 	std::shared_ptr<Label> condition_label = std::make_shared<Label>(parser_info.scope, while_condition_name, condition_label_stmt);
 
-	block->scope->body.push_back(
+	while_scope->body.push_back(
 		std::make_shared<ConditionalJumpStatement>(nullptr, condition_label, nullptr)
 	);
 

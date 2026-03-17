@@ -164,7 +164,7 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 							auto class_ptr = it->second;
 							auto func_it = class_ptr->functions.find(name);
 							if (func_it != class_ptr->functions.end()) {
-								std::cout << "function is: " << func_it->second->name << std::endl;
+								//std::cout << "function is: " << func_it->second->name << std::endl;
 								f = func_it->second;
 								return;
 							}

@@ -18,7 +18,7 @@ struct ReturnStatement : public Statement {
 
     std::string to_string() const override;
 
-    virtual KIND get_kind() const override { return RETURN; }
+    KIND get_kind() const override { return RETURN; }
 };
 
 }
