@@ -19,6 +19,10 @@ namespace vm {
         Value* sp = stack;
         Value* fp = sp;
 
+        Value* dp = fp;
+        Value* ap = fp;
+        Value* bp = fp;
+
         //#define OP_PREFIX(name) &&OP_##name
         //#define DECL_OP(name) [static_cast<uint8_t>(Instruction::name)] = OP_PREFIX(name)
 
@@ -41,9 +45,6 @@ namespace vm {
         #define ERROR() goto OP_ERR
 
         OP_NOP: ADVANCE();
-        
-        OP_GROW: ERROR();
-        OP_SHRINK: ERROR();
 
 		#define LOAD_CONST(TYPE)																\
 			do {																				\
@@ -52,7 +53,7 @@ namespace vm {
 					TYPE value;																	\
 				};																				\
 				LoadStruct& load = FETCH(LoadStruct);                                   		\
-				TYPE& v = STACK_REF(TYPE, fp + load.dest_addr);									\
+				TYPE& v = STACK_REF(TYPE, dp + load.dest_addr);									\
 				v = load.value;																	\
 				/*std::cout << "load: " << (int)load.dest_addr << " <- " << (uint64_t)v << std::endl;*/		\
 			} while(0);
@@ -65,7 +66,7 @@ namespace vm {
 
         OP_LOAD_CONST_16: {
             uint16_t& offset = FETCH(uint16_t);
-            Value16& v = STACK_REF(Value16, fp + offset);
+            Value16& v = STACK_REF(Value16, dp + offset);
 			Value16& v2 = FETCH(Value16);
 			v.v8[0] = v2.v8[0];
 			v.v8[1] = v2.v8[1];
@@ -82,31 +83,59 @@ namespace vm {
 			uint16_t& offset = FETCH(uint16_t);
 			uint16_t& string_pos = FETCH(uint16_t);
 			const char* c = (char*)&const_memory[string_pos];
-            void* addr = (void*)(fp + offset);
+            void* addr = (void*)(dp + offset);
 			new (addr) String(c);
 			ADVANCE();
         }
-        
-        OP_COPY_1: { ERROR(); }
-        OP_COPY_2: ERROR();
-        OP_COPY_4: ERROR();
-        OP_COPY_8: ERROR();
-        OP_COPY_16: ERROR();
-        OP_COPY_VAR: ERROR();
-        
-        OP_COPY_FP_SP_1: ERROR();
-        OP_COPY_FP_SP_2: ERROR();
-        OP_COPY_FP_SP_4: ERROR();
-        OP_COPY_FP_SP_8: ERROR();
-        OP_COPY_FP_SP_16: ERROR();
-        OP_COPY_FP_SP_VAR: ERROR();
-        
-        OP_COPY_SP_FP_1: ERROR();
-        OP_COPY_SP_FP_2: ERROR();
-        OP_COPY_SP_FP_4: ERROR();
-        OP_COPY_SP_FP_8: ERROR();
-        OP_COPY_SP_FP_16: ERROR();
-        OP_COPY_SP_FP_VAR: ERROR();
+		
+		OP_SET_DP_TO_FP:  do {
+			dp = fp;
+			ADVANCE();
+		} while (0);
+
+		OP_SET_AP_TO_FP:  do {
+			ap = fp;
+			ADVANCE();
+		} while (0);
+
+		OP_SET_BP_TO_FP:  do {
+			bp = fp;
+			ADVANCE();
+		} while (0);
+
+		
+		OP_SET_DP_TO_STATIC: do {
+			dp = static_memory;
+			ADVANCE();
+		} while (0);
+
+		OP_SET_AP_TO_STATIC: do {
+			ap = static_memory;
+			ADVANCE();
+		} while (0);
+
+		OP_SET_BP_TO_STATIC: do {
+			bp = static_memory;
+			ADVANCE();
+		} while (0);
+
+		
+		OP_SET_DP_TO_D_PTR: ERROR();
+		OP_SET_DP_TO_A_PTR: ERROR();
+		OP_SET_DP_TO_B_PTR: ERROR();
+		
+		OP_SET_AP_TO_D_PTR: ERROR();
+		OP_SET_AP_TO_A_PTR: ERROR();
+		OP_SET_AP_TO_B_PTR: ERROR();
+		
+		OP_SET_BP_TO_D_PTR: ERROR();
+		OP_SET_BP_TO_A_PTR: ERROR();
+		OP_SET_BP_TO_B_PTR: ERROR();
+
+		OP_PTR_A: ERROR();
+		OP_PTR_B: ERROR();
+
+
 
         #define BINARY_OP(TYPE, OP)                                             \
             do {                                                                \
@@ -116,11 +145,96 @@ namespace vm {
 				uint16_t b_addr;												\
 			};																	\
             auto operands = FETCH(OperandsStruct);								\
-			TYPE& dest = STACK_REF(TYPE, fp + operands.dest_addr);              \
-            const TYPE& operand_a = STACK_REF(TYPE, fp + operands.a_addr);      \
-            const TYPE& operand_b = STACK_REF(TYPE, fp + operands.b_addr);      \
+			TYPE& dest = STACK_REF(TYPE, dp + operands.dest_addr);              \
+            const TYPE& operand_a = STACK_REF(TYPE, ap + operands.a_addr);      \
+            const TYPE& operand_b = STACK_REF(TYPE, bp + operands.b_addr);      \
             dest = operand_a OP operand_b;                                      \
             } while (0);
+		
+		#define BINARY_CONST_OP(TYPE, OP)                                       \
+            do {                                                                \
+			struct OperandsStruct {												\
+				uint16_t dest_addr;												\
+				uint16_t a_addr;												\
+				TYPE b;															\
+			};																	\
+            auto operands = FETCH(OperandsStruct);								\
+			TYPE& dest = STACK_REF(TYPE, dp + operands.dest_addr);              \
+            const TYPE& operand_a = STACK_REF(TYPE, ap + operands.a_addr);      \
+            dest = operand_a OP operands.b;                                     \
+            } while (0);
+
+        OP_ADD_I8: BINARY_OP(int8_t, +); ADVANCE();
+        OP_SUB_I8: BINARY_OP(int8_t, -); ADVANCE();
+        OP_MUL_I8: BINARY_OP(int8_t, *); ADVANCE();
+        OP_DIV_I8: BINARY_OP(int8_t, /); ADVANCE();
+        OP_DIV_U8: BINARY_OP(uint8_t, /); ADVANCE();
+        OP_MOD_I8: BINARY_OP(int8_t, %); ADVANCE();
+        OP_ADD_CONST_I8: BINARY_CONST_OP(int8_t, +); ADVANCE();
+        OP_SUB_CONST_I8: BINARY_CONST_OP(int8_t, -); ADVANCE();
+        OP_MUL_CONST_I8: BINARY_CONST_OP(int8_t, *); ADVANCE();
+        OP_DIV_CONST_I8: BINARY_CONST_OP(int8_t, /); ADVANCE();
+        OP_DIV_CONST_U8: BINARY_CONST_OP(uint8_t, /); ADVANCE();
+        OP_MOD_CONST_I8: BINARY_CONST_OP(int8_t, %); ADVANCE();
+
+        OP_ADD_I16: BINARY_OP(int16_t, +); ADVANCE();
+        OP_SUB_I16: BINARY_OP(int16_t, -); ADVANCE();
+        OP_MUL_I16: BINARY_OP(int16_t, *); ADVANCE();
+        OP_DIV_I16: BINARY_OP(int16_t, /); ADVANCE();
+        OP_DIV_U16: BINARY_OP(uint16_t, /); ADVANCE();
+        OP_MOD_I16: BINARY_OP(int16_t, %); ADVANCE();
+        OP_ADD_CONST_I16: BINARY_CONST_OP(int16_t, +); ADVANCE();
+        OP_SUB_CONST_I16: BINARY_CONST_OP(int16_t, -); ADVANCE();
+        OP_MUL_CONST_I16: BINARY_CONST_OP(int16_t, *); ADVANCE();
+        OP_DIV_CONST_I16: BINARY_CONST_OP(int16_t, /); ADVANCE();
+        OP_DIV_CONST_U16: BINARY_CONST_OP(uint16_t, /); ADVANCE();
+        OP_MOD_CONST_I16: BINARY_CONST_OP(int16_t, %); ADVANCE();
+
+        OP_ADD_I32: BINARY_OP(int32_t, +); ADVANCE();
+        OP_SUB_I32: BINARY_OP(int32_t, -); ADVANCE();
+        OP_MUL_I32: BINARY_OP(int32_t, *); ADVANCE();
+        OP_DIV_I32: BINARY_OP(int32_t, /); ADVANCE();
+        OP_DIV_U32: BINARY_OP(uint32_t, /); ADVANCE();
+        OP_MOD_I32: BINARY_OP(int32_t, %); ADVANCE();
+        OP_ADD_CONST_I32: BINARY_CONST_OP(int32_t, +); ADVANCE();
+        OP_SUB_CONST_I32: BINARY_CONST_OP(int32_t, -); ADVANCE();
+        OP_MUL_CONST_I32: BINARY_CONST_OP(int32_t, *); ADVANCE();
+        OP_DIV_CONST_I32: BINARY_CONST_OP(int32_t, /); ADVANCE();
+        OP_DIV_CONST_U32: BINARY_CONST_OP(uint32_t, /); ADVANCE();
+        OP_MOD_CONST_I32: BINARY_CONST_OP(int32_t, %); ADVANCE();
+
+        OP_ADD_I64: BINARY_OP(int64_t, +); ADVANCE();
+        OP_SUB_I64: BINARY_OP(int64_t, -); ADVANCE();
+        OP_MUL_I64: BINARY_OP(int64_t, *); ADVANCE();
+        OP_DIV_I64: BINARY_OP(int64_t, /); ADVANCE();
+        OP_DIV_U64: BINARY_OP(uint64_t, /); ADVANCE();
+        OP_MOD_I64: BINARY_OP(int64_t, %); ADVANCE();
+        OP_ADD_CONST_I64: BINARY_CONST_OP(int64_t, +); ADVANCE();
+        OP_SUB_CONST_I64: BINARY_CONST_OP(int64_t, -); ADVANCE();
+        OP_MUL_CONST_I64: BINARY_CONST_OP(int64_t, *); ADVANCE();
+        OP_DIV_CONST_I64: BINARY_CONST_OP(int64_t, /); ADVANCE();
+        OP_DIV_CONST_U64: BINARY_CONST_OP(uint64_t, /); ADVANCE();
+        OP_MOD_CONST_I64: BINARY_CONST_OP(int64_t, %); ADVANCE();
+
+        OP_ADD_FLOAT: BINARY_OP(float, +); ADVANCE();
+        OP_SUB_FLOAT: BINARY_OP(float, -); ADVANCE();
+        OP_MUL_FLOAT: BINARY_OP(float, *); ADVANCE();
+        OP_DIV_FLOAT: BINARY_OP(float, /); ADVANCE();
+        OP_ADD_CONST_FLOAT: BINARY_CONST_OP(float, +); ADVANCE();
+        OP_SUB_CONST_FLOAT: BINARY_CONST_OP(float, -); ADVANCE();
+        OP_MUL_CONST_FLOAT: BINARY_CONST_OP(float, *); ADVANCE();
+        OP_DIV_CONST_FLOAT: BINARY_CONST_OP(float, /); ADVANCE();
+
+        OP_ADD_DOUBLE: BINARY_OP(double, +); ADVANCE();
+        OP_SUB_DOUBLE: BINARY_OP(double, -); ADVANCE();
+        OP_MUL_DOUBLE: BINARY_OP(double, *); ADVANCE();
+        OP_DIV_DOUBLE: BINARY_OP(double, /); ADVANCE();
+        OP_ADD_CONST_DOUBLE: BINARY_CONST_OP(double, +); ADVANCE();
+        OP_SUB_CONST_DOUBLE: BINARY_CONST_OP(double, -); ADVANCE();
+        OP_MUL_CONST_DOUBLE: BINARY_CONST_OP(double, *); ADVANCE();
+        OP_DIV_CONST_DOUBLE: BINARY_CONST_OP(double, /); ADVANCE();
+
+
 
         #define COMPARE_OP(TYPE, OP)                                            \
             do {                                                                \
@@ -130,10 +244,10 @@ namespace vm {
 				uint32_t jump_addr;												\
 			};																	\
             const auto& operands = FETCH(OperandsStruct);						\
-            const TYPE& operand_a = STACK_REF(TYPE, fp + operands.a_addr);      \
-            const TYPE& operand_b = STACK_REF(TYPE, fp + operands.b_addr);      \
+            const TYPE& operand_a = STACK_REF(TYPE, ap + operands.a_addr);      \
+            const TYPE& operand_b = STACK_REF(TYPE, bp + operands.b_addr);      \
             if (operand_a OP operand_b) ip = code + operands.jump_addr;			\
-			/*std::cout << "jump at: " << operands.jump_addr << std::endl;*/		\
+			/*std::cout << "jump at: " << operands.jump_addr << std::endl;*/	\
             } while (0);
 
         #define COMPARE_CONST_OP(TYPE, OP)                                      \
@@ -144,112 +258,14 @@ namespace vm {
 				uint32_t jump_addr;												\
 			};																	\
 			const auto& operands = FETCH(OperandsStruct);						\
-            const TYPE& operand_a = STACK_REF(TYPE, fp + operands.a_addr);		\
-            const TYPE& operand_b = operands.b;                                	\
-            if (operand_a OP operand_b) {										\
+            const TYPE& operand_a = STACK_REF(TYPE, ap + operands.a_addr);		\
+            if (operand_a OP operands.b) {										\
 				ip = code + operands.jump_addr;									\
-				/*std::cout << "cjump at: " << (int)(ip - code) << std::endl;*/		\
+				/*std::cout << "cjump at: " << (int)(ip - code) << std::endl;*/	\
 			}																	\
-            } while (0);
-        
-        OP_COPY_TO_PTR_1: ERROR();
-        OP_COPY_TO_PTR_2: ERROR();
-        OP_COPY_TO_PTR_4: ERROR();
-        OP_COPY_TO_PTR_8: ERROR();
-        OP_COPY_TO_PTR_16: ERROR();
-        OP_COPY_TO_PTR_VAR: ERROR();
+		} while (0);
 
-        OP_PTR_OF: ERROR();
 
-		#define COPY_TO_STATIC(TYPE)															\
-			do {																				\
-				struct [[gnu::packed]] LoadStruct {												\
-					uint16_t dest_addr;															\
-					uint16_t local_addr;														\
-				};																				\
-				LoadStruct& load = FETCH(LoadStruct);                                   		\
-				TYPE& dest = STACK_REF(TYPE, static_memory + load.dest_addr);					\
-				TYPE& local = STACK_REF(TYPE, fp + load.local_addr);							\
-				dest = local;																	\
-				std::cout << "copy to static: " << (int)load.dest_addr << " <- " << (int)local << std::endl;		\
-			} while(0);
-
-		OP_COPY_TO_STATIC_1: COPY_TO_STATIC(uint8_t); ADVANCE();
-		OP_COPY_TO_STATIC_2: COPY_TO_STATIC(uint16_t); ADVANCE();
-		OP_COPY_TO_STATIC_4: COPY_TO_STATIC(uint32_t); ADVANCE();
-		OP_COPY_TO_STATIC_8: COPY_TO_STATIC(uint64_t); ADVANCE();
-		OP_COPY_TO_STATIC_16: ERROR();
-		OP_COPY_TO_STATIC_VAR: ERROR();
-
-        OP_ADD_I8: BINARY_OP(int8_t, +); ADVANCE();
-        OP_SUB_I8: BINARY_OP(int8_t, -); ADVANCE();
-        OP_MUL_I8: BINARY_OP(int8_t, *); ADVANCE();
-        OP_DIV_I8: BINARY_OP(int8_t, /); ADVANCE();
-        OP_DIV_U8: BINARY_OP(uint8_t, /); ADVANCE();
-        OP_MOD_I8: BINARY_OP(int8_t, %); ADVANCE();
-        OP_ADD_CONST_I8: BINARY_OP(int8_t, +); ADVANCE();
-        OP_SUB_CONST_I8: BINARY_OP(int8_t, -); ADVANCE();
-        OP_MUL_CONST_I8: BINARY_OP(int8_t, *); ADVANCE();
-        OP_DIV_CONST_I8: BINARY_OP(int8_t, /); ADVANCE();
-        OP_DIV_CONST_U8: BINARY_OP(uint8_t, /); ADVANCE();
-        OP_MOD_CONST_I8: BINARY_OP(int8_t, %); ADVANCE();
-
-        OP_ADD_I16: BINARY_OP(int16_t, +); ADVANCE();
-        OP_SUB_I16: BINARY_OP(int16_t, -); ADVANCE();
-        OP_MUL_I16: BINARY_OP(int16_t, *); ADVANCE();
-        OP_DIV_I16: BINARY_OP(int16_t, /); ADVANCE();
-        OP_DIV_U16: BINARY_OP(uint16_t, /); ADVANCE();
-        OP_MOD_I16: BINARY_OP(int16_t, %); ADVANCE();
-        OP_ADD_CONST_I16: BINARY_OP(int16_t, +); ADVANCE();
-        OP_SUB_CONST_I16: BINARY_OP(int16_t, -); ADVANCE();
-        OP_MUL_CONST_I16: BINARY_OP(int16_t, *); ADVANCE();
-        OP_DIV_CONST_I16: BINARY_OP(int16_t, /); ADVANCE();
-        OP_DIV_CONST_U16: BINARY_OP(uint16_t, /); ADVANCE();
-        OP_MOD_CONST_I16: BINARY_OP(int16_t, %); ADVANCE();
-
-        OP_ADD_I32: BINARY_OP(int32_t, +); ADVANCE();
-        OP_SUB_I32: BINARY_OP(int32_t, -); ADVANCE();
-        OP_MUL_I32: BINARY_OP(int32_t, *); ADVANCE();
-        OP_DIV_I32: BINARY_OP(int32_t, /); ADVANCE();
-        OP_DIV_U32: BINARY_OP(uint32_t, /); ADVANCE();
-        OP_MOD_I32: BINARY_OP(int32_t, %); ADVANCE();
-        OP_ADD_CONST_I32: BINARY_OP(int32_t, +); ADVANCE();
-        OP_SUB_CONST_I32: BINARY_OP(int32_t, -); ADVANCE();
-        OP_MUL_CONST_I32: BINARY_OP(int32_t, *); ADVANCE();
-        OP_DIV_CONST_I32: BINARY_OP(int32_t, /); ADVANCE();
-        OP_DIV_CONST_U32: BINARY_OP(uint32_t, /); ADVANCE();
-        OP_MOD_CONST_I32: BINARY_OP(int32_t, %); ADVANCE();
-
-        OP_ADD_I64: BINARY_OP(int64_t, +); ADVANCE();
-        OP_SUB_I64: BINARY_OP(int64_t, -); ADVANCE();
-        OP_MUL_I64: BINARY_OP(int64_t, *); ADVANCE();
-        OP_DIV_I64: BINARY_OP(int64_t, /); ADVANCE();
-        OP_DIV_U64: BINARY_OP(uint64_t, /); ADVANCE();
-        OP_MOD_I64: BINARY_OP(int64_t, %); ADVANCE();
-        OP_ADD_CONST_I64: BINARY_OP(int64_t, +); ADVANCE();
-        OP_SUB_CONST_I64: BINARY_OP(int64_t, -); ADVANCE();
-        OP_MUL_CONST_I64: BINARY_OP(int64_t, *); ADVANCE();
-        OP_DIV_CONST_I64: BINARY_OP(int64_t, /); ADVANCE();
-        OP_DIV_CONST_U64: BINARY_OP(uint64_t, /); ADVANCE();
-        OP_MOD_CONST_I64: BINARY_OP(int64_t, %); ADVANCE();
-
-        OP_ADD_FLOAT: BINARY_OP(float, +); ADVANCE();
-        OP_SUB_FLOAT: BINARY_OP(float, -); ADVANCE();
-        OP_MUL_FLOAT: BINARY_OP(float, *); ADVANCE();
-        OP_DIV_FLOAT: BINARY_OP(float, /); ADVANCE();
-        OP_ADD_CONST_FLOAT: BINARY_OP(float, +); ADVANCE();
-        OP_SUB_CONST_FLOAT: BINARY_OP(float, -); ADVANCE();
-        OP_MUL_CONST_FLOAT: BINARY_OP(float, *); ADVANCE();
-        OP_DIV_CONST_FLOAT: BINARY_OP(float, /); ADVANCE();
-
-        OP_ADD_DOUBLE: BINARY_OP(double, +); ADVANCE();
-        OP_SUB_DOUBLE: BINARY_OP(double, -); ADVANCE();
-        OP_MUL_DOUBLE: BINARY_OP(double, *); ADVANCE();
-        OP_DIV_DOUBLE: BINARY_OP(double, /); ADVANCE();
-        OP_ADD_CONST_DOUBLE: BINARY_OP(double, +); ADVANCE();
-        OP_SUB_CONST_DOUBLE: BINARY_OP(double, -); ADVANCE();
-        OP_MUL_CONST_DOUBLE: BINARY_OP(double, *); ADVANCE();
-        OP_DIV_CONST_DOUBLE: BINARY_OP(double, /); ADVANCE();
 
         OP_IF_EQ_I8: COMPARE_OP(int8_t, ==); ADVANCE();
         OP_IF_NEQ_I8: COMPARE_OP(int8_t, !=); ADVANCE();
@@ -345,10 +361,19 @@ namespace vm {
         OP_IF_GT_CONST_DOUBLE: COMPARE_CONST_OP(double, >); ADVANCE();
         OP_IF_EGT_CONST_DOUBLE: COMPARE_CONST_OP(double, >=); ADVANCE();
 
+        OP_GOTO:
+		do {
+			auto jump_addr = FETCH(uint32_t);
+            ip = code + jump_addr;
+			//std::cout << "jump at: " << (int)(ip - code) << std::endl;
+        } while(0); ADVANCE();
+
+
+
         OP_CALL: {
 			Instruction* func_addr = code + FETCH(uint32_t);
-			Value* args = fp + FETCH(uint16_t);
-			Value* ret = fp + FETCH(uint16_t);
+			Value* args = ap + FETCH(uint16_t);
+			Value* ret = ap + FETCH(uint16_t);
 
             Instruction*& return_address = STACK_REF(Instruction*, sp);
             return_address = ip;
@@ -368,6 +393,10 @@ namespace vm {
             
 			ip = func_addr;
             fp = sp;
+
+			dp = fp;
+			ap = fp;
+			bp = fp;
 
             ADVANCE();
         }
@@ -389,6 +418,9 @@ namespace vm {
             Instruction*& return_address = STACK_REF(Instruction*, sp);
             ip = return_address;
 
+			dp = fp;
+			ap = fp;
+			bp = fp;
 
 			ADVANCE();
         }
@@ -396,23 +428,20 @@ namespace vm {
         OP_CALL_NATIVE: {
             uint16_t class_id = FETCH(uint16_t);
             uint16_t method_id = FETCH(uint16_t);
-            void* obj = fp + FETCH(uint16_t);
-			Value* args = fp + FETCH(uint16_t);
-			Value* ret = fp + FETCH(uint16_t);
+            void* obj = ap + FETCH(uint16_t);
+			Value* args = ap + FETCH(uint16_t);
+			Value* ret = dp + FETCH(uint16_t);
             vm.db.classes[class_id].methods[method_id].value_call(args, obj, ret);
             ADVANCE();
         }
-
-        OP_GOTO:
-		do {
-			auto jump_addr = FETCH(uint32_t);
-            ip = code + jump_addr;
-			//std::cout << "jump at: " << (int)(ip - code) << std::endl;
-        } while(0); ADVANCE();
         
-        OP_ALT: ERROR();
+        
+		
+		OP_ALT: ERROR();
 
         OP_DIRECT_THREADED: ERROR();
+
+
 
         OP_ERR: {
             std::cout << "runtime error at: " << std::hex << (ip - code) << std::dec << std::endl;

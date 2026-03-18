@@ -15,38 +15,6 @@ std::string AssignmentStatement::to_string() const {
 	return expr_left->to_string() + " = " + expr_right->to_string();
 }
 
-/*
-namespace {
-
-    std::vector<uint8_t> generate_copy_to_static_bytecode(
-			const uint16_t offset_static,
-			const uint16_t offset_local,
-			const int size,
-			BytecodeGenerationInfo& bgi) {
-        std::vector<uint8_t> result;
-        if (size == 0) return {};
-		
-        auto dest = vm::Value2::from(offset_static);
-        auto local = vm::Value2::from(offset_local);
-        switch (size) {
-            case 1: result.push_back((uint8_t)vm::Instruction::COPY_TO_STATIC_1); break;
-            case 2: result.push_back((uint8_t)vm::Instruction::COPY_TO_STATIC_2); break;
-            case 4: result.push_back((uint8_t)vm::Instruction::COPY_TO_STATIC_4); break;
-            case 8: result.push_back((uint8_t)vm::Instruction::COPY_TO_STATIC_8); break;
-            case 16: result.push_back((uint8_t)vm::Instruction::COPY_TO_STATIC_16); break;
-            default:
-                result.push_back((uint8_t)vm::Instruction::COPY_TO_STATIC_VAR);
-                result.push_back(size);
-        }
-        result.push_back(dest.v[0].u8);
-        result.push_back(dest.v[1].u8);
-        result.push_back(local.v[0].u8);
-        result.push_back(local.v[1].u8);
-        return result;
-    }
-}
-*/
-
 std::vector<ExprPtr*> AssignmentStatement::get_expressions() {
 	return {&expr_right};
 }

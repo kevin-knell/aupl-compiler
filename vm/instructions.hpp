@@ -6,8 +6,7 @@
 #define OPCODES(_, s) \
     _(NOP, s(1)) \
     \
-    _(GROW, s(1, 2)) \
-    _(SHRINK, s(1, 2)) \
+    \
     \
     _(LOAD_CONST_1, s(1, 2, 1)) \
     _(LOAD_CONST_2, s(1, 2, 2)) \
@@ -17,43 +16,33 @@
     _(LOAD_CONST_VAR, s(1, 2, 2)) \
 	\
 	_(LOAD_STRING, s(1, 2, 2)) \
+	\
+	\
+	\
+	_(SET_DP_TO_FP, s(1)) \
+	_(SET_AP_TO_FP, s(1)) \
+	_(SET_BP_TO_FP, s(1)) \
+	\
+	_(SET_DP_TO_STATIC, s(1)) \
+	_(SET_AP_TO_STATIC, s(1)) \
+	_(SET_BP_TO_STATIC, s(1)) \
     \
-    _(COPY_1, s(1, 2, 2)) \
-    _(COPY_2, s(1, 2, 2)) \
-    _(COPY_4, s(1, 2, 2)) \
-    _(COPY_8, s(1, 2, 2)) \
-    _(COPY_16, s(1, 2, 2)) \
-    _(COPY_VAR, s(1, 2, 2, 2)) \
+	_(SET_DP_TO_D_PTR, s(1, 2)) \
+	_(SET_DP_TO_A_PTR, s(1, 2)) \
+	_(SET_DP_TO_B_PTR, s(1, 2)) \
     \
-    _(COPY_FP_SP_1, s(1, 2, 2)) \
-    _(COPY_FP_SP_2, s(1, 2, 2)) \
-    _(COPY_FP_SP_4, s(1, 2, 2)) \
-    _(COPY_FP_SP_8, s(1, 2, 2)) \
-    _(COPY_FP_SP_16, s(1, 2, 2)) \
-    _(COPY_FP_SP_VAR, s(1, 2, 2, 2)) \
+	_(SET_AP_TO_D_PTR, s(1, 2)) \
+	_(SET_AP_TO_A_PTR, s(1, 2)) \
+	_(SET_AP_TO_B_PTR, s(1, 2)) \
     \
-    _(COPY_SP_FP_1, s(1, 2, 2)) \
-    _(COPY_SP_FP_2, s(1, 2, 2)) \
-    _(COPY_SP_FP_4, s(1, 2, 2)) \
-    _(COPY_SP_FP_8, s(1, 2, 2)) \
-    _(COPY_SP_FP_16, s(1, 2, 2)) \
-    _(COPY_SP_FP_VAR, s(1, 2, 2, 2)) \
+	_(SET_BP_TO_D_PTR, s(1, 2)) \
+	_(SET_BP_TO_A_PTR, s(1, 2)) \
+	_(SET_BP_TO_B_PTR, s(1, 2)) \
     \
-    _(COPY_TO_PTR_1, s(1, 2, 2)) \
-    _(COPY_TO_PTR_2, s(1, 2, 2)) \
-    _(COPY_TO_PTR_4, s(1, 2, 2)) \
-    _(COPY_TO_PTR_8, s(1, 2, 2)) \
-    _(COPY_TO_PTR_16, s(1, 2, 2)) \
-    _(COPY_TO_PTR_VAR, s(1, 2, 2, 2)) \
+    _(PTR_A, s(1, 2, 2)) \
+    _(PTR_B, s(1, 2, 2)) \
     \
-    _(PTR_OF, s(1, 2, 2)) \
     \
-    _(COPY_TO_STATIC_1, s(1, 2, 2)) \
-    _(COPY_TO_STATIC_2, s(1, 2, 2)) \
-    _(COPY_TO_STATIC_4, s(1, 2, 2)) \
-    _(COPY_TO_STATIC_8, s(1, 2, 2)) \
-    _(COPY_TO_STATIC_16, s(1, 2, 2)) \
-    _(COPY_TO_STATIC_VAR, s(1, 2, 2, 2)) \
     \
     _(ADD_I8, s(1, 2, 2, 2)) \
     _(SUB_I8, s(1, 2, 2, 2)) \
@@ -124,6 +113,8 @@
     _(SUB_CONST_DOUBLE, s(1, 2, 2, 8)) \
     _(MUL_CONST_DOUBLE, s(1, 2, 2, 8)) \
     _(DIV_CONST_DOUBLE, s(1, 2, 2, 8)) \
+    \
+    \
     \
     _(IF_EQ_I8, s(1, 2, 2, 4)) \
     _(IF_NEQ_I8, s(1, 2, 2, 4)) \
@@ -218,17 +209,23 @@
     _(IF_ELT_CONST_DOUBLE, s(1, 2, 2, 4)) \
     _(IF_GT_CONST_DOUBLE, s(1, 2, 2, 4)) \
     _(IF_EGT_CONST_DOUBLE, s(1, 2, 2, 4)) \
+	\
+    _(GOTO, s(1, 4)) \
+    \
+    \
     \
     _(CALL, s(1, 4, 2, 2)) \
     _(RET, s(1)) \
     \
     _(CALL_NATIVE, s(1, 2, 2, 2, 2, 2)) \
     \
-    _(GOTO, s(1, 4)) \
+    \
     \
     _(ALT, s(1, 2, 2, 2)) \
     \
     _(DIRECT_THREADED, s(1)) \
+    \
+    \
     \
     _(ERR, s(1)) \
     _(HALT, s(1))
