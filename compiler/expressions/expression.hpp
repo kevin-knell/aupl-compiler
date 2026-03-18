@@ -12,7 +12,7 @@
 
 #define OVERRIDE_ACCEPT_EXPRESSION_VISITOR \
 	void accept(ExpressionVisitor& visitor) override { visitor.visit(*this); } \
-	void accept(ExpressionVisitor& visitor, VarExprPtr var_expr) override { visitor.visit(*this, var_expr); }
+	void accept(ExpressionAssignmentVisitor& visitor, VarExprPtr var_expr) override { visitor.visit(*this, var_expr); }
 
 namespace cmp {
 
@@ -39,7 +39,7 @@ struct Expression {
     virtual std::string to_string() const = 0;
 
 	virtual void accept(ExpressionVisitor& visitor) { visitor.visit(*this); }
-	virtual void accept(ExpressionVisitor& visitor, VarExprPtr var_expr) { visitor.visit(*this, var_expr); }
+	virtual void accept(ExpressionAssignmentVisitor& visitor, VarExprPtr var_expr) { visitor.visit(*this, var_expr); }
     
     virtual std::vector<ExprPtr*> get_expressions();
     virtual int get_level();

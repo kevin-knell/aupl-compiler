@@ -162,11 +162,11 @@ int main(int argc, char** argv) {
 
     std::cout << "\ngenerating bytecode layout" << std::endl;
 	auto size_gen = cmp::BytecodeGenerator<true>(symbol_table);
-    size_t bytecode_size = size_gen.generate_bytecode(symbol_table, 0);
+    size_t bytecode_size = size_gen.generate_bytecode(symbol_table);
 
     std::cout << "\ngenerating bytecode" << std::endl;
 	auto code_gen = cmp::BytecodeGenerator<false>(symbol_table);
-    auto bpi = code_gen.generate_bytecode(symbol_table, bytecode_size);
+    auto bpi = code_gen.generate_bytecode(symbol_table);
 
     if (!bpi.has_main) {
         std::cout << "no main function!" << std::endl;

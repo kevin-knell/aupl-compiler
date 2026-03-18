@@ -32,6 +32,10 @@ vm::Value* UnaryExpression::eval_constexpr() const {
     switch (op) {
         case OPERATOR::NOT: result->i64 = !expr_val->i64; break;
         case OPERATOR::MINUS: result->i64 = -expr_val->i64; break;
+		default: {
+			std::cerr << "Error: Unexpected Unary Expression case!" << std::endl;
+			exit(1);
+		}
     }
 
     return reinterpret_cast<vm::Value*>(result);

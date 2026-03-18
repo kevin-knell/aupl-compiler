@@ -18,7 +18,26 @@ void File::register_to_db(vm::ClassDB &db) {
 }
 
 File::File(const String& path, int64_t open_flag) {
-	std::ios::openmode open_mode = std::ios::out | std::ios::in;
+	std::ios::openmode open_mode;
+	if (
+		open_flag &
+		(
+			static_cast<int64_t>(OPEN_FLAG::WRITE) |
+			static_cast<int64_t>(OPEN_FLAG::READ)
+		)
+	) open_mode = std::ios::out | std::ios::in;
+	else if (
+		open_flag &
+		static_cast<int64_t>(OPEN_FLAG::READ)
+	) open_mode = std::ios::in;
+	else if (
+		open_flag &
+		static_cast<int64_t>(OPEN_FLAG::WRITE)
+	) open_mode = std::ios::out;
+	else {
+		std::cerr << "Error: Invalid open flag!" << std::endl;
+		return;
+	}
 
 	file_access.open(path.str(), open_mode);
 }

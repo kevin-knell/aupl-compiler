@@ -111,5 +111,5 @@ static_assert(sizeof(Shared<int>) == 16);
 using Shared8 = Shared<int64_t>;
 
 void register_shared_to_db(vm::ClassDB db) {
-
+	(void)db;
 }

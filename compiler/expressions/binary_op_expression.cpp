@@ -42,6 +42,10 @@ vm::Value* BinaryExpression::eval_constexpr() const {
         case OPERATOR::SUB: result->i64 = left_val->i64 - right_val->i64; break;
         case OPERATOR::MUL: result->i64 = left_val->i64 * right_val->i64; break;
         case OPERATOR::DIV: result->i64 = left_val->i64 / right_val->i64; break;
+		default: {
+			std::cerr << "Error: Unexpected Binary Expression case!" << std::endl;
+			exit(1);
+		}
     }
 
     return reinterpret_cast<vm::Value*>(result);

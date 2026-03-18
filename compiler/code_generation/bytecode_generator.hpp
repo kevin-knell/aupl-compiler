@@ -72,7 +72,7 @@ struct BytecodeProductInfo {
 };
 
 template<bool size_only>
-class BytecodeGenerator : StatementVisitor, ExpressionVisitor {
+class BytecodeGenerator : StatementVisitor, ExpressionVisitor, ExpressionAssignmentVisitor {
 private:
 	using BC_GEN_RES = std::conditional_t<size_only, size_t, BytecodeProductInfo>;
 	
@@ -80,7 +80,7 @@ private:
 	BC_GEN_RES result;
 public:
 	BytecodeGenerator(SymbolTable& symbol_table) : bgi(BytecodeGenerationInfo(symbol_table)) {}
-	BC_GEN_RES generate_bytecode(SymbolTable& symbol_table, size_t bytecode_size);
+	BC_GEN_RES generate_bytecode(SymbolTable& symbol_table);
 
 private:
 	void add_error();
@@ -115,15 +115,17 @@ private:
 	void visit(LabelStatement& stmt) override { generate_bytecode(stmt); };
 	void visit(ExpressionStatement& stmt) override { generate_bytecode(stmt); };
 	
-	void visit(VariableExpression& expr) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
-	void visit(UnaryExpression& expr) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
-	void visit(BinaryExpression& expr) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
-	void visit(LoadConstExpression& expr) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
-	void visit(CallExpression& expr) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
-	void visit(AccessExpression& expr) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
-	void visit(TupleExpression& expr) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
-	void visit(StringLiteralExpression& expr) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
+	void visit(Expression&) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
+	void visit(VariableExpression&) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
+	void visit(UnaryExpression&) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
+	void visit(BinaryExpression&) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
+	void visit(LoadConstExpression&) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
+	void visit(CallExpression&) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
+	void visit(AccessExpression&) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
+	void visit(TupleExpression&) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
+	void visit(StringLiteralExpression&) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
 
+	void visit(Expression& expr, VarExprPtr var_expr) override { generate_bytecode(expr, var_expr); }
 	void visit(VariableExpression& expr, VarExprPtr var_expr) override { generate_bytecode(expr, var_expr); }
 	void visit(UnaryExpression& expr, VarExprPtr var_expr) override { generate_bytecode(expr, var_expr); }
 	void visit(BinaryExpression& expr, VarExprPtr var_expr) override { generate_bytecode(expr, var_expr); }
@@ -135,7 +137,7 @@ private:
 };
 
 template <bool size_only>
-inline BytecodeGenerator<size_only>::BC_GEN_RES BytecodeGenerator<size_only>::generate_bytecode(SymbolTable &symbol_table, size_t bytecode_size) {
+inline BytecodeGenerator<size_only>::BC_GEN_RES BytecodeGenerator<size_only>::generate_bytecode(SymbolTable &symbol_table) {
 	if constexpr(size_only) {
 		result = size_t(0);
 	} else {
@@ -260,7 +262,7 @@ inline void BytecodeGenerator<size_only>::append(vm::Instruction op_code, std::v
 // Statements
 // ================================================================================================
 template <bool size_only>
-inline void BytecodeGenerator<size_only>::generate_bytecode(const Statement &stmt) {
+inline void BytecodeGenerator<size_only>::generate_bytecode(const Statement &) {
 	add_error();
 }
 
@@ -302,7 +304,7 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const ConditionalJum
 		ConditionVisitor(BytecodeGenerator& self, const ConditionalJumpStatement& stmt)
 				: self(self), stmt(stmt) {}
 
-		void visit(Expression& expr) override { self.add_error(); }
+		void visit(Expression&) override { self.add_error(); }
 		void visit(VariableExpression& expr) override {
 			vm::Value2 src{ .u16 = static_cast<uint16_t>(Scope::get_variable_index(self.bgi.scope, expr.name)) };
 			vm::Value4 if_addr{ .u32 = stmt.if_label->get_address() };
@@ -333,7 +335,7 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const ConditionalJum
 				);
 			}
 		}
-		void visit(UnaryExpression& expr) override { self.add_error(); }
+		void visit(UnaryExpression&) override { self.add_error(); }
 		void visit(BinaryExpression& expr) override {
 			auto left_var = std::dynamic_pointer_cast<VariableExpression>(expr.left)->var;
 			auto right_var = std::dynamic_pointer_cast<VariableExpression>(expr.right)->var;
@@ -376,11 +378,13 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const ConditionalJum
 				);
 			}
 		}
-		void visit(LoadConstExpression& expr) override { self.add_error(); }
-		void visit(CallExpression& expr) override { self.add_error(); }
-		void visit(AccessExpression& expr) override { self.add_error(); }
-		void visit(TupleExpression& expr) override { self.add_error(); }
-		void visit(StringLiteralExpression& expr) override { self.add_error(); }
+		void visit(LoadConstExpression&) override { self.add_error(); }
+		void visit(CallExpression&) override { self.add_error(); }
+		void visit(AccessExpression&) override { self.add_error(); }
+		void visit(TupleExpression&) override { self.add_error(); }
+		void visit(StringLiteralExpression&) override { self.add_error(); }
+
+
 	};
 
 	ConditionVisitor condition_visitor(*this, stmt);
@@ -389,7 +393,7 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const ConditionalJum
 }
 
 template <bool size_only>
-inline void BytecodeGenerator<size_only>::generate_bytecode(const ReturnStatement &stmt) {
+inline void BytecodeGenerator<size_only>::generate_bytecode(const ReturnStatement&) {
 	append(vm::Instruction::RET, {});
 }
 
@@ -414,9 +418,7 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const ExpressionStat
 // dest <- expr
 // ================================================================================================
 template <bool size_only>
-inline void BytecodeGenerator<size_only>::generate_bytecode(
-		const Expression &expr,
-		VarExprPtr dest_var) {
+inline void BytecodeGenerator<size_only>::generate_bytecode(const Expression&, VarExprPtr) {
 	add_error();
 }
 
@@ -450,9 +452,7 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const VariableExpres
 }
 
 template <bool size_only>
-inline void BytecodeGenerator<size_only>::generate_bytecode(
-		const UnaryExpression& expr,
-		VarExprPtr dest_var) {
+inline void BytecodeGenerator<size_only>::generate_bytecode(const UnaryExpression&, VarExprPtr) {
 	add_error();
 }
 
@@ -593,12 +593,12 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(
 }
 
 template <bool size_only>
-inline void BytecodeGenerator<size_only>::generate_bytecode(const AccessExpression &expr, VarExprPtr dest_var) {
+inline void BytecodeGenerator<size_only>::generate_bytecode(const AccessExpression&, VarExprPtr) {
 	add_error();
 }
 
 template <bool size_only>
-inline void BytecodeGenerator<size_only>::generate_bytecode(const TupleExpression &expr, VarExprPtr dest_var) {
+inline void BytecodeGenerator<size_only>::generate_bytecode(const TupleExpression&, VarExprPtr) {
 	add_error();
 }
 

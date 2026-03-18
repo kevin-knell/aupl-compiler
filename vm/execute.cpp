@@ -295,45 +295,29 @@ namespace vm {
         OP_IF_GT_CONST_I64: COMPARE_CONST_OP(int64_t, >); ADVANCE();
         OP_IF_EGT_CONST_I64: COMPARE_CONST_OP(int64_t, >=); ADVANCE();
 
-        OP_IF_EQ_U8: COMPARE_OP(uint8_t, ==); ADVANCE();
-        OP_IF_NEQ_U8: COMPARE_OP(uint8_t, !=); ADVANCE();
         OP_IF_LT_U8: COMPARE_OP(uint8_t, <); ADVANCE();
         OP_IF_ELT_U8: COMPARE_OP(uint8_t, <=); ADVANCE();
-        OP_IF_EQ_CONST_U8: COMPARE_CONST_OP(uint8_t, ==); ADVANCE();
-        OP_IF_NEQ_CONST_U8: COMPARE_CONST_OP(uint8_t, !=); ADVANCE();
         OP_IF_LT_CONST_U8: COMPARE_CONST_OP(uint8_t, <); ADVANCE();
         OP_IF_ELT_CONST_U8: COMPARE_CONST_OP(uint8_t, <=); ADVANCE();
         OP_IF_GT_CONST_U8: COMPARE_CONST_OP(uint8_t, >); ADVANCE();
         OP_IF_EGT_CONST_U8: COMPARE_CONST_OP(uint8_t, >=); ADVANCE();
 
-        OP_IF_EQ_U16: COMPARE_OP(uint16_t, ==); ADVANCE();
-        OP_IF_NEQ_U16: COMPARE_OP(uint16_t, !=); ADVANCE();
         OP_IF_LT_U16: COMPARE_OP(uint16_t, <); ADVANCE();
         OP_IF_ELT_U16: COMPARE_OP(uint16_t, <=); ADVANCE();
-        OP_IF_EQ_CONST_U16: COMPARE_CONST_OP(uint16_t, ==); ADVANCE();
-        OP_IF_NEQ_CONST_U16: COMPARE_CONST_OP(uint16_t, !=); ADVANCE();
         OP_IF_LT_CONST_U16: COMPARE_CONST_OP(uint16_t, <); ADVANCE();
         OP_IF_ELT_CONST_U16: COMPARE_CONST_OP(uint16_t, <=); ADVANCE();
         OP_IF_GT_CONST_U16: COMPARE_CONST_OP(uint16_t, >); ADVANCE();
         OP_IF_EGT_CONST_U16: COMPARE_CONST_OP(uint16_t, >=); ADVANCE();
 
-        OP_IF_EQ_U32: COMPARE_OP(uint32_t, ==); ADVANCE();
-        OP_IF_NEQ_U32: COMPARE_OP(uint32_t, !=); ADVANCE();
         OP_IF_LT_U32: COMPARE_OP(uint32_t, <); ADVANCE();
         OP_IF_ELT_U32: COMPARE_OP(uint32_t, <=); ADVANCE();
-        OP_IF_EQ_CONST_U32: COMPARE_CONST_OP(uint32_t, ==); ADVANCE();
-        OP_IF_NEQ_CONST_U32: COMPARE_CONST_OP(uint32_t, !=); ADVANCE();
         OP_IF_LT_CONST_U32: COMPARE_CONST_OP(uint32_t, <); ADVANCE();
         OP_IF_ELT_CONST_U32: COMPARE_CONST_OP(uint32_t, <=); ADVANCE();
         OP_IF_GT_CONST_U32: COMPARE_CONST_OP(uint32_t, >); ADVANCE();
         OP_IF_EGT_CONST_U32: COMPARE_CONST_OP(uint32_t, >=); ADVANCE();
 
-        OP_IF_EQ_U64: COMPARE_OP(uint64_t, ==); ADVANCE();
-        OP_IF_NEQ_U64: COMPARE_OP(uint64_t, !=); ADVANCE();
         OP_IF_LT_U64: COMPARE_OP(uint64_t, <); ADVANCE();
         OP_IF_ELT_U64: COMPARE_OP(uint64_t, <=); ADVANCE();
-        OP_IF_EQ_CONST_U64: COMPARE_CONST_OP(uint64_t, ==); ADVANCE();
-        OP_IF_NEQ_CONST_U64: COMPARE_CONST_OP(uint64_t, !=); ADVANCE();
         OP_IF_LT_CONST_U64: COMPARE_CONST_OP(uint64_t, <); ADVANCE();
         OP_IF_ELT_CONST_U64: COMPARE_CONST_OP(uint64_t, <=); ADVANCE();
         OP_IF_GT_CONST_U64: COMPARE_CONST_OP(uint64_t, >); ADVANCE();
@@ -425,10 +409,6 @@ namespace vm {
             ip = code + jump_addr;
 			//std::cout << "jump at: " << (int)(ip - code) << std::endl;
         } while(0); ADVANCE();
-
-        OP_IF_FALSE_GOTO: {
-            ERROR();
-        }
         
         OP_ALT: ERROR();
 
@@ -443,6 +423,9 @@ namespace vm {
             std::cout << "halt" << std::endl;
             return;
         }
+
+		#define UNUSED_LABEL(m_op, _) goto OP_##m_op;
+		OPCODES(UNUSED_LABEL, _)
 
         #undef DISPATCH
     }

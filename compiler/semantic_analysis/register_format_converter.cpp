@@ -140,8 +140,7 @@ void RegisterFormatConverter::convert(ExpressionStatement& stmt) {
 	convert_to_register_format(expr, stmt.is_volatile);
 }
 
-void RegisterFormatConverter::convert(LabelStatement& stmt) {
-}
+void RegisterFormatConverter::convert(LabelStatement&) {}
 
 // ================================================================================================
 // Public

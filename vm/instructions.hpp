@@ -314,14 +314,14 @@ namespace vm {
 					case BinOp::LT: return is_const ? Instruction::IF_LT_CONST_I8 : Instruction::IF_LT_I8;
 					case BinOp::GE: return is_const ? Instruction::IF_EGT_CONST_I8 : Instruction::ERR;
 					case BinOp::LE: return is_const ? Instruction::IF_ELT_CONST_I8 : Instruction::IF_ELT_I8;
+					default: return Instruction::ERR;
                 }
-                break;
             case BinType::UINT8:
                 switch (op) {
                     case BinOp::DIV: return is_const ? Instruction::DIV_CONST_U8 : Instruction::DIV_U8;
+					default: return Instruction::ERR;
                     // Add other ops as needed
                 }
-                break;
             case BinType::INT16:
                 switch (op) {
                     case BinOp::ADD: return is_const ? Instruction::ADD_CONST_I16 : Instruction::ADD_I16;
@@ -335,14 +335,14 @@ namespace vm {
 					case BinOp::LT: return is_const ? Instruction::IF_LT_CONST_I16 : Instruction::IF_LT_I16;
 					case BinOp::GE: return is_const ? Instruction::IF_EGT_CONST_I16 : Instruction::ERR;
 					case BinOp::LE: return is_const ? Instruction::IF_ELT_CONST_I16 : Instruction::IF_ELT_I16;
+					default: return Instruction::ERR;
                 }
-                break;
             case BinType::UINT16:
                 switch (op) {
                     case BinOp::DIV: return is_const ? Instruction::DIV_CONST_U16 : Instruction::DIV_U16;
+					default: return Instruction::ERR;
                     // Add other ops as needed
                 }
-                break;
             case BinType::INT32:
                 switch (op) {
                     case BinOp::ADD: return is_const ? Instruction::ADD_CONST_I32 : Instruction::ADD_I32;
@@ -356,14 +356,14 @@ namespace vm {
 					case BinOp::LT: return is_const ? Instruction::IF_LT_CONST_I32 : Instruction::IF_LT_I32;
 					case BinOp::GE: return is_const ? Instruction::IF_EGT_CONST_I32 : Instruction::ERR;
 					case BinOp::LE: return is_const ? Instruction::IF_ELT_CONST_I32 : Instruction::IF_ELT_I32;
+					default: return Instruction::ERR;
                 }
-                break;
             case BinType::UINT32:
                 switch (op) {
                     case BinOp::DIV: return is_const ? Instruction::DIV_CONST_U32 : Instruction::DIV_U32;
+					default: return Instruction::ERR;
                     // Add other ops as needed
                 }
-                break;
             case BinType::INT64:
                 switch (op) {
                     case BinOp::ADD: return is_const ? Instruction::ADD_CONST_I64 : Instruction::ADD_I64;
@@ -377,14 +377,14 @@ namespace vm {
 					case BinOp::LT: return is_const ? Instruction::IF_LT_CONST_I64 : Instruction::IF_LT_I64;
 					case BinOp::GE: return is_const ? Instruction::IF_EGT_CONST_I64 : Instruction::ERR;
 					case BinOp::LE: return is_const ? Instruction::IF_ELT_CONST_I64 : Instruction::IF_ELT_I64;
+					default: return Instruction::ERR;
                 }
-                break;
             case BinType::UINT64:
                 switch (op) {
                     case BinOp::DIV: return is_const ? Instruction::DIV_CONST_U64 : Instruction::DIV_U64;
+					default: return Instruction::ERR;
                     // Add other ops as needed
                 }
-                break;
             case BinType::FLOAT:
                 switch (op) {
                     case BinOp::ADD: return is_const ? Instruction::ADD_CONST_FLOAT : Instruction::ADD_FLOAT;
@@ -398,8 +398,8 @@ namespace vm {
 					case BinOp::LT: return is_const ? Instruction::IF_LT_CONST_FLOAT : Instruction::IF_LT_FLOAT;
 					case BinOp::GE: return is_const ? Instruction::IF_EGT_CONST_FLOAT : Instruction::ERR;
 					case BinOp::LE: return is_const ? Instruction::IF_ELT_CONST_FLOAT : Instruction::IF_ELT_FLOAT;
+					default: return Instruction::ERR;
                 }
-                break;
             case BinType::DOUBLE:
                 switch (op) {
                     case BinOp::ADD: return is_const ? Instruction::ADD_CONST_DOUBLE : Instruction::ADD_DOUBLE;
@@ -413,9 +413,12 @@ namespace vm {
 					case BinOp::LT: return is_const ? Instruction::IF_LT_CONST_DOUBLE : Instruction::IF_LT_DOUBLE;
 					case BinOp::GE: return is_const ? Instruction::IF_EGT_CONST_DOUBLE : Instruction::ERR;
 					case BinOp::LE: return is_const ? Instruction::IF_ELT_CONST_DOUBLE : Instruction::IF_ELT_DOUBLE;
+					default: return Instruction::ERR;
                 }
-                break;
+			default: return Instruction::ERR;
         }
+		std::cerr << "Error: unexpected BinOp case!" << std::endl;
+		exit(1);
         return Instruction::ERR;
     }
 } // namespace vm
