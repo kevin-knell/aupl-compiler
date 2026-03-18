@@ -26,8 +26,8 @@ namespace {
         std::vector<uint8_t> result;
         if (size == 0) return {};
 		
-        vm::Value2 dest{ .u16 = offset_static };
-        vm::Value2 local{ .u16 = offset_local };
+        auto dest = vm::Value2::from(offset_static);
+        auto local = vm::Value2::from(offset_local);
         switch (size) {
             case 1: result.push_back((uint8_t)vm::Instruction::COPY_TO_STATIC_1); break;
             case 2: result.push_back((uint8_t)vm::Instruction::COPY_TO_STATIC_2); break;

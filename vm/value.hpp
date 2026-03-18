@@ -67,6 +67,8 @@ namespace vm {
                 val.i16 = v;
             else if constexpr (std::is_same_v<T, uint16_t>)
                 val.u16 = v;
+            else if constexpr (std::is_same_v<T, int32_t>)
+                val.i16 = static_cast<int16_t>(v);
             else
                 static_assert(!sizeof(T), "Unsupported Value2::from<T>()");
             return val;
@@ -105,6 +107,8 @@ namespace vm {
                 val.u32 = v;
             else if constexpr (std::is_same_v<T, float>)
                 val.f32 = v;
+			else if constexpr (std::is_same_v<T, size_t>)
+				val.u32 = static_cast<uint32_t>(v);
             else
                 static_assert(!sizeof(T), "Unsupported Value4::from<T>()");
             return val;

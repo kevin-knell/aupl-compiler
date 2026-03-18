@@ -19,8 +19,8 @@ namespace vm {
         Value* sp = stack;
         Value* fp = sp;
 
-        #define OP_PREFIX(name) &&OP_##name
-        #define DECL_OP(name) [static_cast<uint8_t>(Instruction::name)] = OP_PREFIX(name)
+        //#define OP_PREFIX(name) &&OP_##name
+        //#define DECL_OP(name) [static_cast<uint8_t>(Instruction::name)] = OP_PREFIX(name)
 
         static void* dispatch_table[256] = {
             #define DISPATCH_ENTRY(op, size) &&OP_##op,
@@ -423,9 +423,6 @@ namespace vm {
             std::cout << "halt" << std::endl;
             return;
         }
-
-		#define UNUSED_LABEL(m_op, _) goto OP_##m_op;
-		OPCODES(UNUSED_LABEL, _)
 
         #undef DISPATCH
     }
