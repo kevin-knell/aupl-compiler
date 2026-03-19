@@ -35,6 +35,7 @@
 #include <functional>
 
 #ifdef BCG_DEBUG_VERBOSE
+#define BCG_DEBUG
 #define BCG_DEBUG_PRINT(m_text) std::cout << m_text << std::endl
 #define BCG_DEBUG_PRINT_V(m_text) BCG_DEBUG_PRINT(m_text)
 #define BCG_DEBUG_PRINT_NV(m_text)
@@ -53,22 +54,11 @@ namespace cmp
 
 using VarExprPtr = std::shared_ptr<VariableExpression>;
 
-struct BytecodeGenerationInfo {
-	SymbolTable& symbol_table;
-	ClassPtr cls;
-	FuncPtr f;
-	ScopePtr scope;
-	size_t bytecode_size = 0;
-
-	BytecodeGenerationInfo(SymbolTable& symbol_table) : symbol_table(symbol_table) {}
-	BytecodeGenerationInfo(SymbolTable& symbol_table, ClassPtr cls, FuncPtr f, ScopePtr scope)
-			: symbol_table(symbol_table), cls(cls), f(f), scope(scope) {}
-};
-
 struct BytecodeProductInfo {
-	std::vector<uint8_t> bytecode;
     size_t main_start;
     bool has_main = false;
+	std::vector<uint8_t> bytecode;
+	std::vector<vm::Value> const_memory;
 };
 
 template<bool size_only>
@@ -76,11 +66,13 @@ class BytecodeGenerator : StatementVisitor, ExpressionVisitor, ExpressionAssignm
 private:
 	using BC_GEN_RES = std::conditional_t<size_only, size_t, BytecodeProductInfo>;
 	
-	BytecodeGenerationInfo bgi;
+	const SymbolTable& symbol_table;
+	ScopePtr scope;
+	
 	BC_GEN_RES result;
 public:
-	BytecodeGenerator(SymbolTable& symbol_table) : bgi(BytecodeGenerationInfo(symbol_table)) {}
-	BC_GEN_RES generate_bytecode(SymbolTable& symbol_table);
+	BytecodeGenerator(const SymbolTable& symbol_table) : symbol_table(symbol_table) {}
+	BC_GEN_RES generate_bytecode();
 
 private:
 	void add_error();
@@ -137,14 +129,15 @@ private:
 };
 
 template <bool size_only>
-inline BytecodeGenerator<size_only>::BC_GEN_RES BytecodeGenerator<size_only>::generate_bytecode(SymbolTable &symbol_table) {
+inline BytecodeGenerator<size_only>::BC_GEN_RES BytecodeGenerator<size_only>::generate_bytecode() {
 	if constexpr(size_only) {
 		result = size_t(0);
 	} else {
 		result = BytecodeProductInfo {
-			.bytecode = std::vector<uint8_t>(),
 			.main_start = 0,
-			.has_main = false
+			.has_main = false,
+			.bytecode = std::vector<uint8_t>(),
+			.const_memory = std::vector<vm::Value>()
 		};
 	}
 
@@ -152,7 +145,6 @@ inline BytecodeGenerator<size_only>::BC_GEN_RES BytecodeGenerator<size_only>::ge
     for (auto [cn, cls] : symbol_table.classes) {
 		if (cls->native_class_bind) continue;
         BCG_DEBUG_PRINT(cn);
-		bgi.cls = cls;
 
 		// functions
         for (auto [fn, f] : cls->functions) {
@@ -164,22 +156,18 @@ inline BytecodeGenerator<size_only>::BC_GEN_RES BytecodeGenerator<size_only>::ge
 			}
 
             BCG_DEBUG_PRINT("\n" << f->to_string());
-			bgi.f = f;
 
 			// scopes
-			std::function<void(cmp::ScopePtr)> iterate_scopes = [&](cmp::ScopePtr scope) {
-				bgi.scope = scope;
-
+			std::function<void()> iterate_scopes = [&]() {
 				if constexpr(size_only) {
 					scope->starting_address = result;
 					BCG_DEBUG_PRINT(scope->get_full_name() << ": " << std::hex << (int)(result) << std::dec);
 				} else {
-					BCG_DEBUG_PRINT(scope->get_full_name() << " " << (int)scope->starting_address << " {");
+					BCG_DEBUG_PRINT(scope->get_full_name() << " " << (int)scope->starting_address << " " << C_BRACE_L);
 				}
 
 				for (auto stmt : scope->body) {
 					if constexpr(size_only) {
-						bgi.bytecode_size = result;
 						BCG_DEBUG_PRINT("\t" << stmt->to_string() << ": " << std::hex << result << std::dec);
 					} else {
 						BCG_DEBUG_PRINT_V("\t" << stmt->to_string() << ": ");
@@ -199,19 +187,21 @@ inline BytecodeGenerator<size_only>::BC_GEN_RES BytecodeGenerator<size_only>::ge
 				if constexpr(size_only) {
 					BCG_DEBUG_PRINT("");
 				} else {
-					BCG_DEBUG_PRINT("}");
+					BCG_DEBUG_PRINT(C_BRACE_R);
 				}
                 
 				for (auto& lower : scope->lower_scopes) {
 					if (auto lower_scope = lower.lock()) {
-						iterate_scopes(lower_scope);
+						scope = lower_scope;
+						iterate_scopes();
 					} else {
 						BCG_DEBUG_PRINT("Warning: lower scope is expired");
 					}
                 }
             };
 
-			iterate_scopes(f->scope);
+			scope = f->scope;
+			iterate_scopes();
         }
     }
 
@@ -235,6 +225,7 @@ inline void BytecodeGenerator<size_only>::append(vm::Instruction op_code, std::v
 		result += sum;
 		assert(bytecode.size() + 1 == sum);
 	} else {
+#ifdef BCG_DEBUG
 		std::cout << std::hex << std::uppercase << std::setw(2) << std::setfill('0') <<
 				static_cast<int>(op_code) << " " <<
 				C_KEYWORD(vm::OP_NAMES[static_cast<uint8_t>(op_code)]) << std::flush << " ";
@@ -252,6 +243,7 @@ inline void BytecodeGenerator<size_only>::append(vm::Instruction op_code, std::v
 			offset += size;
 		}
 		std::cout << std::endl;
+#endif
 
 		result.bytecode.push_back(static_cast<uint8_t>(op_code));
 		result.bytecode.insert(result.bytecode.end(), bytecode.begin(), bytecode.end());
@@ -306,7 +298,7 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const ConditionalJum
 
 		void visit(Expression&) override { self.add_error(); }
 		void visit(VariableExpression& expr) override {
-			auto src = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(self.bgi.scope, expr.name)) );
+			auto src = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(self.scope, expr.name)) );
 			auto if_addr = vm::Value4::from(stmt.if_label->get_address());
 
 			self.append(
@@ -340,8 +332,8 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const ConditionalJum
 		void visit(BinaryExpression& expr) override {
 			auto left_var = std::dynamic_pointer_cast<VariableExpression>(expr.left)->var;
 			auto right_var = std::dynamic_pointer_cast<VariableExpression>(expr.right)->var;
-			auto left = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(self.bgi.scope, left_var->name)));
-			auto right = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(self.bgi.scope, right_var->name)));
+			auto left = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(self.scope, left_var->name)));
+			auto right = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(self.scope, right_var->name)));
 			auto if_addr = vm::Value4::from(stmt.if_label->get_address());
 
 			std::vector<uint8_t> result;
@@ -401,17 +393,17 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const ReturnStatemen
 template <bool size_only>
 inline void BytecodeGenerator<size_only>::generate_bytecode(const LabelStatement &stmt) {
 	if constexpr(size_only) {
-		if (bgi.scope->label_addresses.find(stmt.identifier) != bgi.scope->label_addresses.end()) {
-			std::cerr << "ERROR, already has label " << stmt.to_string() << ": " << bgi.scope->label_addresses[stmt.identifier] << std::endl;
+		if (scope->label_addresses.find(stmt.identifier) != scope->label_addresses.end()) {
+			std::cerr << "ERROR, already has label " << stmt.to_string() << ": " << scope->label_addresses[stmt.identifier] << std::endl;
 			exit(1);
 		}
-		bgi.scope->label_addresses[stmt.identifier] = bgi.bytecode_size;
+		scope->label_addresses[stmt.identifier] = result;
 	}
 }
 
 template <bool size_only>
 inline void BytecodeGenerator<size_only>::generate_bytecode(const ExpressionStatement &stmt) {
-	auto var_expr = std::make_shared<VariableExpression>(bgi.scope->variables.begin()->second);
+	auto var_expr = std::make_shared<VariableExpression>(scope->variables.begin()->second);
 	stmt.expression->accept(*this, var_expr);
 }
 
@@ -433,8 +425,8 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const VariableExpres
 
 	auto right_primitive_type = std::dynamic_pointer_cast<PrimitiveType>(right_type);
 
-	auto dest = vm::Value2::from(Scope::get_variable_index(bgi.scope, dest_var->name));
-	auto left = vm::Value2::from(Scope::get_variable_index(bgi.scope, expr.var->name));
+	auto dest = vm::Value2::from(Scope::get_variable_index(scope, dest_var->name));
+	auto left = vm::Value2::from(Scope::get_variable_index(scope, expr.var->name));
 	auto right = vm::Value4::from(0);
 
 	vm::Instruction op_code = vm::get_binary_opcode(
@@ -474,9 +466,9 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(
 	auto left_op = std::dynamic_pointer_cast<VariableExpression>(binary_expr.left);
 	auto right_op = std::dynamic_pointer_cast<VariableExpression>(binary_expr.right);
 	
-	auto dest = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(bgi.scope, dest_var->name)));
-	auto left = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(bgi.scope, left_op->var->name)));
-	auto right = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(bgi.scope, right_op->var->name)));
+	auto dest = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(scope, dest_var->name)));
+	auto left = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(scope, left_op->var->name)));
+	auto right = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(scope, right_op->var->name)));
 	vm::Instruction op_code;
 
 	//bool has_const = left_op->var->initial_value->is_constexpr() || right_op->var->initial_value->is_constexpr();
@@ -521,7 +513,7 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(
 
 	std::vector<uint8_t> args;
 	
-	auto dest = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(bgi.scope, dest_var->name)));
+	auto dest = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(scope, dest_var->name)));
 	args = { dest.v[0].u8, dest.v[1].u8 };
 	
 	vm::Value* v = expr.eval_constexpr();
@@ -560,9 +552,9 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(
 			obj_var_expr = std::dynamic_pointer_cast<VariableExpression>(expr.obj_expr);
 		}
 		
-		vm::Value2 obj_address = vm::Value2::from<uint16_t>(obj_var_expr ? Scope::get_variable_index(bgi.scope, obj_var_expr->name) : 0);
-		vm::Value2 args_address = vm::Value2::from<uint16_t>(arg0 ? Scope::get_variable_index(bgi.scope, arg0->var->name) : 0);
-		vm::Value2 ret_address = vm::Value2::from<uint16_t>(Scope::get_variable_index(bgi.scope, dest_var->name));
+		vm::Value2 obj_address = vm::Value2::from<uint16_t>(obj_var_expr ? Scope::get_variable_index(scope, obj_var_expr->name) : 0);
+		vm::Value2 args_address = vm::Value2::from<uint16_t>(arg0 ? Scope::get_variable_index(scope, arg0->var->name) : 0);
+		vm::Value2 ret_address = vm::Value2::from<uint16_t>(Scope::get_variable_index(scope, dest_var->name));
 
 		if (method_pair.is_constructor) {
 			obj_address = ret_address;
@@ -580,8 +572,8 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(
 		);
 	} else {
 		auto func_address = vm::Value4::from<uint32_t>(expr.f->scope->starting_address);
-		vm::Value2 args_address = vm::Value2::from<uint16_t>(arg0 ? Scope::get_variable_index(bgi.scope, arg0->var->name) : 0);
-		vm::Value2 ret_address = vm::Value2::from<uint16_t>(Scope::get_variable_index(bgi.scope, dest_var->name));
+		vm::Value2 args_address = vm::Value2::from<uint16_t>(arg0 ? Scope::get_variable_index(scope, arg0->var->name) : 0);
+		vm::Value2 ret_address = vm::Value2::from<uint16_t>(Scope::get_variable_index(scope, dest_var->name));
 
 		append(
 			vm::Instruction::CALL,
@@ -606,13 +598,16 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const TupleExpressio
 
 template <bool size_only>
 inline void BytecodeGenerator<size_only>::generate_bytecode(const StringLiteralExpression &expr, VarExprPtr dest_var) {
-	auto dest = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(bgi.scope, dest_var->name)));
-	vm::Value2 string_pos = vm::Value2::from<uint16_t>(bgi.symbol_table.const_memory.size());
-	if constexpr(!size_only) {
+	auto dest = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(scope, dest_var->name)));
+	vm::Value2 string_pos;
+	if constexpr(size_only) {
+		string_pos = vm::Value2::from(0);
+	} else {
+		string_pos = vm::Value2::from(result.const_memory.size());
 		for (char c : expr.value) {
-			bgi.symbol_table.const_memory.emplace_back(vm::Value::from(c));
+			result.const_memory.emplace_back(vm::Value::from(c));
 		}
-		bgi.symbol_table.const_memory.emplace_back(vm::Value::from<uint8_t>(0));
+		result.const_memory.emplace_back(vm::Value::from<uint8_t>(0));
 	}
 	append(
 		vm::Instruction::LOAD_STRING,

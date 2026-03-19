@@ -37,35 +37,6 @@ void print_help() {
 }
 
 
-void create_vm(const vm::ClassDB& db, const std::string& path) {
-	vm::VirtualMachine vm(db);
-
-	{
-		std::ifstream input_file(path, std::ios::binary);
-
-		size_t code_size;
-		size_t const_memory_size;
-		size_t main_start;
-
-		input_file.read(reinterpret_cast<char*>(&code_size), sizeof(code_size));
-		input_file.read(reinterpret_cast<char*>(&const_memory_size), sizeof(const_memory_size));
-		input_file.read(reinterpret_cast<char*>(&main_start), sizeof(main_start));
-
-		vm.code = new vm::Instruction[code_size];
-		input_file.read(reinterpret_cast<char*>(vm.code), sizeof(vm::Instruction) * code_size);
-
-		vm.const_memory = new vm::Value[const_memory_size];
-		input_file.read(reinterpret_cast<char*>(vm.const_memory), sizeof(vm::Value) * const_memory_size);
-
-		vm.main_start = main_start;
-
-		input_file.close();
-	}
-
-    vm::run_vm(vm);
-}
-
-
 #ifdef COMPILER
 int main(int argc, char** argv) {
 	// print help
@@ -123,29 +94,20 @@ int main(int argc, char** argv) {
 	}
 
     for (const auto& file : files) {
-        std::cout << "Tokenizing file: " << file << std::endl;
         std::string content = cmp::get_text_from_file(file);
 		
 		cmp::parse_file(content, symbol_table);
     }
 
-    std::cout << "\nsemantic analysis" << std::endl;
-
     cmp::NameAnalyzer name_analyzer(symbol_table);
     name_analyzer.resolve_variables();
 
-    std::cout << "\nconverting to short circuit if" << std::endl;
-
-    // TODO
-
-    std::cout << "\nconverting to register format" << std::endl;
+    // TODO: short circuit if
 
     cmp::RegisterFormatConverter register_format_converter(symbol_table);
 	register_format_converter.convert_to_register_format();
 
 #ifdef OPTIMIZE
-    std::cout << "\noptimizing code" << std::endl;
-
     std::vector<cmp::Optimizer*> optimizers;
     optimizers.push_back((cmp::Optimizer*)new cmp::ConstFoldingOptimizer());
     optimizers.push_back((cmp::Optimizer*)new cmp::EraseUnusedVariableOptimizer());
@@ -156,17 +118,13 @@ int main(int argc, char** argv) {
         }
     }
 #endif
-
-    std::cout << "\ngenerating scope structures" << std::endl;
 	symbol_table.generate_scope_structures();
-
-    std::cout << "\ngenerating bytecode layout" << std::endl;
+	
 	auto size_gen = cmp::BytecodeGenerator<true>(symbol_table);
-    size_t bytecode_size = size_gen.generate_bytecode(symbol_table);
-
-    std::cout << "\ngenerating bytecode" << std::endl;
+    size_t bytecode_size = size_gen.generate_bytecode();
+	
 	auto code_gen = cmp::BytecodeGenerator<false>(symbol_table);
-    auto bpi = code_gen.generate_bytecode(symbol_table);
+    auto bpi = code_gen.generate_bytecode();
 
     if (!bpi.has_main) {
         std::cout << "no main function!" << std::endl;
@@ -182,7 +140,7 @@ int main(int argc, char** argv) {
 	std::ofstream output_file(output_path, std::ios::binary | std::ios::trunc);
 
 	size_t code_size = bytecode_size;
-	size_t const_size = symbol_table.const_memory.size();
+	size_t const_size = bpi.const_memory.size();
 	size_t main_start = bpi.main_start;
 
 	output_file.write(reinterpret_cast<char*>(&code_size), sizeof(code_size));
@@ -194,7 +152,7 @@ int main(int argc, char** argv) {
 		sizeof(uint8_t) * code_size
 	);
 
-	for (auto& v : symbol_table.const_memory) {
+	for (auto& v : bpi.const_memory) {
 		output_file.write(reinterpret_cast<char*>(&v.u8), sizeof(uint8_t));
 	}
 
@@ -205,6 +163,34 @@ int main(int argc, char** argv) {
 #endif
 
 #ifdef VM_ONLY
+void create_vm(const vm::ClassDB& db, const std::string& path) {
+	vm::VirtualMachine vm(db);
+
+	{
+		std::ifstream input_file(path, std::ios::binary);
+
+		size_t code_size;
+		size_t const_memory_size;
+		size_t main_start;
+
+		input_file.read(reinterpret_cast<char*>(&code_size), sizeof(code_size));
+		input_file.read(reinterpret_cast<char*>(&const_memory_size), sizeof(const_memory_size));
+		input_file.read(reinterpret_cast<char*>(&main_start), sizeof(main_start));
+
+		vm.code = new vm::Instruction[code_size];
+		input_file.read(reinterpret_cast<char*>(vm.code), sizeof(vm::Instruction) * code_size);
+
+		vm.const_memory = new vm::Value[const_memory_size];
+		input_file.read(reinterpret_cast<char*>(vm.const_memory), sizeof(vm::Value) * const_memory_size);
+
+		vm.main_start = main_start;
+
+		input_file.close();
+	}
+
+    vm::run_vm(vm);
+}
+
 int main(int argc, char** argv) {
 	if (argc != 2) {
 		std::cerr << "Only 1 arg for input file expected!" << std::endl;

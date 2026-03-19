@@ -33,6 +33,4 @@ class Expression;
 using ExprPtr = std::shared_ptr<Expression>;
 using ExprVec = std::vector<ExprPtr>;
 
-struct BytecodeGenerationInfo;
-
 }

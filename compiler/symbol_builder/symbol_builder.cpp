@@ -223,14 +223,11 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
         std::cout << "constructor has no code" << std::endl;
     }
 
-    std::cout << "finish statements" << std::endl;
-
     constructor_symbol->is_public = is_public;
     constructor_symbol->is_static = false;
     constructor_symbol->is_const = is_const;
     constructor_symbol->is_abstract = is_abstract;
-
-    std::cout << constructor_symbol->to_string() << std::endl;
+	
     parser_info.cls->functions.insert(std::pair("(constructor)", constructor_symbol));
 
     return true;
@@ -390,8 +387,7 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
     function_symbol->is_static = is_static;
     function_symbol->is_const = is_const;
     function_symbol->is_abstract = is_abstract;
-    
-    std::cout << function_symbol->to_string() << std::endl;
+
     parser_info.cls->functions.insert(std::pair(function_symbol->name, function_symbol));
 
     return true;
@@ -450,8 +446,6 @@ bool SymbolBuilder::parse_variable(ParserInfo parser_info) {
     variable_symbol->is_public = is_public;
     variable_symbol->is_static = is_static;
     variable_symbol->is_const = is_const;
-
-    //std::cout << variable_symbol->to_string() << std::endl;
     
     scope->variables.insert(std::pair(name, variable_symbol));
 

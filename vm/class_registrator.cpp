@@ -1,17 +1,22 @@
 #include "class_registrator.hpp"
-#include "vec2.hpp"
+
 #include "string.hpp"
+#include "shared.hpp"
+
+#ifndef MINIMAL_VM
+#include "vec2.hpp"
 #include "console.hpp"
 #include "list.hpp"
 #include "math.hpp"
 #include "file.hpp"
-#include "shared.hpp"
+#endif
 
 void vm::register_classes(vm::ClassDB& db) {
 	// lang-integrated
 	String::register_to_db(db);
 	register_shared_to_db(db);
 	
+#ifndef MINIMAL_VM
 	// util
 	Console::register_to_db(db);
 	Math::register_to_db(db);
@@ -25,4 +30,5 @@ void vm::register_classes(vm::ClassDB& db) {
 	
 	// other
 	File::register_to_db(db);
+#endif
 }

@@ -7,6 +7,21 @@
 #include "statement.hpp"
 #include <iomanip>
 
+#ifdef SCOPE_DEBUG_VERBOSE
+#define SCOPE_DEBUG
+#define SCOPE_DEBUG_PRINT(m_text) std::cout << m_text << std::endl
+#define SCOPE_DEBUG_PRINT_V(m_text) SCOPE_DEBUG_PRINT(m_text)
+#define SCOPE_DEBUG_PRINT_NV(m_text)
+#elifdef SCOPE_DEBUG
+#define SCOPE_DEBUG_PRINT(m_text) std::cout << m_text << std::endl
+#define SCOPE_DEBUG_PRINT_V(m_text)
+#define SCOPE_DEBUG_PRINT_NV(m_text) SCOPE_DEBUG_PRINT(m_text)
+#else
+#define SCOPE_DEBUG_PRINT(m_text)
+#define SCOPE_DEBUG_PRINT_V(m_text)
+#define SCOPE_DEBUG_PRINT_NV(m_text)
+#endif
+
 namespace cmp {
 
 std::shared_ptr<Scope> Scope::find_scope(const std::shared_ptr<Scope>& scope, const std::string& name) {
@@ -34,8 +49,8 @@ void Scope::generate_structure(int offset) {
         }
     }
 
-	std::cout << get_full_name() << std::endl;
-	std::cout << structure_to_string() << std::endl;
+	SCOPE_DEBUG_PRINT(get_full_name());
+	SCOPE_DEBUG_PRINT(structure_to_string());
 
     if (type == FUNCTION || type == FUNCTION_SUB) {
         for (auto wp : lower_scopes) {
