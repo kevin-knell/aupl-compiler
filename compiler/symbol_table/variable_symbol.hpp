@@ -29,6 +29,8 @@ struct VariableSymbol {
     
     std::string to_string() const;
     std::string name_to_string() const;
+
+	size_t get_index() const;
 };
 
 using VarPtr = std::shared_ptr<VariableSymbol>;

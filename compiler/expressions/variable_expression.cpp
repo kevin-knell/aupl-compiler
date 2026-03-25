@@ -6,10 +6,18 @@
 #include "invalid_type.hpp"
 #include "native_class_type.hpp"
 #include "color.hpp"
+#include "shared_type.hpp"
+#include <assert.h>
 
 namespace cmp {
+std::vector<ExprPtr *> VariableExpression::get_expressions() {
+	return obj_expr ? std::vector({&obj_expr}) : std::vector<ExprPtr *>();
+}
+
 std::string VariableExpression::to_string() const {
-    return is_unresolved_symbol() == true ? C_UNRES(name) : var->name_to_string();
+	std::string obj_string = obj_expr ? obj_expr->to_string() + "." : "";
+    std::string name_string = is_unresolved_symbol() == true ? C_UNRES(name) : var->name_to_string();
+	return obj_string + name_string;
 }
 
 bool VariableExpression::is_unresolved_symbol() const {
@@ -17,10 +25,39 @@ bool VariableExpression::is_unresolved_symbol() const {
 }
 
 void VariableExpression::resolve(NameAnalysisInfo& name_analysis_info) {
-    ScopePtr scope = Scope::find_scope(name_analysis_info.scope, name);
-    if (scope) {
+	ScopePtr scope;
+
+	if (obj_expr) {
+		obj_expr->resolve(name_analysis_info);
+		
+		if (obj_expr->is_unresolved_symbol()) {
+			std::cerr << "cannot resolve: " << obj_expr->to_string() << std::endl;
+			return;
+		}
+
+		auto obj_type = obj_expr->get_type();
+		
+		if (obj_type->get_kind() == Type::CLASS) {
+			auto class_type = std::dynamic_pointer_cast<ClassType>(obj_type);
+			auto classes = name_analysis_info.symbol_table.classes;
+			auto cls = classes.find(class_type->name);
+			scope = Scope::find_scope(cls->second->scope, name);
+		} else if (obj_type->get_kind() == Type::SHARED) {
+			auto shared_type = std::dynamic_pointer_cast<SharedType>(obj_type);
+			auto class_type = std::dynamic_pointer_cast<ClassType>(shared_type->type);
+			auto classes = name_analysis_info.symbol_table.classes;
+			auto cls = classes.find(class_type->name);
+			scope = Scope::find_scope(cls->second->scope, name);
+		} else {
+			return;
+		}
+		assert(scope);
+	} else {
+		scope = Scope::find_scope(name_analysis_info.scope, name);
+	}
+	
+	if (scope) {
         var = scope->variables[name];
-        name_analysis_info.cls = nullptr;
     } else {
         auto it = name_analysis_info.symbol_table.classes.find(name);
         if (it != name_analysis_info.symbol_table.classes.end()) {

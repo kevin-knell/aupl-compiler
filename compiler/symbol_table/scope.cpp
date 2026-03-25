@@ -40,6 +40,7 @@ int Scope::get_variable_index(const ScopePtr& scope, const std::string &name) {
 
 void Scope::generate_structure(int offset) {
     variable_indices.clear();
+	size = 0;
     for (auto& [name, var] : variables) {
         int var_size = var->type->get_size();
         if (var_size) {

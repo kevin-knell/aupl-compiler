@@ -3,6 +3,7 @@
 #include "vec2.hpp"
 #include "vm.hpp"
 #include "string.hpp"
+#include "shared.hpp"
 #include <cstring>
 
 namespace vm {
@@ -82,11 +83,26 @@ namespace vm {
         OP_LOAD_STRING: {
 			uint16_t& offset = FETCH(uint16_t);
 			uint16_t& string_pos = FETCH(uint16_t);
+			
 			const char* c = (char*)&const_memory[string_pos];
             void* addr = (void*)(dp + offset);
+			
 			new (addr) String(c);
+			
 			ADVANCE();
         }
+
+		OP_MAKE_SHARED_RAW: {
+			uint16_t& shared_pos = FETCH(uint16_t);
+			uint16_t& size = FETCH(uint16_t);
+			
+			void* shared_addr = (void*)(ap + shared_pos);
+			vm::Value* mem = new vm::Value[size];
+			
+			new (shared_addr) Shared<vm::Value>(mem);
+			
+			ADVANCE();
+		}
 		
 		OP_SET_DP_TO_FP:  do {
 			dp = fp;
@@ -125,7 +141,13 @@ namespace vm {
 		OP_SET_DP_TO_B_PTR: ERROR();
 		
 		OP_SET_AP_TO_D_PTR: ERROR();
-		OP_SET_AP_TO_A_PTR: ERROR();
+		OP_SET_AP_TO_A_PTR: do {
+			std::cout << "ap set at: " << std::hex << size_t(ip - code) << std::endl;
+			// ap = STACK_REF(vm::Value*, ap + FETCH(uint16_t));
+			ap += FETCH(uint16_t);
+
+			ADVANCE();
+		} while(0);
 		OP_SET_AP_TO_B_PTR: ERROR();
 		
 		OP_SET_BP_TO_D_PTR: ERROR();
@@ -139,7 +161,7 @@ namespace vm {
 
         #define BINARY_OP(TYPE, OP)                                             \
             do {                                                                \
-			struct OperandsStruct {												\
+			struct [[gnu::packed]] OperandsStruct {												\
 				uint16_t dest_addr;												\
 				uint16_t a_addr;												\
 				uint16_t b_addr;												\
@@ -153,11 +175,12 @@ namespace vm {
 		
 		#define BINARY_CONST_OP(TYPE, OP)                                       \
             do {                                                                \
-			struct OperandsStruct {												\
+			struct [[gnu::packed]] OperandsStruct {												\
 				uint16_t dest_addr;												\
 				uint16_t a_addr;												\
 				TYPE b;															\
 			};																	\
+			static_assert(sizeof(OperandsStruct) == sizeof(uint16_t) + sizeof(uint16_t) + sizeof(TYPE)); \
             auto operands = FETCH(OperandsStruct);								\
 			TYPE& dest = STACK_REF(TYPE, dp + operands.dest_addr);              \
             const TYPE& operand_a = STACK_REF(TYPE, ap + operands.a_addr);      \
@@ -203,13 +226,22 @@ namespace vm {
         OP_DIV_CONST_U32: BINARY_CONST_OP(uint32_t, /); ADVANCE();
         OP_MOD_CONST_I32: BINARY_CONST_OP(int32_t, %); ADVANCE();
 
-        OP_ADD_I64: BINARY_OP(int64_t, +); ADVANCE();
+        OP_ADD_I64: {
+			BINARY_OP(int64_t, +);
+			ADVANCE();
+		}
         OP_SUB_I64: BINARY_OP(int64_t, -); ADVANCE();
         OP_MUL_I64: BINARY_OP(int64_t, *); ADVANCE();
         OP_DIV_I64: BINARY_OP(int64_t, /); ADVANCE();
         OP_DIV_U64: BINARY_OP(uint64_t, /); ADVANCE();
         OP_MOD_I64: BINARY_OP(int64_t, %); ADVANCE();
-        OP_ADD_CONST_I64: BINARY_CONST_OP(int64_t, +); ADVANCE();
+        OP_ADD_CONST_I64: {
+			std::cout << "add const at: " << std::hex << size_t(ip - code) << std::endl;
+			BINARY_CONST_OP(int64_t, +);
+			ip = code + 0x83;
+			std::cout << "add const at: " << std::hex << size_t(ip - code) << std::endl;
+			ADVANCE();
+		}
         OP_SUB_CONST_I64: BINARY_CONST_OP(int64_t, -); ADVANCE();
         OP_MUL_CONST_I64: BINARY_CONST_OP(int64_t, *); ADVANCE();
         OP_DIV_CONST_I64: BINARY_CONST_OP(int64_t, /); ADVANCE();
@@ -402,6 +434,8 @@ namespace vm {
         }
 
         OP_RET: {
+			std::cout << "ret at: " << std::hex << size_t(ip - code) << std::endl;
+
 			sp -= sizeof(Value*);
 			//Value*& args = STACK_REF(Value*, sp);
 
@@ -426,11 +460,13 @@ namespace vm {
         }
 
         OP_CALL_NATIVE: {
+			std::cout << "call at: " << std::hex << size_t(ip - code) << std::endl;
+			std::cout << "call native" << std::endl;
             uint16_t class_id = FETCH(uint16_t);
             uint16_t method_id = FETCH(uint16_t);
-            void* obj = ap + FETCH(uint16_t);
-			Value* args = ap + FETCH(uint16_t);
-			Value* ret = dp + FETCH(uint16_t);
+            void* obj = fp + FETCH(uint16_t);
+			Value* args = fp + FETCH(uint16_t);
+			Value* ret = fp + FETCH(uint16_t);
             vm.db.classes[class_id].methods[method_id].value_call(args, obj, ret);
             ADVANCE();
         }

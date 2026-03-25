@@ -6,7 +6,6 @@
 #include "expression.hpp"
 #include "color.hpp"
 #include "assign_statement.hpp"
-#include "access_expression.hpp"
 
 #ifdef NA_DEBUG
 #define NA_DEBUG_PRINT(m_text) std::cout << m_text << std::endl;

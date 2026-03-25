@@ -31,6 +31,7 @@
 #include "symbol_table.hpp"
 
 #include "primitive_type.hpp"
+#include "shared_type.hpp"
 #include <iomanip>
 #include <functional>
 
@@ -95,7 +96,6 @@ private:
 	void generate_bytecode(const BinaryExpression& expr, VarExprPtr dest_var);
 	void generate_bytecode(const LoadConstExpression& expr, VarExprPtr dest_var);
 	void generate_bytecode(const CallExpression& expr, VarExprPtr dest_var);
-	void generate_bytecode(const AccessExpression& expr, VarExprPtr dest_var);
 	void generate_bytecode(const TupleExpression& expr, VarExprPtr dest_var);
 	void generate_bytecode(const StringLiteralExpression& expr, VarExprPtr dest_var);
 	
@@ -113,7 +113,6 @@ private:
 	void visit(BinaryExpression&) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
 	void visit(LoadConstExpression&) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
 	void visit(CallExpression&) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
-	void visit(AccessExpression&) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
 	void visit(TupleExpression&) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
 	void visit(StringLiteralExpression&) override { std::cerr << "Expression without var visited!" << std::endl; exit(1); };
 
@@ -123,7 +122,6 @@ private:
 	void visit(BinaryExpression& expr, VarExprPtr var_expr) override { generate_bytecode(expr, var_expr); }
 	void visit(LoadConstExpression& expr, VarExprPtr var_expr) override { generate_bytecode(expr, var_expr); }
 	void visit(CallExpression& expr, VarExprPtr var_expr) override { generate_bytecode(expr, var_expr); }
-	void visit(AccessExpression& expr, VarExprPtr var_expr) override { generate_bytecode(expr, var_expr); }
 	void visit(TupleExpression& expr, VarExprPtr var_expr) override { generate_bytecode(expr, var_expr); }
 	void visit(StringLiteralExpression& expr, VarExprPtr var_expr) override { generate_bytecode(expr, var_expr); }
 };
@@ -227,6 +225,8 @@ inline void BytecodeGenerator<size_only>::append(vm::Instruction op_code, std::v
 	} else {
 #ifdef BCG_DEBUG
 		std::cout << std::hex << std::uppercase << std::setw(2) << std::setfill('0') <<
+				result.bytecode.size() << ": " <<
+				std::setw(2) << std::setfill('0') <<
 				static_cast<int>(op_code) << " " <<
 				C_KEYWORD(vm::OP_NAMES[static_cast<uint8_t>(op_code)]) << std::flush << " ";
 
@@ -298,7 +298,7 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const ConditionalJum
 
 		void visit(Expression&) override { self.add_error(); }
 		void visit(VariableExpression& expr) override {
-			auto src = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(self.scope, expr.name)) );
+			auto src = vm::Value2::from(expr.var->scope->variable_indices[expr.name]);
 			auto if_addr = vm::Value4::from(stmt.if_label->get_address());
 
 			self.append(
@@ -332,8 +332,8 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const ConditionalJum
 		void visit(BinaryExpression& expr) override {
 			auto left_var = std::dynamic_pointer_cast<VariableExpression>(expr.left)->var;
 			auto right_var = std::dynamic_pointer_cast<VariableExpression>(expr.right)->var;
-			auto left = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(self.scope, left_var->name)));
-			auto right = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(self.scope, right_var->name)));
+			auto left = vm::Value2::from(static_cast<uint16_t>(left_var->scope->variable_indices[left_var->name]));
+			auto right = vm::Value2::from(static_cast<uint16_t>(right_var->scope->variable_indices[right_var->name]));
 			auto if_addr = vm::Value4::from(stmt.if_label->get_address());
 
 			std::vector<uint8_t> result;
@@ -373,7 +373,6 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const ConditionalJum
 		}
 		void visit(LoadConstExpression&) override { self.add_error(); }
 		void visit(CallExpression&) override { self.add_error(); }
-		void visit(AccessExpression&) override { self.add_error(); }
 		void visit(TupleExpression&) override { self.add_error(); }
 		void visit(StringLiteralExpression&) override { self.add_error(); }
 
@@ -423,10 +422,23 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const VariableExpres
 		add_error();
 	}
 
+	if (expr.obj_expr) {
+		auto obj_var_expr = std::dynamic_pointer_cast<VariableExpression>(expr.obj_expr);
+		assert(obj_var_expr);
+		auto ap_dest = vm::Value2::from(obj_var_expr->var->scope->variable_indices[obj_var_expr->name]);
+
+		append(
+			vm::Instruction::SET_AP_TO_A_PTR,
+			{
+				ap_dest.v[0].u8, ap_dest.v[1].u8
+			}
+		);
+	}
+
 	auto right_primitive_type = std::dynamic_pointer_cast<PrimitiveType>(right_type);
 
-	auto dest = vm::Value2::from(Scope::get_variable_index(scope, dest_var->name));
-	auto left = vm::Value2::from(Scope::get_variable_index(scope, expr.var->name));
+	auto dest = vm::Value2::from(dest_var->var->scope->variable_indices[dest_var->name]);
+	auto left = vm::Value2::from(expr.var->scope->variable_indices[expr.var->name]);
 	auto right = vm::Value4::from(0);
 
 	vm::Instruction op_code = vm::get_binary_opcode(
@@ -466,9 +478,9 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(
 	auto left_op = std::dynamic_pointer_cast<VariableExpression>(binary_expr.left);
 	auto right_op = std::dynamic_pointer_cast<VariableExpression>(binary_expr.right);
 	
-	auto dest = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(scope, dest_var->name)));
-	auto left = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(scope, left_op->var->name)));
-	auto right = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(scope, right_op->var->name)));
+	auto dest = vm::Value2::from(dest_var->var->get_index());
+	auto left = vm::Value2::from(left_op->var->get_index());
+	auto right = vm::Value2::from(right_op->var->get_index());
 	vm::Instruction op_code;
 
 	//bool has_const = left_op->var->initial_value->is_constexpr() || right_op->var->initial_value->is_constexpr();
@@ -513,7 +525,7 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(
 
 	std::vector<uint8_t> args;
 	
-	auto dest = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(scope, dest_var->name)));
+	auto dest = vm::Value2::from(dest_var->var->get_index());
 	args = { dest.v[0].u8, dest.v[1].u8 };
 	
 	vm::Value* v = expr.eval_constexpr();
@@ -533,6 +545,24 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(
 		return;
 	}
 
+	// Allocate if shared
+	if (dest_var->get_type()->get_kind() == Type::SHARED) {
+		auto shared_type = std::dynamic_pointer_cast<SharedType>(dest_var->get_type());
+		TypePtr type = shared_type->type;
+		
+		vm::Value2 shared_offset = vm::Value2::from(dest_var->var->get_index());
+		vm::Value2 size = vm::Value2::from(type->get_size());
+
+		append(
+			vm::Instruction::MAKE_SHARED_RAW,
+			{
+				shared_offset.v[0].u8, shared_offset.v[1].u8,
+				size.v[0].u8, size.v[1].u8
+			}
+		);
+	}
+
+	// call
 	std::shared_ptr<VariableExpression> arg0;
 	
 	if (!expr.arguments.empty()) {
@@ -552,9 +582,9 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(
 			obj_var_expr = std::dynamic_pointer_cast<VariableExpression>(expr.obj_expr);
 		}
 		
-		vm::Value2 obj_address = vm::Value2::from<uint16_t>(obj_var_expr ? Scope::get_variable_index(scope, obj_var_expr->name) : 0);
-		vm::Value2 args_address = vm::Value2::from<uint16_t>(arg0 ? Scope::get_variable_index(scope, arg0->var->name) : 0);
-		vm::Value2 ret_address = vm::Value2::from<uint16_t>(Scope::get_variable_index(scope, dest_var->name));
+		vm::Value2 obj_address = vm::Value2::from(obj_var_expr ? obj_var_expr->var->get_index() : 0);
+		vm::Value2 args_address = vm::Value2::from(arg0 ? arg0->var->get_index() : 0);
+		vm::Value2 ret_address = vm::Value2::from(dest_var->var->get_index());
 
 		if (method_pair.is_constructor) {
 			obj_address = ret_address;
@@ -571,24 +601,19 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(
 			}
 		);
 	} else {
-		auto func_address = vm::Value4::from<uint32_t>(expr.f->scope->starting_address);
-		vm::Value2 args_address = vm::Value2::from<uint16_t>(arg0 ? Scope::get_variable_index(scope, arg0->var->name) : 0);
-		vm::Value2 ret_address = vm::Value2::from<uint16_t>(Scope::get_variable_index(scope, dest_var->name));
+		auto func_address = vm::Value4::from(expr.f->scope->starting_address);
+		vm::Value2 args_address = vm::Value2::from(arg0 ? arg0->var->get_index() : 0);
+		vm::Value2 ret_address = vm::Value2::from(dest_var->var->get_index());
 
 		append(
 			vm::Instruction::CALL,
 			{
 				func_address.v[0].u8, func_address.v[1].u8, func_address.v[2].u8, func_address.v[3].u8,
 				args_address.v[0].u8, args_address.v[1].u8,
-				ret_address.v[0].u8, ret_address.v[0].u8
+				ret_address.v[0].u8, ret_address.v[1].u8
 			}
 		);
 	}
-}
-
-template <bool size_only>
-inline void BytecodeGenerator<size_only>::generate_bytecode(const AccessExpression&, VarExprPtr) {
-	add_error();
 }
 
 template <bool size_only>
@@ -598,7 +623,7 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const TupleExpressio
 
 template <bool size_only>
 inline void BytecodeGenerator<size_only>::generate_bytecode(const StringLiteralExpression &expr, VarExprPtr dest_var) {
-	auto dest = vm::Value2::from(static_cast<uint16_t>(Scope::get_variable_index(scope, dest_var->name)));
+	auto dest = vm::Value2::from(dest_var->var->get_index());
 	vm::Value2 string_pos;
 	if constexpr(size_only) {
 		string_pos = vm::Value2::from(0);

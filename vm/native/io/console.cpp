@@ -81,7 +81,7 @@ int64_t Console::get_char() {
 }
 
 void Console::register_to_db(vm::ClassDB& db) {
-		const int id = REGISTER_CLASS(id, Console);
+		const int id = REGISTER_CLASS(Console);
 
 		REGISTER_GLOBAL_METHOD(id, Console, print, void (*)());
 		REGISTER_GLOBAL_METHOD(id, Console, print, void (*)(const String& text));

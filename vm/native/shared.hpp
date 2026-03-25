@@ -41,8 +41,7 @@ public:
 	Shared() noexcept
 		: obj(nullptr), data(nullptr) {}
 
-	explicit Shared(T* ptr)
-		: obj(ptr) {
+	explicit Shared(T* ptr) : obj(ptr) {
 		if (ptr) {
 			data = new SharedData{1};
 		} else {
@@ -104,12 +103,20 @@ public:
 	static Shared make(Args&&... args) {
 		return Shared(new T(std::forward<Args>(args)...));
 	}
+
+	static Shared<vm::Value> make_raw(size_t size) {
+		return Shared<vm::Value>(new vm::Value[size]);
+	}
 };
 
+
+#define REGISTER_SHARED(T) \
+	do { \
+		const size_t id = REGISTER_CLASS(Shared<T>); \
+		if constexpr(std::is_same_v<T, vm::Value>) { \
+			REGISTER_STATIC_METHOD(id, Shared<vm::Value>, make_raw, Shared<vm::Value> (*)(size_t size)); \
+		} \
+	} while(0);
+
+
 static_assert(sizeof(Shared<int>) == 16);
-
-using Shared8 = Shared<int64_t>;
-
-void register_shared_to_db(vm::ClassDB db) {
-	(void)db;
-}

@@ -10,7 +10,6 @@ class UnaryExpression;
 class BinaryExpression;
 class LoadConstExpression;
 class CallExpression;
-class AccessExpression;
 class TupleExpression;
 class StringLiteralExpression;
 
@@ -24,7 +23,6 @@ private:
 	virtual void visit(BinaryExpression& expr) = 0;
 	virtual void visit(LoadConstExpression& expr) = 0;
 	virtual void visit(CallExpression& expr) = 0;
-	virtual void visit(AccessExpression& expr) = 0;
 	virtual void visit(TupleExpression& expr) = 0;
 	virtual void visit(StringLiteralExpression& expr) = 0;
 
@@ -34,7 +32,6 @@ private:
 	friend class BinaryExpression;
 	friend class LoadConstExpression;
 	friend class CallExpression;
-	friend class AccessExpression;
 	friend class TupleExpression;
 	friend class StringLiteralExpression;
 };
@@ -47,7 +44,6 @@ private:
 	virtual void visit(BinaryExpression& expr, VarExprPtr var_expr) = 0;
 	virtual void visit(LoadConstExpression& expr, VarExprPtr var_expr) = 0;
 	virtual void visit(CallExpression& expr, VarExprPtr var_expr) = 0;
-	virtual void visit(AccessExpression& expr, VarExprPtr var_expr) = 0;
 	virtual void visit(TupleExpression& expr, VarExprPtr var_expr) = 0;
 	virtual void visit(StringLiteralExpression& expr, VarExprPtr var_expr) = 0;
 
@@ -57,7 +53,6 @@ private:
 	friend class BinaryExpression;
 	friend class LoadConstExpression;
 	friend class CallExpression;
-	friend class AccessExpression;
 	friend class TupleExpression;
 	friend class StringLiteralExpression;
 };

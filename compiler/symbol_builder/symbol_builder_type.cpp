@@ -70,15 +70,8 @@ TypePtr SymbolBuilder::parse_class_type(ParserInfo& parser_info) {
 
     if (match(TokenType::IDENTIFIER)) {
 		auto class_name = next().value;
-
-		auto& classes = parser_info.symbol_table.classes;
-		auto it = classes.find(class_name);
-		if (it == classes.end()) {
-			return std::make_shared<ClassType>(class_name);
-		} else {
-			return it->second->type;
-		}
-        // TODO: MyClass<T>
+		return std::make_shared<ClassType>(class_name);
+		// TODO: MyClass<T>
     }
 
     return nullptr;

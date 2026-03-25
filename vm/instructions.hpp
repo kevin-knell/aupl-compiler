@@ -16,6 +16,7 @@
     _(LOAD_CONST_VAR, s(1, 2, 2)) \
 	\
 	_(LOAD_STRING, s(1, 2, 2)) \
+	_(MAKE_SHARED_RAW, s(1, 2, 2)) \
 	\
 	\
 	\

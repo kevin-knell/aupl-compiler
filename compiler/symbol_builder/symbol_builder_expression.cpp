@@ -3,7 +3,6 @@
 #include "variable_expression.hpp"
 #include "unary_op_expression.hpp"
 #include "binary_op_expression.hpp"
-#include "access_expression.hpp"
 #include "call_expression.hpp"
 #include "load_const_expression.hpp"
 #include "primitive_type.hpp"
@@ -160,8 +159,12 @@ ExprPtr SymbolBuilder::parse_access(ParserInfo& parser_info) {
 			auto call_expr = std::dynamic_pointer_cast<CallExpression>(right);
 			call_expr->obj_expr = left;
 			return call_expr;
+		} else if (right->get_kind() == Expression::VARIABLE) {
+			auto var_expr = std::dynamic_pointer_cast<VariableExpression>(right);
+			var_expr->obj_expr = left;
+			return var_expr;
 		} else {
-			left = std::make_shared<AccessExpression>(left, right);
+			std::cerr << "unknown access expression: " << right->to_string() << std::endl;
 		}
     }
 

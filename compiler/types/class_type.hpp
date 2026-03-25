@@ -8,7 +8,7 @@ struct ClassType : public Type {
     std::string name;
 
     std::string to_string() const override { return name; }
-    int get_size() const { return 1; };
+    int get_size() const { return 256; };
 
 	KIND get_kind() const override { return CLASS; };
 

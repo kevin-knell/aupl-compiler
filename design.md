@@ -197,8 +197,8 @@ The following basic types are integrated into the language:
 ```
 void
 bool
-int		(64 bit)
-float	(64 bit)
+int (64 bit)
+float (64 bit)
 
 These specific Native Types:
 String
@@ -235,9 +235,45 @@ Tuples may contain any Types of Objects:
 (int, (int, int), int)		// nested
 ```
 
+#### Generics
+```
+class MyList<T>
+```
+
+```
+generic<T>
+T my_function(T a, T b) = a + b
+```
+
+#### Type Expressions
+when using ```auto``` in a variable declaration, the type is inferred.
+```
+auto a = 5
+```
+
+```typeof(...)``` can be used to infer the type of an expression. The result must be unambiguous at compiler time.
+```
+typeof(5) a = 5
+```
+
+```typename``` can be used to declare a type as if it was a variable.
+```
+typename T = int
+T a = 5
+```
+it can also use ```typeof```.
+```
+typename T = typeof(5)
+T a = 5
+```
+
 # Modules
-## Compiler
-The compiler parses ```.aupl``` files and outputs **bytecode** or another desired form of result.
+## AUPL
 
 ## VM
 The Virtual Machine (VM) execudes **bytecode** that was previously put out by the compiler.
+
+### Instruction Set
+
+## Compiler
+The compiler parses ```.aupl``` files and outputs **bytecode** or another desired form of result.

@@ -161,9 +161,6 @@ namespace vm {
 
     struct Value16 {
         union {
-            std::shared_ptr<void> shared;
-            std::weak_ptr<void> weak;
-
             Value v[16];
             Value2 v2[8];
             Value4 v4[4];

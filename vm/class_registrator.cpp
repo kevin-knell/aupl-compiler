@@ -11,6 +11,10 @@
 #include "file.hpp"
 #endif
 
+void register_shared_to_db(vm::ClassDB& db) {
+	CREATE_GENERICS(REGISTER_SHARED)
+}
+
 void vm::register_classes(vm::ClassDB& db) {
 	// lang-integrated
 	String::register_to_db(db);

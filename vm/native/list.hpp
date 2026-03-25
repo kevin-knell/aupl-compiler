@@ -51,7 +51,7 @@ public:
 using List8 = List<int64_t>;
 
 void register_list8_to_db(vm::ClassDB &db) {
-	const int ID = REGISTER_CLASS(ID, List8);
+	const int ID = REGISTER_CLASS(List8);
 
 	REGISTER_CONSTRUCTOR(ID, List8());
 	

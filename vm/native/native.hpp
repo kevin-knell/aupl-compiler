@@ -33,7 +33,7 @@ struct is_primitive {
 
 #define DECLARE_OBJECT_CLASS(m_name, m_parent)
 
-#define REGISTER_CLASS(m_id, m_name) db.register_class<m_name>(#m_name)
+#define REGISTER_CLASS(m_name) db.register_class<m_name>(#m_name)
 
 #define REGISTER_CONSTRUCTOR(m_id, ...) \
     db.register_constructor<__VA_ARGS__>(m_id, #__VA_ARGS__)
@@ -46,3 +46,6 @@ struct is_primitive {
 
 #define REGISTER_GLOBAL_METHOD(m_id, m_class, m_name, ...) \
     db.register_static_method<__VA_ARGS__>(m_id, #m_name, &m_class::m_name, #__VA_ARGS__, true)
+
+#define CREATE_GENERICS(_) \
+	_(vm::Value)

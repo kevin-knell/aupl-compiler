@@ -5,6 +5,7 @@
 namespace cmp {
 
 struct VariableExpression : public Expression {
+	ExprPtr obj_expr;
     VarPtr var;
     std::string name;
 
@@ -12,6 +13,8 @@ struct VariableExpression : public Expression {
     VariableExpression(VarPtr var) : var(var), name(var->name) {}
 
 	OVERRIDE_ACCEPT_EXPRESSION_VISITOR
+	
+    std::vector<ExprPtr*> get_expressions() override;
 
     std::string to_string() const override;
     bool is_unresolved_symbol() const override;

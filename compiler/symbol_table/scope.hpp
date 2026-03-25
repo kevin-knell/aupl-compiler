@@ -28,7 +28,8 @@ struct Scope {
     std::map<std::string, size_t> label_addresses;
     std::map<std::string, VarPtr> variables;
     std::map<std::string, int> variable_indices;
-    int size;
+	
+    int size = 0;
     int temp_count = 0;
 	mutable int label_count = 0;
 

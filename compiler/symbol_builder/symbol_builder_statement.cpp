@@ -9,6 +9,7 @@
 #include "conditional_jump_statement.hpp"
 #include "call_expression.hpp"
 #include "binary_op_expression.hpp"
+#include "shared_type.hpp"
 #include <iostream>
 
 namespace cmp {
@@ -78,11 +79,22 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
     // Save current index to backtrack if no match
     size_t start_idx = index;
 
+	StmtVec result;
+
     TypePtr type = parse_type(parser_info);
     if (!type) {
         index = start_idx;
         return {};
     }
+
+	TypePtr constructor_type = type;
+	TypePtr variable_type;
+
+	if (type->get_kind() == Type::CLASS) {
+		variable_type = std::make_shared<SharedType>(type);
+	} else {
+		variable_type = type;
+	}
 
     // Expect identifier for variable name
     if (!match(TokenType::IDENTIFIER)) {
@@ -122,10 +134,10 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
 		}
 		next(); // consume ')'
 		
-		expr = std::make_shared<CallExpression>(type->to_string(), args, nullptr);
+		expr = std::make_shared<CallExpression>(constructor_type->to_string(), args, nullptr);
 	}
 
-    VarPtr var = std::make_shared<VariableSymbol>(type, var_name, expr);
+    VarPtr var = std::make_shared<VariableSymbol>(variable_type, var_name, expr);
     parser_info.scope->variables[var_name] = var;
     var->scope = parser_info.scope;
     return { std::make_shared<DeclareStatement>(var) };

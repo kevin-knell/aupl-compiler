@@ -18,7 +18,7 @@ bool String::empty() const { return value.empty(); }
 char String::operator[](size_t i) const { return value[i]; }
 
 void String::register_to_db(vm::ClassDB& db) {
-        const int id = REGISTER_CLASS(id, String);
+        const int id = REGISTER_CLASS(String);
 
 		REGISTER_CONSTRUCTOR(id, String());
 		REGISTER_CONSTRUCTOR(id, String(const char* s));

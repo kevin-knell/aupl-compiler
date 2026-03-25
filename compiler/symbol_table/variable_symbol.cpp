@@ -1,6 +1,8 @@
 #include "variable_symbol.hpp"
 
 #include "color.hpp"
+#include "scope.hpp"
+#include <assert.h>
 
 #define TAG(s, b) std::string(b ? s : "")
 
@@ -19,6 +21,12 @@ std::string VariableSymbol::to_string() const {
 
 std::string VariableSymbol::name_to_string() const {
     return name.front() == '%' ? C_TEMP(name) : C_IDENTIFIER(name);
+}
+
+size_t VariableSymbol::get_index() const {
+	assert(scope);
+	assert(scope->has(name));
+	return Scope::get_variable_index(scope, name);
 }
 
 } // namespace cmp
