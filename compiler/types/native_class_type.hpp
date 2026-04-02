@@ -14,6 +14,7 @@ namespace cmp
 
 struct NativeClassType : public Type {
 	const vm::ClassBind& cls;
+	ClassPtr class_ptr;
 
 	NativeClassType(const vm::ClassBind& cls);
     std::string to_string() const override;

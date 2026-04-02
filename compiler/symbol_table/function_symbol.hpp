@@ -23,6 +23,7 @@ struct FunctionSymbol {
 	std::vector<VarPtr> parameters;
 	ScopePtr scope;
 	vm::MethodPair* method_pair = nullptr;
+	bool is_constructor = false;
 
 	bool is_public = false;
 	bool is_static = false;
@@ -37,8 +38,8 @@ struct FunctionSymbol {
 	FunctionSymbol(const TypePtr& return_type,
 		const std::string& name,
 		const std::vector<VarPtr>& parameters,
-		const ScopePtr& scope)
-		: return_type(std::move(return_type)), name(name), parameters(parameters), scope(std::move(scope)) {
+		const ScopePtr& scope, const bool is_constructor)
+		: return_type(std::move(return_type)), name(name), parameters(parameters), scope(std::move(scope)), is_constructor(is_constructor) {
 			scope->name = head_to_string();
 		}
 	

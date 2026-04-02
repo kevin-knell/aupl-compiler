@@ -9,7 +9,8 @@
 
 namespace cmp {
 
-FunctionSymbol::FunctionSymbol(vm::MethodPair &method_pair) : name(method_pair.name), method_pair(&method_pair) {}
+FunctionSymbol::FunctionSymbol(vm::MethodPair &method_pair)
+		: name(method_pair.name), method_pair(&method_pair), is_constructor(method_pair.is_constructor) {}
 
 std::string FunctionSymbol::head_to_string() {
 	if (method_pair) {

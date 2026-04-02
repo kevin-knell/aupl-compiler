@@ -15,18 +15,17 @@ SymbolTable::SymbolTable(vm::ClassDB &db) {
 		
 		std::shared_ptr<NativeClassType> nat = std::dynamic_pointer_cast<NativeClassType>(class_symbol->type);
 		native_types[cls.name] = nat;
+		nat->class_ptr = class_symbol;
 		
-		//std::cout << "native class: " << nat->to_string() << std::endl;
+		std::cout << "native class: " << nat->to_string() << std::endl;
 		
 		for (auto& f : cls.methods) {
 			auto nat_func = std::make_shared<FunctionSymbol>(f);
 			class_symbol->functions[f.name] = nat_func;
 			nat->functions.push_back(nat_func);
-			//std::cout << "\tnative func: " << nat_func->to_string() << std::endl;
-			//std::cout << "\t\t" << nat_func->method_pair->arg_count << std::endl;
+			std::cout << "\tnative func: " << nat_func->to_string() << std::endl;
 			if (f.is_global) {
 				global_native_functions.push_back(nat_func);
-				//std::cout << "\tglobal native func: " << nat_func->to_string() << std::endl;
 			}
 		}
 

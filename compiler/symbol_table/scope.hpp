@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <iostream>
 #include "forward_declarations.hpp"
 
 namespace cmp {
@@ -28,6 +29,7 @@ struct Scope {
     std::map<std::string, size_t> label_addresses;
     std::map<std::string, VarPtr> variables;
     std::map<std::string, int> variable_indices;
+	std::vector<std::string> args;
 	
     int size = 0;
     int temp_count = 0;

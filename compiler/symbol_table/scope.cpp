@@ -5,7 +5,9 @@
 
 #include "variable_symbol.hpp"
 #include "statement.hpp"
+#include "color.hpp"
 #include <iomanip>
+#include <algorithm>
 
 #ifdef SCOPE_DEBUG_VERBOSE
 #define SCOPE_DEBUG
@@ -41,7 +43,20 @@ int Scope::get_variable_index(const ScopePtr& scope, const std::string &name) {
 void Scope::generate_structure(int offset) {
     variable_indices.clear();
 	size = 0;
+
+	for (auto name : args) {
+		auto var = variables[name];
+        int var_size = var->type->get_size();
+        if (var_size) {
+            variable_indices[name] = offset;
+            offset += var_size;
+            size += var_size;
+        }
+	}
+
     for (auto& [name, var] : variables) {
+		if (std::find(args.begin(), args.end(), name) != args.end()) continue;
+
         int var_size = var->type->get_size();
         if (var_size) {
             variable_indices[name] = offset;
@@ -75,11 +90,25 @@ std::string Scope::get_full_name() {
 
 std::string Scope::structure_to_string() const {
     std::stringstream result;
-    for (auto [name, offset] : variable_indices) {
+
+	if (!args.empty()) result << GREY << "args:" << CLEAR << "\n";
+
+	for (std::string name : args) {
+		int offset = variable_indices.find(name)->second;
+        VarPtr var = variables.find(name)->second;
+        int var_size = var->type->get_size();
+        result << std::setw(4) << std::hex << offset << " to " << std::setw(4) << offset + var_size - 1 << ": " << var->to_string() << "\n";
+	}
+
+    if (!args.empty()) result << GREY << "other:" << CLEAR << "\n";
+	
+	for (auto [name, offset] : variable_indices) {
+		if (std::find(args.begin(), args.end(), name) != args.end()) continue;
         VarPtr var = variables.find(name)->second;
         int var_size = var->type->get_size();
         result << std::setw(4) << std::hex << offset << " to " << std::setw(4) << offset + var_size - 1 << ": " << var->to_string() << "\n";
     }
+
     return result.str();
 }
 

@@ -254,8 +254,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_while(ParserInfo& parser_info) {
 
     ExprPtr condition_expr = parse_expression(parser_info);
     if (!condition_expr) {
-		std::cerr << "no expression after while" << std::endl;
-		exit(1);
+		parser_info.cls->errors.emplace_back(peek().pos, peek().pos, "no expression after while", Error::CRITICAL);
 		return {};
     }
 

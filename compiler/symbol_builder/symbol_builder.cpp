@@ -5,6 +5,7 @@
 #include "class_type.hpp"
 #include "static_class_type.hpp"
 #include "primitive_type.hpp"
+#include "pointer_type.hpp"
 #include <cassert>
 
 namespace cmp {
@@ -144,6 +145,14 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
     }
     next(); // consume (
 
+	// add pointer to self as arg
+	auto class_type = parser_info.cls->type;
+	auto pointer_type = std::make_shared<PointerType>(class_type);
+	auto this_var = std::make_shared<VariableSymbol>(pointer_type, "this", nullptr);
+	scope->args.push_back(this_var->name);
+	scope->variables[this_var->name] = this_var;
+	this_var->scope = scope;
+
     std::vector<VarPtr> parameters;
 
     while (!expect(")")) {
@@ -179,7 +188,9 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
         }
 
 		auto param = std::make_shared<VariableSymbol>(arg_type, arg_name, initial_value);
+		scope->args.push_back(arg_name);
 		scope->variables[arg_name] = param;
+		param->scope = scope;
         parameters.push_back(param);
     }
     next(); // consume )
@@ -191,7 +202,7 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
 
     TypePtr return_type = PrimitiveType::TYPE_VOID;
     assert(return_type);
-    FuncPtr constructor_symbol = std::make_shared<FunctionSymbol>(return_type, parser_info.cls->name, parameters, scope);
+    FuncPtr constructor_symbol = std::make_shared<FunctionSymbol>(return_type, parser_info.cls->name, parameters, scope, true);
     constructor_symbol->is_static = true; // treat constructor as static
 
     ParserInfo parser_info_body{symbol_table, parser_info.cls, constructor_symbol, scope};
@@ -285,14 +296,17 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
     }
     next(); // consume (
 
-    std::vector<VarPtr> parameters;
-
 	if (!is_static) {
-		auto this_temp = scope->get_temp(parser_info.cls->type, nullptr, "this");
-		this_temp->is_const = is_const;
-		this_temp->scope = scope;
-		parameters.push_back(this_temp);
+		// add pointer to self as arg
+		auto class_type = parser_info.cls->type;
+		auto pointer_type = std::make_shared<PointerType>(class_type);
+		auto this_var = std::make_shared<VariableSymbol>(pointer_type, "this", nullptr);
+		scope->args.push_back(this_var->name);
+		scope->variables[this_var->name] = this_var;
+		this_var->scope = scope;
 	}
+
+    std::vector<VarPtr> parameters;
 
     while (!expect(")")) {
         if (!parameters.empty()) {
@@ -328,7 +342,8 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
         }
 
         VarPtr param = std::make_shared<VariableSymbol>(arg_type, arg_name, initial_value);
-        scope->variables[arg_name] = param;
+        scope->args.push_back(arg_name);
+		scope->variables[arg_name] = param;
         parameters.push_back(param);
     }
     next(); // consume )
@@ -336,7 +351,7 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
     // body
     bool is_abstract = false;
 
-    FuncPtr function_symbol = std::make_shared<FunctionSymbol>(return_type, name, parameters, scope);
+    FuncPtr function_symbol = std::make_shared<FunctionSymbol>(return_type, name, parameters, scope, false);
     ParserInfo parser_info_body{symbol_table, parser_info.cls, function_symbol, scope};
 
     if (expect("=")) {
@@ -447,7 +462,7 @@ bool SymbolBuilder::parse_variable(ParserInfo parser_info) {
     variable_symbol->is_static = is_static;
     variable_symbol->is_const = is_const;
     
-    scope->variables.insert(std::pair(name, variable_symbol));
+    scope->variables[name] = variable_symbol;
 
     return true;
 }

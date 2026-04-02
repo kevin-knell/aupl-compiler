@@ -112,7 +112,22 @@ void RegisterFormatConverter::convert(DeclareStatement& stmt) {
 
 void RegisterFormatConverter::convert(AssignmentStatement& stmt) {
 	auto& expr = stmt.expr_right;
-	convert_to_register_format(expr, stmt.is_volatile);
+
+	auto left_type = stmt.expr_left->get_type();
+
+	switch(left_type->get_kind()) {
+		case Type::NATIVE_CLASS: {
+			if (expr->get_kind() == Expression::VARIABLE) {
+				convert_to_register_format(expr, stmt.is_volatile);
+			} else {
+				replace_with_temp(expr, stmt.is_volatile);
+			}
+			break;
+		}
+		default: {
+			convert_to_register_format(expr, stmt.is_volatile);
+		}
+	}
 }
 
 void RegisterFormatConverter::convert(ConditionalJumpStatement& stmt) {

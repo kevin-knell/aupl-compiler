@@ -44,8 +44,7 @@ struct ClassSymbol {
 			native_class_bind(&native_class_bind),
 			static_var(std::make_shared<VariableSymbol>(std::make_shared<StaticClassType>(name), "(static)" + name)),
 			type(std::make_shared<NativeClassType>(native_class_bind)),
-			is_declared(true)
-			 {}
+			is_declared(true) {}
 };
 
 using ClassPtr = std::shared_ptr<ClassSymbol>;

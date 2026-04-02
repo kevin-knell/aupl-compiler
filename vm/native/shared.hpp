@@ -16,7 +16,7 @@ struct SharedData {
 
 template<typename T>
 class Shared {
-private:
+public: //private:
 	T* obj;
 	SharedData* data;
 

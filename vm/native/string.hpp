@@ -13,10 +13,11 @@ public:
     
 	String() = default;
 	String(const String& s);
+	String(String&& other) noexcept;
+
     String(const char* s);
     String(const std::string& s);
     String(std::string&& s);
-	String(String&& other) noexcept;
 	String(int64_t i);
 	String(void* p);
 
@@ -24,7 +25,10 @@ public:
     size_t size() const;
     bool empty() const;
     char operator[](size_t i) const;
+	
+	// operators
 	String& operator=(const String& s) = default;
+	
 	operator std::string() const { return value; }
 	operator const char*() const { return value.c_str(); }
 };

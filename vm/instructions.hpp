@@ -90,12 +90,12 @@
     _(DIV_I64, s(1, 2, 2, 2)) \
     _(DIV_U64, s(1, 2, 2, 2)) \
     _(MOD_I64, s(1, 2, 2, 2)) \
-    _(ADD_CONST_I64, s(1, 2, 2, 4)) \
-    _(SUB_CONST_I64, s(1, 2, 2, 4)) \
-    _(MUL_CONST_I64, s(1, 2, 2, 4)) \
-    _(DIV_CONST_I64, s(1, 2, 2, 4)) \
-    _(DIV_CONST_U64, s(1, 2, 2, 4)) \
-    _(MOD_CONST_I64, s(1, 2, 2, 4)) \
+    _(ADD_CONST_I64, s(1, 2, 2, 8)) \
+    _(SUB_CONST_I64, s(1, 2, 2, 8)) \
+    _(MUL_CONST_I64, s(1, 2, 2, 8)) \
+    _(DIV_CONST_I64, s(1, 2, 2, 8)) \
+    _(DIV_CONST_U64, s(1, 2, 2, 8)) \
+    _(MOD_CONST_I64, s(1, 2, 2, 8)) \
     \
     _(ADD_FLOAT, s(1, 2, 2, 2)) \
     _(SUB_FLOAT, s(1, 2, 2, 2)) \
@@ -215,6 +215,7 @@
     \
     \
     \
+	_(ADD_SP, s(1, 2)) \
     _(CALL, s(1, 4, 2, 2)) \
     _(RET, s(1)) \
     \

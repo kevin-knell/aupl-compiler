@@ -112,7 +112,7 @@ std::vector<Token> tokenize(const std::string& source) {
 
         TokenType type = get_token_type(token_text);
 
-        tokens.push_back(Token(type, token_text, start_pos, is_newline));
+        tokens.emplace_back(type, token_text, start_pos, is_newline);
 
 		is_newline = false;
     }

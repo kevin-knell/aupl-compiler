@@ -16,6 +16,7 @@ struct Type {
 		TUPLE,
 		ARRAY,
 
+		POINTER,
 		SHARED,
 
 		INVALID

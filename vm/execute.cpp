@@ -33,7 +33,9 @@ namespace vm {
             #undef DISPATCH_ENTRY
         };
 
-        #define DISPATCH() goto *dispatch_table[static_cast<uint8_t>(*(ip++))]
+        #define DISPATCH() \
+			/*std::cout << size_t(ip - code) << std::endl;*/ \
+			goto *dispatch_table[static_cast<uint8_t>(*(ip++))]
 
         DISPATCH();
 
@@ -71,7 +73,7 @@ namespace vm {
 			Value16& v2 = FETCH(Value16);
 			v.v8[0] = v2.v8[0];
 			v.v8[1] = v2.v8[1];
-            std::cout << "load: " << (int)offset << " <- Value16" << std::endl;
+            //std::cout << "load: " << (int)offset << " <- Value16" << std::endl;
             ADVANCE();
         }
 
@@ -100,17 +102,22 @@ namespace vm {
 			vm::Value* mem = new vm::Value[size];
 			
 			new (shared_addr) Shared<vm::Value>(mem);
+
+			//std::cout << "shared obj: " << ((Shared<vm::Value>*)shared_addr)->obj << std::endl;
+			//std::cout << "shared data: " << ((Shared<vm::Value>*)shared_addr)->data << std::endl;
 			
 			ADVANCE();
 		}
 		
 		OP_SET_DP_TO_FP:  do {
 			dp = fp;
+			//std::cout << "dp: " << dp << std::endl;
 			ADVANCE();
 		} while (0);
 
 		OP_SET_AP_TO_FP:  do {
 			ap = fp;
+			//std::cout << "ap: " << ap << std::endl;
 			ADVANCE();
 		} while (0);
 
@@ -136,16 +143,21 @@ namespace vm {
 		} while (0);
 
 		
-		OP_SET_DP_TO_D_PTR: ERROR();
-		OP_SET_DP_TO_A_PTR: ERROR();
+		OP_SET_DP_TO_D_PTR: do {
+			dp = *STACK_REF(vm::Value**, dp + FETCH(uint16_t));
+			ADVANCE();
+		} while(0);
+		
+		OP_SET_DP_TO_A_PTR: do {
+			dp = *STACK_REF(vm::Value**, ap + FETCH(uint16_t));
+			ADVANCE();
+		} while(0);
+
 		OP_SET_DP_TO_B_PTR: ERROR();
 		
 		OP_SET_AP_TO_D_PTR: ERROR();
 		OP_SET_AP_TO_A_PTR: do {
-			std::cout << "ap set at: " << std::hex << size_t(ip - code) << std::endl;
-			// ap = STACK_REF(vm::Value*, ap + FETCH(uint16_t));
-			ap += FETCH(uint16_t);
-
+			ap = *STACK_REF(vm::Value**, ap + FETCH(uint16_t));
 			ADVANCE();
 		} while(0);
 		OP_SET_AP_TO_B_PTR: ERROR();
@@ -185,7 +197,7 @@ namespace vm {
 			TYPE& dest = STACK_REF(TYPE, dp + operands.dest_addr);              \
             const TYPE& operand_a = STACK_REF(TYPE, ap + operands.a_addr);      \
             dest = operand_a OP operands.b;                                     \
-            } while (0);
+			} while (0);
 
         OP_ADD_I8: BINARY_OP(int8_t, +); ADVANCE();
         OP_SUB_I8: BINARY_OP(int8_t, -); ADVANCE();
@@ -236,10 +248,9 @@ namespace vm {
         OP_DIV_U64: BINARY_OP(uint64_t, /); ADVANCE();
         OP_MOD_I64: BINARY_OP(int64_t, %); ADVANCE();
         OP_ADD_CONST_I64: {
-			std::cout << "add const at: " << std::hex << size_t(ip - code) << std::endl;
-			BINARY_CONST_OP(int64_t, +);
-			ip = code + 0x83;
-			std::cout << "add const at: " << std::hex << size_t(ip - code) << std::endl;
+			// std::cout << "add const at: " << std::hex << size_t(ip - code) << std::endl;
+			BINARY_CONST_OP(uint64_t, +);
+			// std::cout << "added const at: " << std::hex << size_t(ip - code) << std::endl;
 			ADVANCE();
 		}
         OP_SUB_CONST_I64: BINARY_CONST_OP(int64_t, -); ADVANCE();
@@ -402,13 +413,23 @@ namespace vm {
 
 
 
-        OP_CALL: {
+        OP_ADD_SP: {
+			sp += FETCH(int16_t);
+			ADVANCE();
+		}
+		
+		OP_CALL: {
+			
+			//std::cout << "call: " << std::hex << STACK_REF(uint64_t, dp + 0x68) << std::endl;
+
 			Instruction* func_addr = code + FETCH(uint32_t);
 			Value* args = ap + FETCH(uint16_t);
 			Value* ret = ap + FETCH(uint16_t);
 
             Instruction*& return_address = STACK_REF(Instruction*, sp);
             return_address = ip;
+
+			//std::cout << "ret address: " << std::hex << size_t(return_address - code) << std::endl;
 			
 			sp += sizeof(return_address);
 
@@ -429,12 +450,14 @@ namespace vm {
 			dp = fp;
 			ap = fp;
 			bp = fp;
+			
+			//std::cout << "call: " << std::hex << STACK_REF(uint64_t, dp + 0x0) << std::endl;
 
             ADVANCE();
         }
 
         OP_RET: {
-			std::cout << "ret at: " << std::hex << size_t(ip - code) << std::endl;
+			// std::cout << "ret at: " << std::hex << size_t(ip - code) << std::endl;
 
 			sp -= sizeof(Value*);
 			//Value*& args = STACK_REF(Value*, sp);
@@ -456,12 +479,13 @@ namespace vm {
 			ap = fp;
 			bp = fp;
 
+			// std::cout << "ret to: " << std::hex << size_t(ip - code) << std::endl;
+
 			ADVANCE();
         }
 
         OP_CALL_NATIVE: {
-			std::cout << "call at: " << std::hex << size_t(ip - code) << std::endl;
-			std::cout << "call native" << std::endl;
+			// std::cout << "call native at: " << std::hex << size_t(ip - code) << std::endl;
             uint16_t class_id = FETCH(uint16_t);
             uint16_t method_id = FETCH(uint16_t);
             void* obj = fp + FETCH(uint16_t);

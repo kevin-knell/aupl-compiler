@@ -1,6 +1,7 @@
 // call_expression.hpp
 #pragma once
 #include "expression.hpp"
+#include "function_symbol.hpp"
 
 namespace cmp {
 
@@ -12,6 +13,9 @@ struct CallExpression : public Expression {
 
     CallExpression(std::string name, const std::vector<ExprPtr>& arguments, ExprPtr obj_expr)
         : name(name), arguments(arguments), obj_expr(obj_expr) {}
+	
+	CallExpression(FuncPtr f, const std::vector<ExprPtr>& arguments, ExprPtr obj_expr)
+		: name(f->name), arguments(arguments), obj_expr(obj_expr), f(f) {}
 	
 	OVERRIDE_ACCEPT_EXPRESSION_VISITOR
 

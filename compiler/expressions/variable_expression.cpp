@@ -58,6 +58,9 @@ void VariableExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 	
 	if (scope) {
         var = scope->variables[name];
+		if (scope->type == Scope::CLASS) {
+			obj_expr = std::make_shared<VariableExpression>("this");
+		}
     } else {
         auto it = name_analysis_info.symbol_table.classes.find(name);
         if (it != name_analysis_info.symbol_table.classes.end()) {

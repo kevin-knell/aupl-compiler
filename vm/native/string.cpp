@@ -22,7 +22,9 @@ void String::register_to_db(vm::ClassDB& db) {
 
 		REGISTER_CONSTRUCTOR(id, String());
 		REGISTER_CONSTRUCTOR(id, String(const char* s));
+		//REGISTER_CONSTRUCTOR(id, String(const String& s));
 		REGISTER_CONSTRUCTOR(id, String(int64_t i));
 
 		REGISTER_METHOD(id, String, size, size_t (String::*)() const);
+		REGISTER_METHOD(id, String, operator=, String& (String::*)(const String& s));
 }

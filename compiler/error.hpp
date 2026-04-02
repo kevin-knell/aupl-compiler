@@ -4,10 +4,24 @@
 namespace cmp {
 
 struct Error {
-    int pos;
-    std::string message;
+	enum Level {
+		CRITICAL,
+		ERROR,
+		WARNING,
+		HINT
+	};
 
-    Error(int pos, std::string message) : pos(pos), message(message) {}
+    const size_t start;
+	const size_t end;
+    const std::string message;
+	const Level level;
+
+    Error(size_t start, size_t end, std::string message, Level level)
+			: start(start), end(end), message(message), level(level) {
+		if (level == CRITICAL) {
+			abort();
+		}
+	}
 };
 
 }

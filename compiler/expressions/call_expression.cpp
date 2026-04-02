@@ -9,6 +9,8 @@
 #include "variable_expression.hpp"
 #include "static_class_type.hpp"
 #include "bytecode_generator.hpp"
+#include "class_type.hpp"
+#include "forward_declarations.hpp"
 
 namespace cmp {
 
@@ -35,7 +37,7 @@ std::string CallExpression::to_string() const {
 }
 
 bool CallExpression::is_unresolved_symbol() const {
-    return !f;
+    return !f || (obj_expr && obj_expr->is_unresolved_symbol());
 }
 
 void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
@@ -130,7 +132,7 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 					return;
 				}
 			}
-
+			
 			std::cerr << "no valid constructor found!" << std::endl;
 			return;
 		}
@@ -154,7 +156,15 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 			case Expression::VARIABLE: {
 				auto var_expr = std::dynamic_pointer_cast<VariableExpression>(obj_expr);
 				auto var = var_expr->var;
-				auto obj_type = var_expr->get_type();
+				auto access_type = var_expr->get_type();
+
+				if (access_type->get_kind() != Type::SHARED) {
+					return;
+				}
+
+				auto shared_type = std::dynamic_pointer_cast<SharedType>(access_type);
+				auto obj_type = shared_type->type;
+
 				switch (obj_type->get_kind()) {
 					case Type::STATIC_CLASS: {
 						//std::cout << "is static class" << std::endl;
@@ -178,6 +188,24 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 						for (auto f2 : native_class_type->functions) {
 							if (f2->name == name
 									&& f2->method_pair->arg_count == arguments.size()) {
+								f = f2;
+								return;
+							}
+						}
+						break;
+					}
+					case Type::CLASS: {
+						auto class_type = std::dynamic_pointer_cast<ClassType>(obj_type);
+						auto classes = name_analysis_info.symbol_table.classes;
+						auto class_it = classes.find(class_type->name);
+
+						if (class_it == classes.end()) {
+							return;
+						}
+
+						for (auto [name, f2] : class_it->second->functions) {
+							if (f2->name == name
+									&& f2->parameters.size() == arguments.size()) {
 								f = f2;
 								return;
 							}

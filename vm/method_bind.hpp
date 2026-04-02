@@ -112,8 +112,15 @@ MethodFunc bind_method(Method method) {
 
         if constexpr (!std::is_same_v<Ret, void>) {
             MethodCaller<Method, ObjType, Ret> caller(method, obj);
-            Ret result = std::apply(caller, arg_storage);
-            new (ret_ptr) Ret(std::move(result));
+
+			if constexpr (std::is_reference_v<Ret>) {
+				decltype(auto) result = std::apply(caller, arg_storage);
+				using Raw = std::remove_reference_t<Ret>;
+				*reinterpret_cast<Raw**>(ret_ptr) = std::addressof(result);
+			} else {
+				Ret result = std::apply(caller, arg_storage);
+				new (ret_ptr) Ret(std::move(result));
+			}
         } else {
             MethodCaller<Method, ObjType, void> caller(method, obj);
             std::apply(caller, arg_storage);
