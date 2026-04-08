@@ -11,6 +11,7 @@
 #include "bytecode_generator.hpp"
 #include "class_type.hpp"
 #include "forward_declarations.hpp"
+#include "pointer_type.hpp"
 
 namespace cmp {
 
@@ -158,17 +159,20 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 				auto var = var_expr->var;
 				auto access_type = var_expr->get_type();
 
-				if (access_type->get_kind() != Type::SHARED) {
-					return;
-				}
+				const Type* obj_type;
 
-				auto shared_type = std::dynamic_pointer_cast<SharedType>(access_type);
-				auto obj_type = shared_type->type;
+				if (access_type->is_pointer_type()) {
+					obj_type = &access_type->get_inner_type();
+				} else {
+					obj_type = access_type.get();
+					//std::cerr << "invalid type for call: " << access_type->to_string() << std::endl;
+					//return;
+				}
 
 				switch (obj_type->get_kind()) {
 					case Type::STATIC_CLASS: {
 						//std::cout << "is static class" << std::endl;
-						auto static_class_type = std::dynamic_pointer_cast<StaticClassType>(obj_type);
+						auto static_class_type = reinterpret_cast<const StaticClassType*>(obj_type);
 						auto it = name_analysis_info.symbol_table.classes.find(static_class_type->name);
 						if (it != name_analysis_info.symbol_table.classes.end()) {
 							auto class_ptr = it->second;
@@ -184,7 +188,7 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 					}
 					case Type::NATIVE_CLASS: {
 						//std::cout << "is native class" << std::endl;
-						auto native_class_type = std::dynamic_pointer_cast<NativeClassType>(obj_type);
+						auto native_class_type = reinterpret_cast<const NativeClassType*>(obj_type);
 						for (auto f2 : native_class_type->functions) {
 							if (f2->name == name
 									&& f2->method_pair->arg_count == arguments.size()) {
@@ -195,7 +199,7 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 						break;
 					}
 					case Type::CLASS: {
-						auto class_type = std::dynamic_pointer_cast<ClassType>(obj_type);
+						auto class_type = reinterpret_cast<const ClassType*>(obj_type);
 						auto classes = name_analysis_info.symbol_table.classes;
 						auto class_it = classes.find(class_type->name);
 

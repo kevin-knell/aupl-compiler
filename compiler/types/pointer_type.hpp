@@ -15,6 +15,9 @@ struct PointerType : public Type {
 	KIND get_kind() const override;
 
 	bool is_cpp_type(const std::string&) const override { return false; }
+
+	bool is_pointer_type() override { return true; }
+	Type& get_inner_type() override { return *type; }
 };
 
 } // namespace cmp

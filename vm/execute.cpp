@@ -87,9 +87,9 @@ namespace vm {
 			uint16_t& string_pos = FETCH(uint16_t);
 			
 			const char* c = (char*)&const_memory[string_pos];
-            void* addr = (void*)(dp + offset);
+            Shared<String>* shared_addr = reinterpret_cast<Shared<String>*>(dp + offset);
 			
-			new (addr) String(c);
+			*shared_addr = Shared<String>::make(c);
 			
 			ADVANCE();
         }

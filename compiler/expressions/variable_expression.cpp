@@ -37,17 +37,37 @@ void VariableExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 
 		auto obj_type = obj_expr->get_type();
 		
+		/*
 		if (obj_type->get_kind() == Type::CLASS) {
 			auto class_type = std::dynamic_pointer_cast<ClassType>(obj_type);
 			auto classes = name_analysis_info.symbol_table.classes;
 			auto cls = classes.find(class_type->name);
 			scope = Scope::find_scope(cls->second->scope, name);
-		} else if (obj_type->get_kind() == Type::SHARED) {
-			auto shared_type = std::dynamic_pointer_cast<SharedType>(obj_type);
-			auto class_type = std::dynamic_pointer_cast<ClassType>(shared_type->type);
-			auto classes = name_analysis_info.symbol_table.classes;
-			auto cls = classes.find(class_type->name);
-			scope = Scope::find_scope(cls->second->scope, name);
+		} else
+		*/
+		
+		if (obj_type->is_pointer_type()) {
+			const Type& inner_type = obj_type->get_inner_type();
+			
+			ClassPtr cls;
+
+			if (inner_type.get_kind() == Type::CLASS) {
+				const ClassType* class_type = reinterpret_cast<const ClassType*>(&inner_type);
+				auto classes = name_analysis_info.symbol_table.classes;
+				auto it = classes.find(class_type->name);
+
+				if (it != classes.end()) {
+					cls = it->second;
+				} else {
+					std::cerr << "Class not found: " << class_type->to_string() << std::endl;
+					return;
+				}
+			} else if (inner_type.get_kind() == Type::NATIVE_CLASS) {
+				const NativeClassType* class_type = reinterpret_cast<const NativeClassType*>(&inner_type);
+				cls = class_type->class_ptr;
+			}
+			
+			scope = Scope::find_scope(cls->scope, name);
 		} else {
 			return;
 		}

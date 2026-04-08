@@ -90,7 +90,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
 	TypePtr constructor_type = type;
 	TypePtr variable_type;
 
-	if (type->get_kind() == Type::CLASS) {
+	if (type->get_kind() == Type::CLASS || type->get_kind() == Type::NATIVE_CLASS) {
 		variable_type = std::make_shared<SharedType>(type);
 	} else {
 		variable_type = type;

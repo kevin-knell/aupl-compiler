@@ -334,7 +334,12 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const DeclareStateme
 
 	VarExprPtr var_expr = std::make_shared<VariableExpression>(stmt.variable_symbol);
 
-	if (stmt.variable_symbol->type->get_kind() == Type::NATIVE_CLASS) {
+	if (stmt.variable_symbol->initial_value->get_kind() == Expression::STRING_LIT) {
+		stmt.variable_symbol->initial_value->accept(*this, var_expr);
+		return;
+	}
+
+	if (false) {
 		auto native_type = std::dynamic_pointer_cast<NativeClassType>(stmt.variable_symbol->type);
 		auto methods = native_type->cls.methods;
 
@@ -666,12 +671,11 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(
 	}
 
 	// Allocate if shared
-	if (dest_var->get_type()->get_kind() == Type::SHARED) {
-		auto shared_type = std::dynamic_pointer_cast<SharedType>(dest_var->get_type());
-		TypePtr type = shared_type->type;
+	if (dest_var->get_type()->is_pointer_type() && expr.f->is_constructor) {
+		Type& type = dest_var->get_type()->get_inner_type();
 		
 		vm::Value2 shared_offset = vm::Value2::from(dest_var->var->get_index());
-		vm::Value2 size = vm::Value2::from(type->get_size());
+		vm::Value2 size = vm::Value2::from(type.get_size());
 
 		append(
 			vm::Instruction::MAKE_SHARED_RAW,

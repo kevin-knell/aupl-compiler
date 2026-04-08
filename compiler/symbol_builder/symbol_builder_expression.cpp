@@ -9,6 +9,7 @@
 #include "tuple_expression.hpp"
 #include "string.hpp"
 #include "string_literal_expression.hpp"
+#include "shared_type.hpp"
 #include <iostream>
 #include <cassert>
 
@@ -211,7 +212,9 @@ ExprPtr SymbolBuilder::parse_primary(ParserInfo& parser_info) {
 		std::string value = next().value;
 		auto it = parser_info.symbol_table.native_types.find("String");
 		assert(it != parser_info.symbol_table.native_types.end());
-		auto result = std::make_shared<StringLiteralExpression>(it->second, value.substr(1, value.size() - 2));
+		auto string_type = it->second;
+		auto shared_type = std::make_shared<SharedType>(string_type);
+		auto result = std::make_shared<StringLiteralExpression>(shared_type, value.substr(1, value.size() - 2));
 		return result;
     }
 
