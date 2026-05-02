@@ -7,8 +7,18 @@
 #include "function_parser.hpp"
 #include "type_traits.hpp"
 #include "method_bind.hpp"
+#include "native.hpp"
 
 namespace vm {
+
+struct VariableBind {
+	std::string name;
+	std::string type;
+	uint16_t class_id;
+	uint16_t var_id;
+	uint16_t setter_id;
+	uint16_t getter_id;
+};
 
 struct MethodPair {
     std::string name;
@@ -17,6 +27,7 @@ struct MethodPair {
     MethodFunc pointer_call;
 	bool is_global = false;
 	std::vector<std::string> arg_types;
+	std::vector<std::string> arg_names;
 	size_t arg_count;
 	uint16_t class_id;
 	uint16_t method_id;
@@ -24,14 +35,23 @@ struct MethodPair {
 };
 
 struct ClassBind {
+	// meta
     const std::string name;
     const int id;
 	const size_t size;
+	const bool is_object;
+	const bool is_trivial;
+	
+	// static
+	std::vector<VariableBind> static_variables;
     std::vector<MethodPair> static_methods;
+
+	// local
+	std::vector<VariableBind> variables;
     std::vector<MethodPair> methods;
 
-	ClassBind(const std::string& name, size_t id, size_t size)
-		: name(name), id(id), size(size) {}
+	ClassBind(const std::string& name, size_t id, size_t size, bool is_object, bool is_trivial)
+		: name(name), id(id), size(size), is_object(is_object), is_trivial(is_trivial) {}
 };
 
 namespace {
@@ -46,7 +66,7 @@ public:
 
 	template<typename ClassType>
     size_t register_class(std::string name) {
-        classes.push_back(ClassBind(name, classes.size(), sizeof(ClassType)));
+        classes.emplace_back(name, classes.size(), sizeof(ClassType), IS_OBJECT(ClassType), IS_TRIVIAL(ClassType));
 		return classes.back().id;
     }
 
@@ -61,6 +81,7 @@ public:
 
 		auto parsed = FunctionParser::parse(signature);
 		pair.arg_types = parsed.parameter_types;
+		pair.arg_names = parsed.parameters;
 		pair.arg_count = parsed.parameters.size();
 
 		pair.class_id = class_id;
@@ -82,6 +103,7 @@ public:
 
 		auto parsed = FunctionParser::parse(signature);
 		pair.arg_types = parsed.parameter_types;
+		pair.arg_names = parsed.parameters;
 		pair.arg_count = parsed.parameters.size();
 
 		pair.class_id = class_id;
@@ -103,6 +125,7 @@ public:
 
 		auto parsed = FunctionParser::parse(signature);
 		pair.arg_types = parsed.parameter_types;
+		pair.arg_names = parsed.parameters;
 		pair.arg_count = parsed.parameters.size();
 
 		pair.class_id = class_id;
@@ -113,6 +136,22 @@ public:
 
 		classes[class_id].methods.push_back(std::move(pair));
     }
+
+	template<typename T>
+	void register_variable(uint16_t class_id, std::string name, std::string type) {
+		classes[class_id].variables.emplace_back(
+			VariableBind{
+				.name = name,
+				.type = type,
+
+				.class_id = class_id,
+				.var_id = static_cast<uint16_t>(classes[class_id].variables.size()),
+
+				.setter_id = 0,
+				.getter_id = 0
+			}
+		);
+	}
 };
 
 } // namespace vm

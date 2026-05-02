@@ -1,12 +1,12 @@
-#include "primitive.hpp"
 #include <complex>
+#include "native.hpp"
 
 namespace vm {
     class ClassDB;
 } // namespace vm
 
 
-class complex : public Primitive {
+class complex {
 public:
     static void register_to_db(vm::ClassDB& db);
 
@@ -21,4 +21,4 @@ public:
     double im() const;
 };
 
-MARK_PRIMITIVE(complex)
+MARK_TRIVIAL(complex)

@@ -1,13 +1,20 @@
 #include "primitive_type.hpp"
 #include "color.hpp"
 #include <algorithm>
+#include "type_from_cpp.hpp"
 
 namespace cmp
 {
 
 TypePtr create(std::string n, int s, vm::BinType bin_type, std::vector<std::string> cpp_types) {
-    PrimitiveType result = PrimitiveType(n, s, bin_type, cpp_types);
-    return std::make_shared<PrimitiveType>(result);
+    PrimitiveType type = PrimitiveType(n, s, bin_type, cpp_types);
+    auto result = std::make_shared<PrimitiveType>(type);
+
+	for (auto s : cpp_types) {
+		named_cpp_types()[s] = result;
+	}
+
+	return result;
 }
 
 const TypePtr PrimitiveType::TYPE_I8  = create("i8", 1, vm::BinType::INT8, { "int8_t" });
@@ -41,6 +48,10 @@ Type::KIND PrimitiveType::get_kind() const {
 
 bool PrimitiveType::is_cpp_type(const std::string &cpp_type) const {
 	return std::find(cpp_types.begin(), cpp_types.end(), cpp_type) != cpp_types.end();
+}
+
+std::string PrimitiveType::to_cpp_type_str() {
+	return cpp_types.front();
 }
 
 } // namespace cmp

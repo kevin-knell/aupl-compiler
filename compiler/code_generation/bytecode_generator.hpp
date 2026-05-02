@@ -36,20 +36,20 @@
 #include <iomanip>
 #include <functional>
 
-#ifdef BCG_DEBUG_VERBOSE
-#define BCG_DEBUG
-#define BCG_DEBUG_PRINT(m_text) std::cout << m_text << std::endl
-#define BCG_DEBUG_PRINT_V(m_text) BCG_DEBUG_PRINT(m_text)
-#define BCG_DEBUG_PRINT_NV(m_text)
-#elifdef BCG_DEBUG
-#define BCG_DEBUG_PRINT(m_text) std::cout << m_text << std::endl
-#define BCG_DEBUG_PRINT_V(m_text)
-#define BCG_DEBUG_PRINT_NV(m_text) BCG_DEBUG_PRINT(m_text)
-#else
-#define BCG_DEBUG_PRINT(m_text)
-#define BCG_DEBUG_PRINT_V(m_text)
-#define BCG_DEBUG_PRINT_NV(m_text)
-#endif
+#define BCG_DEBUG_PRINT(m_text) \
+	if (BytecodeGenerator::bcg_debug_print) { \
+		std::cout << m_text << std::endl; \
+	}
+
+#define BCG_DEBUG_PRINT_V(m_text) \
+	if (BytecodeGenerator::bcg_debug_print_verbose) { \
+		BCG_DEBUG_PRINT(m_text); \
+	}
+
+#define BCG_DEBUG_PRINT_NV(m_text) \
+	if (!BytecodeGenerator::bcg_debug_print_verbose) { \
+		BCG_DEBUG_PRINT(m_text); \
+	}
 
 namespace cmp
 {
@@ -79,6 +79,9 @@ private:
 	
 	BC_GEN_RES result;
 public:
+	static bool bcg_debug_print;
+	static bool bcg_debug_print_verbose;
+
 	BytecodeGenerator(const SymbolTable& symbol_table) : symbol_table(symbol_table) {}
 	BC_GEN_RES generate_bytecode();
 

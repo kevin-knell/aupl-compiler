@@ -14,3 +14,7 @@ int cmp::PointerType::get_size() const {
 cmp::Type::KIND cmp::PointerType::get_kind() const {
 	return POINTER;
 }
+
+std::string cmp::PointerType::to_cpp_type_str() {
+	return type->to_cpp_type_str() + "*";
+}

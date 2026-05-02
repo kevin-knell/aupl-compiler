@@ -27,6 +27,44 @@ vm::Value* LoadConstExpression::eval_constexpr() const {
     return value;
 }
 
+std::string LoadConstExpression::value_to_string() const {
+	if (type == PrimitiveType::TYPE_BOOL) {
+		if (value->as<bool>()) {
+			return "true";
+		} else {
+			return "false";
+		}
+	}
+
+	if (type == PrimitiveType::TYPE_I8) {
+		return std::to_string(*reinterpret_cast<int8_t*>(value));
+	} else if (type == PrimitiveType::TYPE_I16) {
+		return std::to_string(*reinterpret_cast<int16_t*>(value));
+	} else if (type == PrimitiveType::TYPE_I32) {
+		return std::to_string(*reinterpret_cast<int32_t*>(value));
+	} else if (type == PrimitiveType::TYPE_INT) {
+		return std::to_string(*reinterpret_cast<int64_t*>(value));
+	}
+	
+	if (type == PrimitiveType::TYPE_U8) {
+		return std::to_string(*reinterpret_cast<uint8_t*>(value));
+	} else if (type == PrimitiveType::TYPE_U16) {
+		return std::to_string(*reinterpret_cast<uint16_t*>(value));
+	} else if (type == PrimitiveType::TYPE_U32) {
+		return std::to_string(*reinterpret_cast<uint32_t*>(value));
+	} else if (type == PrimitiveType::TYPE_U64) {
+		return std::to_string(*reinterpret_cast<uint64_t*>(value));
+	}
+	
+	if (type == PrimitiveType::TYPE_F32) {
+		return std::to_string(*reinterpret_cast<float*>(value));
+	} else if (type == PrimitiveType::TYPE_FLOAT) {
+		return std::to_string(*reinterpret_cast<double*>(value));
+	}
+	
+	return "()";
+}
+
 std::string LoadConstExpression::to_string() const {
 	if (type == PrimitiveType::TYPE_BOOL) {
 		if (value->as<bool>()) {
@@ -68,5 +106,4 @@ std::string LoadConstExpression::to_string() const {
 
 	return C_ERROR("L" + type->to_string());
 }
-
 }

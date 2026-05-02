@@ -15,3 +15,7 @@ int cmp::SharedType::get_size() const {
 cmp::Type::KIND cmp::SharedType::get_kind() const {
 	return SHARED;
 }
+
+std::string cmp::SharedType::to_cpp_type_str() {
+	return "Shared<" + type->to_cpp_type_str() + ">";
+}

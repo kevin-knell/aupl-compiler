@@ -22,6 +22,14 @@ bool NativeClassType::is_cpp_type(const std::string &cpp_type) const {
 			|| ("const " + cls.name + "&") == cpp_type;
 }
 
+std::string NativeClassType::to_cpp_type_str() {
+	return cls.name;
+}
+
+bool NativeClassType::default_store_shared() const {
+	return cls.is_object;
+}
+
 NativeClassType::NativeClassType(const vm::ClassBind& cls) : cls(cls) {}
 
 } // namespace cmp

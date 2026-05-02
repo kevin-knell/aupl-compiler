@@ -27,6 +27,7 @@ void vm::register_classes(vm::ClassDB& db) {
 
 	// simple types
 	vec2::register_to_db(db);
+	vec2i::register_to_db(db);
 
 	// object types
 	// data structures

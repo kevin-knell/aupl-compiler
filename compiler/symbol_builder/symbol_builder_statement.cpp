@@ -90,7 +90,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
 	TypePtr constructor_type = type;
 	TypePtr variable_type;
 
-	if (type->get_kind() == Type::CLASS || type->get_kind() == Type::NATIVE_CLASS) {
+	if (type->default_store_shared()) {
 		variable_type = std::make_shared<SharedType>(type);
 	} else {
 		variable_type = type;
@@ -217,20 +217,20 @@ std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
     }
 
 	StmtVec result;
-	result.push_back(std::make_shared<ConditionalJumpStatement>(condition_expr, if_label, else_label));
-
+	result.push_back(std::make_shared<ConditionalJumpStatement>(CJ_KIND::IF, condition_expr, if_label, else_label));
+	
 	std::shared_ptr<LabelStatement> return_label_stmt = std::make_shared<LabelStatement>(if_ret_name);
 	result.push_back(return_label_stmt);
 
 	std::shared_ptr<Label> return_label = std::make_shared<Label>(parser_info.scope, if_ret_name, return_label_stmt);
 
 	if_scope->body.push_back(
-		std::make_shared<ConditionalJumpStatement>(nullptr, return_label, nullptr)
+		std::make_shared<ConditionalJumpStatement>(CJ_KIND::IF_RETURN, nullptr, return_label, nullptr)
 	);
 
 	if (else_scope) {
 		else_scope->body.push_back(
-			std::make_shared<ConditionalJumpStatement>(nullptr, return_label, nullptr)
+			std::make_shared<ConditionalJumpStatement>(CJ_KIND::IF_RETURN, nullptr, return_label, nullptr)
 		);
 	}
 
@@ -273,14 +273,14 @@ std::vector<StmtPtr> SymbolBuilder::parse_while(ParserInfo& parser_info) {
 	//std::shared_ptr<Label> return_label = std::make_shared<Label>(parser_info.scope, while_ret_name, return_label_stmt);
 	
 	result.push_back(condition_label_stmt);
-	result.push_back(std::make_shared<ConditionalJumpStatement>(condition_expr, while_label, nullptr));
+	auto while_jump = std::make_shared<ConditionalJumpStatement>(CJ_KIND::WHILE, condition_expr, while_label, nullptr);
+	result.push_back(while_jump);
 	//result.push_back(return_label_stmt);
 
 	std::shared_ptr<Label> condition_label = std::make_shared<Label>(parser_info.scope, while_condition_name, condition_label_stmt);
 
-	while_scope->body.push_back(
-		std::make_shared<ConditionalJumpStatement>(nullptr, condition_label, nullptr)
-	);
+	auto while_return_jump = std::make_shared<ConditionalJumpStatement>(CJ_KIND::WHILE_RETURN, nullptr, condition_label, nullptr);
+	while_scope->body.push_back(while_return_jump);
 
     return result;
 }

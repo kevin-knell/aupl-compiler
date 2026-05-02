@@ -31,6 +31,8 @@ public:
 	KIND get_kind() const override;
 
 	bool is_cpp_type(const std::string& cpp_type) const override;
+
+	std::string to_cpp_type_str() override;
 private:
     const std::string name; // "int", "bool", etc.
     const int size;

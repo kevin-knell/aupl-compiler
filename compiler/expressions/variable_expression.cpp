@@ -25,6 +25,8 @@ bool VariableExpression::is_unresolved_symbol() const {
 }
 
 void VariableExpression::resolve(NameAnalysisInfo& name_analysis_info) {
+	std::cout << "resolve var expr: " << to_string() << std::endl;
+
 	ScopePtr scope;
 
 	if (obj_expr) {
@@ -35,7 +37,7 @@ void VariableExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 			return;
 		}
 
-		auto obj_type = obj_expr->get_type();
+		TypePtr obj_type = obj_expr->get_type();
 		
 		/*
 		if (obj_type->get_kind() == Type::CLASS) {
@@ -47,29 +49,40 @@ void VariableExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 		*/
 		
 		if (obj_type->is_pointer_type()) {
-			const Type& inner_type = obj_type->get_inner_type();
+			Type& inner_type = obj_type->get_inner_type();
 			
 			ClassPtr cls;
 
 			if (inner_type.get_kind() == Type::CLASS) {
-				const ClassType* class_type = reinterpret_cast<const ClassType*>(&inner_type);
+				ClassType& class_type = dynamic_cast<ClassType&>(inner_type);
 				auto classes = name_analysis_info.symbol_table.classes;
-				auto it = classes.find(class_type->name);
+				auto it = classes.find(class_type.name);
 
 				if (it != classes.end()) {
 					cls = it->second;
 				} else {
-					std::cerr << "Class not found: " << class_type->to_string() << std::endl;
+					std::cerr << "Class not found: " << class_type.to_string() << std::endl;
 					return;
 				}
 			} else if (inner_type.get_kind() == Type::NATIVE_CLASS) {
-				const NativeClassType* class_type = reinterpret_cast<const NativeClassType*>(&inner_type);
-				cls = class_type->class_ptr;
+				NativeClassType& class_type = dynamic_cast<NativeClassType&>(inner_type);
+				cls = class_type.class_ptr;
 			}
 			
 			scope = Scope::find_scope(cls->scope, name);
+			std::cout << scope->get_full_name() << std::endl;
 		} else {
-			return;
+			ClassPtr cls;
+
+			if (obj_type->get_kind() == Type::NATIVE_CLASS) {
+				NativeClassType& class_type = dynamic_cast<NativeClassType&>(*obj_type);
+				cls = class_type.class_ptr;
+			} else {
+				std::cerr << "invalid obj_type: " << obj_type->to_string() << std::endl;
+				return;
+			}
+			
+			scope = Scope::find_scope(cls->scope, name);
 		}
 		assert(scope);
 	} else {
@@ -78,7 +91,7 @@ void VariableExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 	
 	if (scope) {
         var = scope->variables[name];
-		if (scope->type == Scope::CLASS) {
+		if (!obj_expr && scope->type == Scope::CLASS) {
 			obj_expr = std::make_shared<VariableExpression>("this");
 		}
     } else {

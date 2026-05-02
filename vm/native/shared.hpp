@@ -5,8 +5,7 @@
 #include "native.hpp"
 #include "class_db.hpp"
 
-namespace vm
-{
+namespace vm {
 	class ClassDB;
 }
 

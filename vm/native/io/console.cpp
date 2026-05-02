@@ -68,6 +68,10 @@ void Console::move(int64_t _x, int64_t _y) {
 	::move(y, x);
 }
 
+void Console::move(vec2i v) {
+	move(v.x, v.y);
+}
+
 void Console::printw(String s) {
 	::mvprintw(y, x, "%s", s.str().c_str());
 }

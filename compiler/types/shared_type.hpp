@@ -18,6 +18,8 @@ struct SharedType : public Type {
 
 	bool is_pointer_type() override { return true; }
 	Type& get_inner_type() override { return *type; }
+
+	std::string to_cpp_type_str() override;
 };
 
 } // namespace cmp

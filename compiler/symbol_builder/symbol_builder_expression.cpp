@@ -213,8 +213,7 @@ ExprPtr SymbolBuilder::parse_primary(ParserInfo& parser_info) {
 		auto it = parser_info.symbol_table.native_types.find("String");
 		assert(it != parser_info.symbol_table.native_types.end());
 		auto string_type = it->second;
-		auto shared_type = std::make_shared<SharedType>(string_type);
-		auto result = std::make_shared<StringLiteralExpression>(shared_type, value.substr(1, value.size() - 2));
+		auto result = std::make_shared<StringLiteralExpression>(string_type, value.substr(1, value.size() - 2));
 		return result;
     }
 

@@ -60,7 +60,7 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 				if (nat_func->name == name
 						&& nat_func->method_pair->arg_count == arguments.size()) {
 					candidates.push_back(nat_func);
-					//std::cout << "candidate: " << nat_func->to_string() << std::endl;
+					std::cout << "candidate: " << nat_func->to_string() << std::endl;
 				}
 			}
 
@@ -69,9 +69,16 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 				
 				for (size_t i = 0; i < nat_func->method_pair->arg_types.size(); i++) {
 					std::string cpp_type_name = nat_func->method_pair->arg_types[i];
-					TypePtr type = arguments[i]->get_type();
+					auto arg = arguments[i];
+					TypePtr type = arg->get_type();
 
-					if (!type->is_cpp_type(cpp_type_name)) {
+					if (!type) {
+						std::cerr << "type == null_ptr! " << arg->to_string() << std::endl;
+						wrong_type = true;
+						break;
+					}
+
+					if (!type || !type->is_cpp_type(cpp_type_name)) {
 						wrong_type = true;
 						break;
 					}
@@ -242,7 +249,15 @@ bool CallExpression::is_pure() const {
 }
 
 TypePtr CallExpression::get_type() const {
-    return (f && f->return_type) ? f->return_type : InvalidType::make("unknown call: " + name);
+    if (f && f->return_type) {
+		if (f->is_constructor) {
+			return std::make_shared<ClassType>(f->name);
+		} else {
+			return f->return_type;
+		}
+	}
+	
+	return InvalidType::make("unknown call: " + name);
 }
 
 }

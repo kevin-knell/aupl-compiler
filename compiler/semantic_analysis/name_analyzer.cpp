@@ -7,13 +7,25 @@
 #include "color.hpp"
 #include "assign_statement.hpp"
 
-#ifdef NA_DEBUG
-#define NA_DEBUG_PRINT(m_text) std::cout << m_text << std::endl;
-#else
-#define NA_DEBUG_PRINT(m_text)
-#endif
+#define NA_DEBUG_PRINT(m_text) \
+	if (NameAnalyzer::na_debug_print) { \
+		std::cout << m_text << std::endl; \
+	}
+
+#define NA_DEBUG_PRINT_V(m_text) \
+	if (NameAnalyzer::na_debug_print_verbose) { \
+		NA_DEBUG_PRINT(m_text); \
+	}
+
+#define NA_DEBUG_PRINT_NV(m_text) \
+	if (!NameAnalyzer::na_debug_print_verbose) { \
+		NA_DEBUG_PRINT(m_text); \
+	}
 
 namespace cmp {
+
+bool NameAnalyzer::na_debug_print = false;
+bool NameAnalyzer::na_debug_print_verbose = false;
 
 static void resolve_expressions(NameAnalysisInfo& name_analysis_info, std::vector<ExprPtr*> expressions) {
     for (auto p : expressions) {

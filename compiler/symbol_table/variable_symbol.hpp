@@ -3,6 +3,7 @@
 //#include "expression.hpp"
 #include <string>
 #include "forward_declarations.hpp"
+#include "class_db.hpp"
 
 namespace cmp {
 
@@ -26,6 +27,8 @@ struct VariableSymbol {
 
     VariableSymbol(TypePtr type, const std::string& name, ExprPtr initial_value = nullptr)
         : type(std::move(type)), name(name), initial_value(std::move(initial_value)) {}
+	
+	VariableSymbol(vm::VariableBind& v);
     
     std::string to_string() const;
     std::string name_to_string() const;

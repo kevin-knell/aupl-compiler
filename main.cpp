@@ -18,7 +18,11 @@
 #include "const_folding_optimizer.hpp"
 #include "erase_unused_variable_optimizer.hpp"
 #include "color.hpp"
+
 #include "bytecode_generator.hpp"
+#include "cpp_generator.hpp"
+#include "type_from_cpp.hpp"
+
 #endif
 
 #include "vm.hpp"
@@ -38,43 +42,61 @@ void print_help() {
 
 
 #ifdef COMPILER
-int main(int argc, char** argv) {
-	// print help
-	for (int i = 1; i < argc; ++i) {
-		std::string arg = argv[i];
-
-		if (arg == "--help" || arg == "-h") {
-			print_help();
-			return 0;
+static std::vector<std::string>::iterator contains_arg(std::vector<std::string>& args, std::vector<std::string> searched) {
+	for (auto s : searched) {
+		auto it = std::find(args.begin(), args.end(), s);
+		if (it != args.end()) {
+			return it;
 		}
 	}
 
-	// print version
+	return args.end();
+}
+
+
+int main(int argc, char** argv) {
+	std::vector<std::string> args;
+
 	for (int i = 1; i < argc; ++i) {
 		std::string arg = argv[i];
+		args.push_back(arg);
+	}
 
-		if (arg == "--version" || arg == "-v") {
-			std::cout << "Version: 0.1" << std::endl;
-			return 0;
-		}
+	// print help
+	if (contains_arg(args, {"--help", "-h"}) != args.end()) {
+		print_help();
+		return 0;
+	}
+
+	// print version
+	if (contains_arg(args, {"--version", "-v"}) != args.end()) {
+		std::cout << "Version: 0.1" << std::endl;
+		return 0;
 	}
 
 	// output
 	std::string output_path;
-	
-	for (int i = 1; i < argc; ++i) {
-		std::string arg = argv[i];
+	{
+		auto it = contains_arg(args, {"-o"});
+		
+		std::cout << "it" << std::endl;
+		
+		if (it != args.end()) {
+			it++;
 
-		if (arg == "-o") {
-			if (i + 1 >= argc) {
+			std::cout << "it" << std::endl;
+			
+			if (it == args.end()) {
 				std::cerr << "no arg for -o!" << std::endl;
 				return 1;
 			}
 
-			output_path = argv[i + 1];
-			break;
+			output_path = *it;
 		}
 	}
+
+	cmp::NameAnalyzer::na_debug_print = true;
+	cmp::NameAnalyzer::na_debug_print_verbose = true;
 
 	// compile
 
@@ -107,7 +129,6 @@ int main(int argc, char** argv) {
     cmp::RegisterFormatConverter register_format_converter(symbol_table);
 	register_format_converter.convert_to_register_format();
 
-#ifdef OPTIMIZE
     std::vector<cmp::Optimizer*> optimizers;
     optimizers.push_back((cmp::Optimizer*)new cmp::ConstFoldingOptimizer());
     optimizers.push_back((cmp::Optimizer*)new cmp::EraseUnusedVariableOptimizer());
@@ -117,9 +138,24 @@ int main(int argc, char** argv) {
             p->optimize(symbol_table);
         }
     }
-#endif
-	symbol_table.generate_scope_structures();
 	
+	symbol_table.generate_scope_structures();
+
+	for (auto [cn, cls] : symbol_table.classes) {
+		if (cls->native_class_bind) {
+			continue;
+		}
+
+		std::cout << cn << std::endl;
+		
+		for (auto [fn, f] : cls->functions) {
+			std::cout << f->to_string() << std::endl;
+		}
+	}
+	
+	// generate bytecode
+
+#ifdef GEN_BC
 	auto size_gen = cmp::BytecodeGenerator<true>(symbol_table);
     size_t bytecode_size = size_gen.generate_bytecode();
 	
@@ -157,6 +193,23 @@ int main(int argc, char** argv) {
 	}
 
 	output_file.close();
+#endif
+
+#define GEN_CPP
+
+#ifdef GEN_CPP
+	std::ofstream hpp_file(output_path + ".hpp", std::ios::trunc);
+	std::ofstream cpp_file(output_path + ".cpp", std::ios::trunc);
+
+	cmp::CppCodeGenerator cpp_generator(symbol_table);
+	cpp_generator.generate_cpp_code(hpp_file, cpp_file);
+
+	std::cout << "written" << std::endl;
+
+	hpp_file.close();
+	cpp_file.close();
+
+#endif
 	
     return 0;
 }

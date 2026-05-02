@@ -202,7 +202,7 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
 
     TypePtr return_type = PrimitiveType::TYPE_VOID;
     assert(return_type);
-    FuncPtr constructor_symbol = std::make_shared<FunctionSymbol>(return_type, parser_info.cls->name, parameters, scope, true);
+    FuncPtr constructor_symbol = FunctionSymbol::create(return_type, parser_info.cls->name, parameters, scope, true);
     constructor_symbol->is_static = true; // treat constructor as static
 
     ParserInfo parser_info_body{symbol_table, parser_info.cls, constructor_symbol, scope};
@@ -351,7 +351,7 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
     // body
     bool is_abstract = false;
 
-    FuncPtr function_symbol = std::make_shared<FunctionSymbol>(return_type, name, parameters, scope, false);
+    FuncPtr function_symbol = FunctionSymbol::create(return_type, name, parameters, scope, false);
     ParserInfo parser_info_body{symbol_table, parser_info.cls, function_symbol, scope};
 
     if (expect("=")) {

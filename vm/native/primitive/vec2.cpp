@@ -41,6 +41,9 @@ void vec2::register_to_db(vm::ClassDB& db) {
 		REGISTER_CONSTRUCTOR(id, vec2());
 		REGISTER_CONSTRUCTOR(id, vec2(double x, double y));
 
+		REGISTER_VARIABLE(id, double, x);
+		REGISTER_VARIABLE(id, double, y);
+
         REGISTER_METHOD(id, vec2, set_x, void (vec2::*)(double x));
         REGISTER_METHOD(id, vec2, get_x, double (vec2::*)() const);
         REGISTER_METHOD(id, vec2, set_y, void (vec2::*)(double y));

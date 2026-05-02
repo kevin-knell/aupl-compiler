@@ -1,13 +1,15 @@
 #pragma once
-#include "primitive.hpp"
+
 #include <iostream>
+
+#include "native.hpp"
 
 namespace vm {
     class ClassDB;
 } // namespace vm
 
 
-class vec2 : public Primitive {
+class vec2 {
 public:
     static void register_to_db(vm::ClassDB& db);
 
@@ -71,4 +73,4 @@ public:
 };
 static_assert(sizeof(vec2) == 16);
 
-MARK_PRIMITIVE(vec2)
+MARK_TRIVIAL(vec2)

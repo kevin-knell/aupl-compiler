@@ -1,7 +1,7 @@
-#include "primitive.hpp"
+#include "native.hpp"
 
-class mat3x2 : Primitive {
+class mat3x2 {
 
 };
 
-MARK_PRIMITIVE(mat3x2)
+MARK_TRIVIAL(mat3x2)

@@ -12,6 +12,7 @@ struct LoadConstExpression : Expression {
 
 	OVERRIDE_ACCEPT_EXPRESSION_VISITOR
 
+	std::string value_to_string() const;
 	std::string to_string() const override;
 	std::vector<ExprPtr*> get_expressions() override;
 	bool is_unresolved_symbol() const override { return false; }

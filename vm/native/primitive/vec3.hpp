@@ -1,5 +1,7 @@
-#include "primitive.hpp"
+#include "native.hpp"
 
-class vec3 : public Primitive {
+class vec3 {
 
 };
+
+MARK_TRIVIAL(vec3)

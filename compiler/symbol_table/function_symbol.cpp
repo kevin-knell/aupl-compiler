@@ -8,10 +8,32 @@
 #define TAG(s, b) std::string(b ? s : "")
 
 namespace cmp {
+	FuncPtr FunctionSymbol::create(vm::MethodPair &method_pair) {
+		return std::make_shared<FunctionSymbol>(Private(), method_pair);
+	}
 
-FunctionSymbol::FunctionSymbol(vm::MethodPair &method_pair)
-		: name(method_pair.name), method_pair(&method_pair), is_constructor(method_pair.is_constructor) {}
+	FuncPtr FunctionSymbol::create(
+			const TypePtr &return_type,
+			const std::string &name,
+			const std::vector<VarPtr> &parameters,
+			const ScopePtr &scope,
+			const bool is_constructor
+			) {
+		return std::make_shared<FunctionSymbol>(Private(), return_type, name, parameters, scope, is_constructor);
+	}
 
+FunctionSymbol::FunctionSymbol(Private, vm::MethodPair &method_pair)
+		: return_type(PrimitiveType::TYPE_VOID), name(method_pair.name), method_pair(&method_pair), is_constructor(method_pair.is_constructor) {}
+
+FunctionSymbol::FunctionSymbol(Private, const TypePtr& return_type,
+		const std::string& name,
+		const std::vector<VarPtr>& parameters,
+		const ScopePtr& scope, const bool is_constructor)
+				: return_type(std::move(return_type)), name(name), parameters(parameters), scope(std::move(scope)), is_constructor(is_constructor)
+	{
+		scope->name = head_to_string();
+	}
+	
 std::string FunctionSymbol::head_to_string() {
 	if (method_pair) {
 		return method_pair->signature;
@@ -87,6 +109,81 @@ std::string FunctionSymbol::to_string() {
     return head + code;
 }
 
+std::string FunctionSymbol::to_cpp_string_prototype() {
+	std::stringstream ss;
+
+	if (is_static) {
+		ss << "static ";
+	}
+
+	if (!is_constructor) {
+		ss << return_type->to_cpp_type_str();
+		ss << " ";
+	}
+
+	ss << name;
+
+	ss << "(";
+
+	for (auto it = parameters.begin(); it != parameters.end(); ++it) {
+		if (it != parameters.begin()) {
+			ss << ", ";
+		}
+		
+		VarPtr arg = *it;
+		ss << arg->type->to_cpp_type_str();
+		ss << " ";
+		ss << arg->name;
+	}
+
+	ss << ")";
+
+	// TODO: const
+	// TODO: override
+
+	ss << ";";
+
+	return ss.str();
+}
+std::string FunctionSymbol::to_cpp_string(std::string context) {
+	if (method_pair) {
+		return head_to_string();
+	}
+
+	std::stringstream ss;
+
+	if (!is_constructor) {
+		ss << return_type->to_cpp_type_str();
+		ss << " ";
+	}
+
+	if (!context.empty()) {
+		ss << context;
+		ss << "::";
+	}
+
+	ss << name;
+
+	ss << "(";
+
+	for (auto it = parameters.begin(); it != parameters.end(); ++it) {
+		if (it != parameters.begin()) {
+			ss << ", ";
+		}
+		
+		VarPtr arg = *it;
+		ss << arg->type->to_cpp_type_str();
+		ss << " ";
+		ss << arg->name;
+	}
+
+	ss << ")";
+
+	// TODO: const
+	// TODO: override
+
+	return ss.str();
+}
 }
 
 #undef TAG

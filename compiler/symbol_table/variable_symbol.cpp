@@ -2,14 +2,19 @@
 
 #include "color.hpp"
 #include "scope.hpp"
+#include "type_from_cpp.hpp"
 #include <assert.h>
 
 #define TAG(s, b) std::string(b ? s : "")
 
 namespace cmp
 {
+	VariableSymbol::VariableSymbol(vm::VariableBind &v)
+		: type(get_type_from_cpp(v.type)), name(v.name) {}
 
 std::string VariableSymbol::to_string() const {
+	if (!type) return "UnknownType " + name;
+
     return C_KEYWORD(
                 TAG("public ", is_public) +
                 TAG("static ", is_static) +

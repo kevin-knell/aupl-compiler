@@ -30,6 +30,10 @@ struct Type {
 
 	virtual bool is_pointer_type() { return false; }
 	virtual Type& get_inner_type() { return *this; }
+
+	virtual std::string to_cpp_type_str() { return "char"; };
+
+	virtual bool default_store_shared() const { return false; }
 };
 
 using TypePtr = std::shared_ptr<Type>;

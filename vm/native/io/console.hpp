@@ -4,6 +4,7 @@
 #include "object.hpp"
 #include "string.hpp"
 #include "vec2.hpp"
+#include "vec2i.hpp"
 
 
 class Console {
@@ -30,6 +31,7 @@ public:
 	static void endwin();
 	static void clear();
 	static void move(int64_t x, int64_t y);
+	static void move(vec2i v);
 	static void printw(String s);
 	static void refresh();
 	static int64_t get_char();
