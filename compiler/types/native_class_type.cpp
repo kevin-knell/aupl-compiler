@@ -7,7 +7,7 @@ std::string NativeClassType::to_string() const {
 	return cls.name;
 }
 
-int NativeClassType::get_size() const {
+size_t NativeClassType::get_size() const {
 	return cls.size;
 }
 

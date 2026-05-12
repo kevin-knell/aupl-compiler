@@ -3,8 +3,9 @@
 
 namespace cmp {
 
-struct EraseUnusedVariableOptimizer : public Optimizer {
+struct EraseUnusedVariableOptimizer final : public Optimizer {
     void optimize(SymbolTable& st) const override;
+	~EraseUnusedVariableOptimizer() override = default;
 };
     
 } // namespace cmp

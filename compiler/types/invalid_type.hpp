@@ -4,7 +4,7 @@
 namespace cmp
 {
 
-struct InvalidType : public Type {
+struct InvalidType final : public Type {
     std::string name;
 
     static TypePtr make(const std::string& n) {
@@ -14,7 +14,7 @@ struct InvalidType : public Type {
     InvalidType(const std::string& n) : name(n) {}
 
     std::string to_string() const override { return "(invalid)" + name; }
-    int get_size() const { return 16; };
+    size_t get_size() const override { return 16; };
 
 	KIND get_kind() const override { return INVALID; };
 

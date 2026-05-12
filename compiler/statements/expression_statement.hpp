@@ -5,7 +5,7 @@
 
 namespace cmp {
 
-struct ExpressionStatement : public Statement {
+struct ExpressionStatement final : public Statement {
     ExprPtr expression;
 
     ExpressionStatement(ExprPtr expr)

@@ -4,7 +4,7 @@
 
 namespace cmp {
 
-struct BinaryExpression : public Expression {
+struct BinaryExpression final : public Expression {
     using OPERATOR = vm::BinOp;
 
     ExprPtr left;

@@ -3,7 +3,7 @@
 
 namespace cmp {
 
-struct StringLiteralExpression : Expression {
+struct StringLiteralExpression final : Expression {
 	TypePtr type;
 	std::string value;
 

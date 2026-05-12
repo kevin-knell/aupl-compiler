@@ -4,7 +4,7 @@
 namespace cmp
 {
 
-struct LabelStatement : public Statement {
+struct LabelStatement final : public Statement {
     std::string identifier;
 
 	LabelStatement(const std::string& id) : identifier(id) {}

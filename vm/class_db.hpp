@@ -37,7 +37,7 @@ struct MethodPair {
 struct ClassBind {
 	// meta
     const std::string name;
-    const int id;
+    const int16_t id;
 	const size_t size;
 	const bool is_object;
 	const bool is_trivial;
@@ -50,7 +50,7 @@ struct ClassBind {
 	std::vector<VariableBind> variables;
     std::vector<MethodPair> methods;
 
-	ClassBind(const std::string& name, size_t id, size_t size, bool is_object, bool is_trivial)
+	ClassBind(const std::string& name, int16_t id, size_t size, bool is_object, bool is_trivial)
 		: name(name), id(id), size(size), is_object(is_object), is_trivial(is_trivial) {}
 };
 
@@ -65,13 +65,13 @@ public:
     std::vector<ClassBind> classes;
 
 	template<typename ClassType>
-    size_t register_class(std::string name) {
-        classes.emplace_back(name, classes.size(), sizeof(ClassType), IS_OBJECT(ClassType), IS_TRIVIAL(ClassType));
+    int16_t register_class(std::string name) {
+        classes.emplace_back(name, static_cast<int16_t>(classes.size()), sizeof(ClassType), IS_OBJECT(ClassType), IS_TRIVIAL(ClassType));
 		return classes.back().id;
     }
 
     template<typename Constructor>
-    void register_constructor(int class_id, std::string signature) {
+    void register_constructor(int16_t class_id, std::string signature) {
         MethodPair pair;
 		pair.name = classes[class_id].name;
 		pair.signature = signature;
@@ -85,7 +85,7 @@ public:
 		pair.arg_count = parsed.parameters.size();
 
 		pair.class_id = class_id;
-		pair.method_id = classes[class_id].methods.size();
+		pair.method_id = static_cast<int16_t>(classes[class_id].methods.size());
 
 		pair.is_global = false;
 		pair.is_constructor = true;
@@ -94,7 +94,7 @@ public:
     }
 
     template<typename Method>
-    void register_method(int class_id, std::string name, Method method, std::string signature) {
+    void register_method(int16_t class_id, std::string name, Method method, std::string signature) {
         MethodPair pair;
         pair.name = name;
 		pair.signature = replace_member_pointer_with_name(signature, name);
@@ -107,7 +107,7 @@ public:
 		pair.arg_count = parsed.parameters.size();
 
 		pair.class_id = class_id;
-		pair.method_id = classes[class_id].methods.size();
+		pair.method_id = static_cast<int16_t>(classes[class_id].methods.size());
 
 		pair.is_global = false;
 		pair.is_constructor = false;
@@ -116,7 +116,7 @@ public:
     }
 
     template<typename Method>
-    void register_static_method(int class_id, std::string name, Method method, std::string signature, bool is_global = false) {
+    void register_static_method(int16_t class_id, std::string name, Method method, std::string signature, bool is_global = false) {
         MethodPair pair;
         pair.name = name;
 		pair.signature = replace_member_pointer_with_name(signature, name);
@@ -129,7 +129,7 @@ public:
 		pair.arg_count = parsed.parameters.size();
 
 		pair.class_id = class_id;
-		pair.method_id = classes[class_id].methods.size();
+		pair.method_id = static_cast<int16_t>(classes[class_id].methods.size());
 
 		pair.is_global = is_global;
 		pair.is_constructor = false;

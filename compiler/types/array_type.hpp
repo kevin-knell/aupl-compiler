@@ -5,14 +5,14 @@
 namespace cmp
 {
 
-struct ArrayType : public Type {
+struct ArrayType final : public Type {
 	TypePtr base_type;
 	ExprPtr size_expr;
 	bool is_const;
 
     std::string to_string() const override;
     
-	int get_size() const override { return 1; }
+	size_t get_size() const override { return 1; }
 
 	KIND get_kind() const override;
 

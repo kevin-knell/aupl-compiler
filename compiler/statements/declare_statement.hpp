@@ -5,7 +5,7 @@
 
 namespace cmp {
 
-struct DeclareStatement : public Statement {
+struct DeclareStatement final : public Statement {
     VarPtr variable_symbol;
 
     DeclareStatement(const VarPtr& variable_symbol);

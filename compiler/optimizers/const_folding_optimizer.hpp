@@ -3,8 +3,9 @@
 
 namespace cmp {
 
-struct ConstFoldingOptimizer : public Optimizer {
+struct ConstFoldingOptimizer final : public Optimizer {
     void optimize(SymbolTable& st) const override;
+	~ConstFoldingOptimizer() override = default;
 };
 
 } // namespace cmp

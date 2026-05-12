@@ -4,7 +4,7 @@
 
 namespace cmp {
 
-struct VariableExpression : public Expression {
+struct VariableExpression final : public Expression {
 	ExprPtr obj_expr;
     VarPtr var;
     std::string name;

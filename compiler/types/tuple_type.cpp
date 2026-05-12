@@ -14,8 +14,8 @@ std::string TupleType::to_string() const {
     return result + ")";
 }
 
-int TupleType::get_size() const {
-	int result = 0;
+size_t TupleType::get_size() const {
+	size_t result = 0;
 
 	for (auto t : types) {
 		result += t->get_size();

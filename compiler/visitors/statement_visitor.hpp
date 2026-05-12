@@ -12,6 +12,8 @@ class LabelStatement;
 class ExpressionStatement;
 
 class StatementVisitor {
+public:
+	virtual ~StatementVisitor() = default;
 private:
 	virtual void visit(Statement& stmt) = 0;
 	virtual void visit(DeclareStatement& stmt) = 0;

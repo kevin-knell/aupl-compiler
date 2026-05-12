@@ -6,7 +6,7 @@
 namespace cmp
 {
 
-TypePtr create(std::string n, int s, vm::BinType bin_type, std::vector<std::string> cpp_types) {
+TypePtr create(std::string n, size_t s, vm::BinType bin_type, std::vector<std::string> cpp_types) {
     PrimitiveType type = PrimitiveType(n, s, bin_type, cpp_types);
     auto result = std::make_shared<PrimitiveType>(type);
 
@@ -38,7 +38,7 @@ std::string PrimitiveType::to_string() const {
     return C_TYPE(name);
 }
 
-int PrimitiveType::get_size() const {
+size_t PrimitiveType::get_size() const {
     return size;
 }
 

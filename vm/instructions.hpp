@@ -274,7 +274,7 @@ namespace vm {
         #undef ENUM_ENTRY
     };
 
-    static_assert((uint8_t)Instruction::HALT <= 255);
+    static_assert(static_cast<uint8_t>(Instruction::HALT) <= 255);
 
     #define OPCODE_SIZE(op, size) v.push_back(std::vector<int>(size));
     #define OP_SIZE_LIST(...) {__VA_ARGS__}

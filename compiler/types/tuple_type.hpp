@@ -6,14 +6,14 @@
 
 namespace cmp {
 
-struct TupleType : public Type {
+struct TupleType final : public Type {
     std::vector<TypePtr> types;
 
     TupleType(std::vector<TypePtr> types);
 
     std::string to_string() const override;
 
-    int get_size() const override;
+    size_t get_size() const override;
 
 	KIND get_kind() const override;
 

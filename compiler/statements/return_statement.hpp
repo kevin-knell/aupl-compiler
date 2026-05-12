@@ -6,7 +6,7 @@
 
 namespace cmp {
 
-struct ReturnStatement : public Statement {
+struct ReturnStatement final : public Statement {
     ExprPtr return_value;
 
     ReturnStatement(ExprPtr val)

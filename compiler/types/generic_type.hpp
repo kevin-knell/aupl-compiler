@@ -6,7 +6,7 @@
 namespace cmp
 {
 
-struct GenericType : public Type {
+struct GenericType final : public Type {
     TypePtr base;
     std::vector<TypePtr> parameters;
 
@@ -22,7 +22,7 @@ struct GenericType : public Type {
         return result + ">";
     }
 
-    int get_size() { return 1; };
+    size_t get_size() { return 1; };
 
 	KIND get_kind() const override { return INVALID; };
 

@@ -4,7 +4,7 @@
 
 namespace cmp {
 
-struct AssignmentStatement : public Statement {
+struct AssignmentStatement final : public Statement {
     ExprPtr expr_left;
     ExprPtr expr_right;
 

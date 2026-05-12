@@ -5,7 +5,7 @@
 #include "string.hpp"
 
 void File::register_to_db(vm::ClassDB &db) {
-	const int ID = REGISTER_CLASS(File);
+	const int16_t ID = REGISTER_CLASS(File);
 	
 	//REGISTER_CONSTRUCTOR(ID, File(const String& path, int64_t open_flag));
 

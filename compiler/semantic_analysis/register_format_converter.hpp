@@ -14,7 +14,7 @@
 
 namespace cmp {
 
-class RegisterFormatConverter : StatementVisitor {
+class RegisterFormatConverter final : public StatementVisitor {
 private:
 	SymbolTable& symbol_table;
 	StmtVec statements;
@@ -45,6 +45,7 @@ private:
 public:
     void convert_to_register_format();
     RegisterFormatConverter(SymbolTable& symbol_table) : symbol_table(symbol_table) {}
+	~RegisterFormatConverter() override = default;
 };
 
 } // namespace cmp

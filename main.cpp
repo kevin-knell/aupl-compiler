@@ -130,8 +130,8 @@ int main(int argc, char** argv) {
 	register_format_converter.convert_to_register_format();
 
     std::vector<cmp::Optimizer*> optimizers;
-    optimizers.push_back((cmp::Optimizer*)new cmp::ConstFoldingOptimizer());
-    optimizers.push_back((cmp::Optimizer*)new cmp::EraseUnusedVariableOptimizer());
+    optimizers.push_back(static_cast<cmp::Optimizer*>(new cmp::ConstFoldingOptimizer()));
+    optimizers.push_back(static_cast<cmp::Optimizer*>(new cmp::EraseUnusedVariableOptimizer()));
 
     for (int i = 0; i < 1; ++i) {
         for (auto p : optimizers) {

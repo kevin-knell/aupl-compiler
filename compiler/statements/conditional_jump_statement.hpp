@@ -16,7 +16,7 @@ enum class CJ_KIND {
 	WHILE_RETURN
 };
 
-class ConditionalJumpStatement : public Statement {
+class ConditionalJumpStatement final : public Statement {
 public:
 	const CJ_KIND cj_kind;
     ExprPtr condition;

@@ -17,7 +17,7 @@ class MethodPair;
 
 namespace cmp {
 
-struct FunctionSymbol : public std::enable_shared_from_this<FunctionSymbol> {
+struct FunctionSymbol final : public std::enable_shared_from_this<FunctionSymbol> {
 private:
 	struct Private{ explicit Private() = default; };
 

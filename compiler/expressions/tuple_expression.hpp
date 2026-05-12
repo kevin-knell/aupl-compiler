@@ -4,7 +4,7 @@
 
 namespace cmp {
 	
-struct TupleExpression : public Expression {
+struct TupleExpression final : public Expression {
 	ExprVec expressions;
 
 	TupleExpression(ExprVec expressions) : expressions(expressions) {}

@@ -8,7 +8,7 @@
 
 namespace cmp {
 
-class CppCodeGenerator : StatementVisitor, ExpressionVisitor {
+class CppCodeGenerator final : public StatementVisitor, public ExpressionVisitor {
 private:
 	const SymbolTable& symbol_table;
 	ClassPtr current_class;
@@ -27,6 +27,8 @@ private:
 public:
 	CppCodeGenerator(const SymbolTable& symbol_table) : symbol_table(symbol_table) {}
 	void generate_cpp_code(std::ofstream& hpp_file, std::ofstream& cpp_file);
+
+	~CppCodeGenerator() override = default;
 
 private:
 	void iterate_scope();

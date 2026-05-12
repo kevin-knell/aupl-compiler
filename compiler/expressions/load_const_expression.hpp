@@ -4,7 +4,7 @@
 
 namespace cmp {
 
-struct LoadConstExpression : Expression {
+struct LoadConstExpression final : Expression {
 	TypePtr type;
 	vm::Value* value;
 

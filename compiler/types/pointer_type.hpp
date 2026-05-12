@@ -3,14 +3,14 @@
 
 namespace cmp {
 
-struct PointerType : public Type {
+struct PointerType final : public Type {
 	TypePtr type;
 	
 	PointerType(TypePtr type);
 
     std::string to_string() const override;
 
-    int get_size() const override;
+    size_t get_size() const override;
 
 	KIND get_kind() const override;
 

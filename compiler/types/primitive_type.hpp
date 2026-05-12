@@ -5,7 +5,7 @@
 namespace cmp
 {
 
-struct PrimitiveType : public Type {
+struct PrimitiveType final : public Type {
 public:
     static const TypePtr TYPE_I8;
     static const TypePtr TYPE_I16;
@@ -26,7 +26,7 @@ public:
 	const vm::BinType vm_bin_type;
 
     std::string to_string() const override;
-    int get_size() const override;
+    size_t get_size() const override;
 
 	KIND get_kind() const override;
 
@@ -35,13 +35,13 @@ public:
 	std::string to_cpp_type_str() override;
 private:
     const std::string name; // "int", "bool", etc.
-    const int size;
+    const size_t size;
 	const std::vector<std::string> cpp_types;
 
-    explicit PrimitiveType(const std::string& n, int s, vm::BinType bin_type, std::vector<std::string> cpp_types)
+    explicit PrimitiveType(const std::string& n, size_t s, vm::BinType bin_type, std::vector<std::string> cpp_types)
 		: vm_bin_type(bin_type), name(n), size(s), cpp_types(cpp_types) {}
 
-    friend TypePtr create(std::string n, int s, vm::BinType bin_type, std::vector<std::string> cpp_types);
+    friend TypePtr create(std::string n, size_t s, vm::BinType bin_type, std::vector<std::string> cpp_types);
 };
 
 } // namespace cmp

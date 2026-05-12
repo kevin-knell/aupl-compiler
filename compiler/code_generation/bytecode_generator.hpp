@@ -64,7 +64,7 @@ struct BytecodeProductInfo {
 };
 
 template<bool size_only>
-class BytecodeGenerator : StatementVisitor, ExpressionAssignmentVisitor {
+class BytecodeGenerator final : public StatementVisitor, public ExpressionAssignmentVisitor {
 private:
 	using BC_GEN_RES = std::conditional_t<size_only, size_t, BytecodeProductInfo>;
 	
@@ -84,6 +84,8 @@ public:
 
 	BytecodeGenerator(const SymbolTable& symbol_table) : symbol_table(symbol_table) {}
 	BC_GEN_RES generate_bytecode();
+
+	~BytecodeGenerator() = default;
 
 private:
 	void add_error();
@@ -165,9 +167,9 @@ inline BytecodeGenerator<size_only>::BC_GEN_RES BytecodeGenerator<size_only>::ge
 			std::function<void()> iterate_scopes = [&]() {
 				if constexpr(size_only) {
 					scope->starting_address = result;
-					BCG_DEBUG_PRINT(scope->get_full_name() << ": " << std::hex << (int)(result) << std::dec);
+					BCG_DEBUG_PRINT(scope->get_full_name() << ": " << std::hex << static_cast<int>(result) << std::dec);
 				} else {
-					BCG_DEBUG_PRINT(scope->get_full_name() << " " << (int)scope->starting_address << " " << C_BRACE_L);
+					BCG_DEBUG_PRINT(scope->get_full_name() << " " << static_cast<int>(scope->starting_address) << " " << C_BRACE_L);
 				}
 
 				for (auto stmt : scope->body) {
@@ -264,7 +266,7 @@ inline void BytecodeGenerator<size_only>::append(vm::Instruction op_code, std::v
 			for (size_t byte_idx = 0; byte_idx < size; ++byte_idx) {
 				std::cout <<
 						std::hex << std::uppercase << std::setw(2) << std::setfill('0') <<
-						(int)bytecode[offset + byte_idx];
+						static_cast<int>bytecode[offset + byte_idx];
 			}
 			std::cout << " ";
 			offset += size;
@@ -420,7 +422,7 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const ConditionalJum
 		return;
 	}
 
-	struct ConditionVisitor : ExpressionVisitor {
+	struct ConditionVisitor final : ExpressionVisitor {
 		BytecodeGenerator& self;
 		const ConditionalJumpStatement& stmt;
 
@@ -631,7 +633,7 @@ template <bool size_only>
 inline void BytecodeGenerator<size_only>::generate_bytecode(
 		const LoadConstExpression &expr,
 		VarExprPtr dest_var) {
-	int size = dest_var->get_type()->get_size();
+	size_t size = dest_var->get_type()->get_size();
 	assert(expr.get_type()->get_size() >= size);
 	if (size == 0) return;
 	

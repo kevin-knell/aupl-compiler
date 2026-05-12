@@ -24,7 +24,7 @@ struct Type {
 
     virtual ~Type() = default;
     virtual std::string to_string() const = 0;
-    virtual int get_size() const = 0;
+    virtual size_t get_size() const = 0;
 	virtual KIND get_kind() const = 0;
 	virtual bool is_cpp_type(const std::string& cpp_type) const = 0;
 

@@ -16,6 +16,8 @@ class StringLiteralExpression;
 using VarExprPtr = std::shared_ptr<VariableExpression>;
 
 class ExpressionVisitor {
+public:
+	virtual ~ExpressionVisitor() = default;
 private:
 	virtual void visit(Expression& expr) = 0;
 	virtual void visit(VariableExpression& expr) = 0;
@@ -37,6 +39,8 @@ private:
 };
 
 class ExpressionAssignmentVisitor {
+public:
+	virtual ~ExpressionAssignmentVisitor() = default;
 private:
 	virtual void visit(Expression& expr, VarExprPtr var_expr) = 0;
 	virtual void visit(VariableExpression& expr, VarExprPtr var_expr) = 0;

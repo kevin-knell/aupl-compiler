@@ -36,17 +36,17 @@ std::shared_ptr<Scope> Scope::find_scope(const std::shared_ptr<Scope>& scope, co
     }
 }
 
-int Scope::get_variable_index(const ScopePtr& scope, const std::string &name) {
+size_t Scope::get_variable_index(const ScopePtr& scope, const std::string &name) {
 	return find_scope(scope, name)->variable_indices[name];
 }
 
-void Scope::generate_structure(int offset) {
+void Scope::generate_structure(size_t offset) {
     variable_indices.clear();
 	size = 0;
 
 	for (auto name : args) {
 		auto var = variables[name];
-        int var_size = var->type->get_size();
+        size_t var_size = var->type->get_size();
         if (var_size) {
             variable_indices[name] = offset;
             offset += var_size;
@@ -57,7 +57,7 @@ void Scope::generate_structure(int offset) {
     for (auto& [name, var] : variables) {
 		if (std::find(args.begin(), args.end(), name) != args.end()) continue;
 
-        int var_size = var->type->get_size();
+        size_t var_size = var->type->get_size();
         if (var_size) {
             variable_indices[name] = offset;
             offset += var_size;
@@ -94,9 +94,9 @@ std::string Scope::structure_to_string() const {
 	if (!args.empty()) result << GREY << "args:" << CLEAR << "\n";
 
 	for (std::string name : args) {
-		int offset = variable_indices.find(name)->second;
+		size_t offset = variable_indices.find(name)->second;
         VarPtr var = variables.find(name)->second;
-        int var_size = var->type->get_size();
+        size_t var_size = var->type->get_size();
         result << std::setw(4) << std::hex << offset << " to " << std::setw(4) << offset + var_size - 1 << ": " << var->to_string() << "\n";
 	}
 
@@ -105,7 +105,7 @@ std::string Scope::structure_to_string() const {
 	for (auto [name, offset] : variable_indices) {
 		if (std::find(args.begin(), args.end(), name) != args.end()) continue;
         VarPtr var = variables.find(name)->second;
-        int var_size = var->type->get_size();
+        size_t var_size = var->type->get_size();
         result << std::setw(4) << std::hex << offset << " to " << std::setw(4) << offset + var_size - 1 << ": " << var->to_string() << "\n";
     }
 

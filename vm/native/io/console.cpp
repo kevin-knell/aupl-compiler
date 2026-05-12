@@ -65,15 +65,15 @@ void Console::clear() {
 void Console::move(int64_t _x, int64_t _y) {
 	x = _x;
 	y = _y;
-	::move(y, x);
+	::move(static_cast<int>(y), static_cast<int>(x));
 }
 
 void Console::move(vec2i v) {
-	move(v.x, v.y);
+	move(static_cast<int>(v.x), static_cast<int>(v.y));
 }
 
 void Console::printw(String s) {
-	::mvprintw(y, x, "%s", s.str().c_str());
+	::mvprintw(static_cast<int>(y), static_cast<int>(x), "%s", s.str().c_str());
 }
 
 void Console::refresh() {
@@ -85,7 +85,7 @@ int64_t Console::get_char() {
 }
 
 void Console::register_to_db(vm::ClassDB& db) {
-		const int id = REGISTER_CLASS(Console);
+		const int16_t id = REGISTER_CLASS(Console);
 
 		REGISTER_GLOBAL_METHOD(id, Console, print, void (*)());
 		REGISTER_GLOBAL_METHOD(id, Console, print, void (*)(const String& text));

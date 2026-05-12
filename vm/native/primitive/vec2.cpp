@@ -36,7 +36,7 @@ double vec2::length() const
 }
 
 void vec2::register_to_db(vm::ClassDB& db) {
-        const int id = REGISTER_CLASS(vec2);
+        const int16_t id = REGISTER_CLASS(vec2);
 		
 		REGISTER_CONSTRUCTOR(id, vec2());
 		REGISTER_CONSTRUCTOR(id, vec2(double x, double y));

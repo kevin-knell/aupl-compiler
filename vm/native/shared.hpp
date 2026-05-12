@@ -111,7 +111,7 @@ public:
 
 #define REGISTER_SHARED(T) \
 	do { \
-		const size_t id = REGISTER_CLASS(Shared<T>); \
+		const int16_t id = REGISTER_CLASS(Shared<T>); \
 		if constexpr(std::is_same_v<T, vm::Value>) { \
 			REGISTER_STATIC_METHOD(id, Shared<vm::Value>, make_raw, Shared<vm::Value> (*)(size_t size)); \
 		} \

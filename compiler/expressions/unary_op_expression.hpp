@@ -4,7 +4,7 @@
 
 namespace cmp {
 
-struct UnaryExpression : public Expression {
+struct UnaryExpression final : public Expression {
     enum OPERATOR {
 		NOT,
 		MINUS,

@@ -5,7 +5,7 @@
 
 namespace cmp {
 
-struct CallExpression : public Expression {
+struct CallExpression final : public Expression {
     std::string name;
     std::vector<ExprPtr> arguments;
 	ExprPtr obj_expr;

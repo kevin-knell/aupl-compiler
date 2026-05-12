@@ -12,13 +12,13 @@ class ClassBind;
 namespace cmp
 {
 
-struct NativeClassType : public Type {
+struct NativeClassType final : public Type {
 	const vm::ClassBind& cls;
 	ClassPtr class_ptr;
 
 	NativeClassType(const vm::ClassBind& cls);
     std::string to_string() const override;
-    int get_size() const override;
+    size_t get_size() const override;
 	FuncVec functions;
 
 	KIND get_kind() const override;

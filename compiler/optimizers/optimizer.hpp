@@ -5,6 +5,7 @@ namespace cmp {
 
 struct Optimizer {
     virtual void optimize(SymbolTable& st) const = 0;
+	virtual ~Optimizer() = default;
 };
 
 }
