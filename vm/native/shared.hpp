@@ -9,6 +9,8 @@ namespace vm {
 	class ClassDB;
 }
 
+namespace auplib {
+
 struct SharedData {
 	size_t ref_count;
 };
@@ -108,6 +110,9 @@ public:
 	}
 };
 
+static_assert(sizeof(Shared<int>) == 16);
+
+}
 
 #define REGISTER_SHARED(T) \
 	do { \
@@ -116,6 +121,3 @@ public:
 			REGISTER_STATIC_METHOD(id, Shared<vm::Value>, make_raw, Shared<vm::Value> (*)(size_t size)); \
 		} \
 	} while(0);
-
-
-static_assert(sizeof(Shared<int>) == 16);

@@ -6,6 +6,8 @@
 #include "class_db.hpp"
 #include "complex.hpp"
 
+namespace auplib {
+
 const vec2 vec2::ZERO(0, 0);
 const vec2 vec2::ONE(0, 0);
 const vec2 vec2::EX(1, 0);
@@ -66,4 +68,6 @@ void vec2::register_to_db(vm::ClassDB& db) {
         REGISTER_METHOD(id, vec2, operator-, vec2 (vec2::*)(const vec2& other) const);
         REGISTER_METHOD(id, vec2, operator*);
         REGISTER_METHOD(id, vec2, operator/);
+}
+
 }

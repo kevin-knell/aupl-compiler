@@ -5,6 +5,8 @@ namespace vm {
     class ClassDB;
 } // namespace vm
 
+namespace auplib {
+
 class String {
 private:
     std::string value;
@@ -32,3 +34,5 @@ public:
 	operator std::string() const { return value; }
 	operator const char*() const { return value.c_str(); }
 };
+
+}

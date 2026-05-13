@@ -56,6 +56,7 @@ namespace {
 void cmp::CppCodeGenerator::generate_cpp_code(std::ofstream &hpp_file, std::ofstream &cpp_file) {
 	append(hpp_includes, "// include");
 	append(hpp_forward_declarations, "\n\n\n// forward declarations");
+	append(hpp_forward_declarations, "using namespace auplib;");
 	append(hpp_classes, "\n\n\n// classes");
 	append(hpp_global_functions, "\n\n\n// global functions");
 

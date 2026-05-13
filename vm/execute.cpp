@@ -87,9 +87,9 @@ namespace vm {
 			uint16_t& string_pos = FETCH(uint16_t);
 			
 			const char* c = reinterpret_cast<char*>(&const_memory[string_pos]);
-            Shared<String>* shared_addr = reinterpret_cast<Shared<String>*>(dp + offset);
+            auplib::Shared<auplib::String>* shared_addr = reinterpret_cast<auplib::Shared<auplib::String>*>(dp + offset);
 			
-			*shared_addr = Shared<String>::make(c);
+			*shared_addr = auplib::Shared<auplib::String>::make(c);
 			
 			ADVANCE();
         }
@@ -101,7 +101,7 @@ namespace vm {
 			void* shared_addr = static_cast<void*>(ap + shared_pos);
 			vm::Value* mem = new vm::Value[size];
 			
-			new (shared_addr) Shared<vm::Value>(mem);
+			new (shared_addr) auplib::Shared<vm::Value>(mem);
 
 			//std::cout << "shared obj: " << ((Shared<vm::Value>*)shared_addr)->obj << std::endl;
 			//std::cout << "shared data: " << ((Shared<vm::Value>*)shared_addr)->data << std::endl;

@@ -4,6 +4,8 @@
 #include "class_db.hpp"
 #include "string.hpp"
 
+namespace auplib {
+
 void File::register_to_db(vm::ClassDB &db) {
 	const int16_t ID = REGISTER_CLASS(File);
 	
@@ -62,4 +64,6 @@ bool File::end() const {
 
 void File::write_line(const String& s) {
 	file_access << s.str() << std::flush;
+}
+
 }

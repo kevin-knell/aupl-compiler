@@ -3,6 +3,8 @@
 #include "native.hpp"
 #include <iostream>
 
+namespace auplib {
+
 String::String(const String &s) : value(s.str()) {}
 
 String::String(const char *s) : value(s) {}
@@ -27,4 +29,6 @@ void String::register_to_db(vm::ClassDB& db) {
 
 		REGISTER_METHOD(id, String, size, size_t (String::*)() const);
 		REGISTER_METHOD(id, String, operator=, String& (String::*)(const String& s));
+}
+
 }

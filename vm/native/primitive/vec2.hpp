@@ -8,6 +8,7 @@ namespace vm {
     class ClassDB;
 } // namespace vm
 
+namespace auplib {
 
 class vec2 {
 public:
@@ -74,3 +75,5 @@ public:
 static_assert(sizeof(vec2) == 16);
 
 MARK_TRIVIAL(vec2)
+
+}

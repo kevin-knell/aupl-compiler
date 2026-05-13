@@ -6,6 +6,8 @@ namespace vm {
     class ClassDB;
 } // namespace vm
 
+namespace auplib {
+
 class vec2i {
 public:
     static void register_to_db(vm::ClassDB& db);
@@ -22,3 +24,5 @@ public:
 };
 
 MARK_TRIVIAL(vec2i)
+
+}

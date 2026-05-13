@@ -12,7 +12,7 @@ std::string SharedType::to_string() const {
 }
 
 size_t SharedType::get_size() const {
-	return sizeof(Shared<vm::Value>);
+	return sizeof(auplib::Shared<vm::Value>);
 }
 
 Type::KIND SharedType::get_kind() const {

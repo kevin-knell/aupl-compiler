@@ -12,10 +12,13 @@
 #endif
 
 void register_shared_to_db(vm::ClassDB& db) {
+	using auplib::Shared;
 	CREATE_GENERICS(REGISTER_SHARED)
 }
 
 void vm::register_classes(vm::ClassDB& db) {
+	using namespace auplib;
+	
 	// lang-integrated
 	String::register_to_db(db);
 	register_shared_to_db(db);

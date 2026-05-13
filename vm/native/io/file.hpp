@@ -7,6 +7,8 @@ namespace vm {
     class ClassDB;
 } // namespace vm
 
+namespace auplib {
+
 class String;
 
 class File : Object {
@@ -40,3 +42,5 @@ public:
 	// write
 	void write_line(const String& s);
 };
+
+}

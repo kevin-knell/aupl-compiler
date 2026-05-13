@@ -7,8 +7,11 @@ namespace vm
     class ClassDB;
 } // namespace vm
 
+namespace auplib {
 
 class ClassBind : Object {
 public:
     static void register_to_db(vm::ClassDB& db);
 };
+
+}

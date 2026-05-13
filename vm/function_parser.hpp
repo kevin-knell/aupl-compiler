@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 
-
 struct FunctionSignature {
     std::string return_type;
     std::vector<std::string> parameter_types;

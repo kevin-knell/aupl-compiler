@@ -2,6 +2,7 @@
 #include "native.hpp"
 #include "class_db.hpp"
 
+namespace auplib {
 
 class Math {
 public:
@@ -49,3 +50,5 @@ public:
 static_assert(sizeof(long) == 8);
 
 STATIC_ASSERT_UTILITY_CLASS(Math);
+
+}

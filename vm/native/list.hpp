@@ -8,6 +8,8 @@ namespace vm {
     class ClassDB;
 } // namespace vm
 
+namespace auplib {
+
 template<typename T>
 class List : public Object {
 public:
@@ -62,4 +64,6 @@ void register_list8_to_db(vm::ClassDB &db) {
 	REGISTER_METHOD(ID, List8, size, int64_t (List8::*)());
 	REGISTER_METHOD(ID, List8, empty, bool (List8::*)());
 	REGISTER_METHOD(ID, List8, clear, void (List8::*)());
+}
+
 }

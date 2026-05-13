@@ -2,6 +2,8 @@
 #include <cmath>
 #include <algorithm>
 
+namespace auplib {
+
 void Math::register_to_db(vm::ClassDB &db) {
 	const int16_t id = REGISTER_CLASS(Math);
 
@@ -117,4 +119,6 @@ double Math::clamp(double x, double from, double to) {
 
 int Math::clamp(int x, int from, int to) {
     return std::clamp(x, from, to);
+}
+
 }

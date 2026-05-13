@@ -2,6 +2,8 @@
 #include <iostream>
 #include <ncurses.h>
 
+namespace auplib {
+
 int64_t Console::x = 0;
 int64_t Console::y = 0;
 
@@ -104,4 +106,6 @@ void Console::register_to_db(vm::ClassDB& db) {
 		REGISTER_STATIC_METHOD(id, Console, printw, void (*)(String s));
 		REGISTER_STATIC_METHOD(id, Console, refresh, void (*)());
 		REGISTER_STATIC_METHOD(id, Console, get_char, int64_t (*)());
+}
+
 }

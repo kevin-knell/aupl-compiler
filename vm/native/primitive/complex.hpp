@@ -5,6 +5,7 @@ namespace vm {
     class ClassDB;
 } // namespace vm
 
+namespace auplib {
 
 class complex {
 public:
@@ -22,3 +23,5 @@ public:
 };
 
 MARK_TRIVIAL(complex)
+
+}

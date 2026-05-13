@@ -6,6 +6,7 @@
 #include "vec2.hpp"
 #include "vec2i.hpp"
 
+namespace auplib {
 
 class Console {
 private:
@@ -38,3 +39,5 @@ public:
 };
 
 STATIC_ASSERT_UTILITY_CLASS(Console);
+
+}
