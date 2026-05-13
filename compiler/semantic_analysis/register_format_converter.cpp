@@ -146,6 +146,8 @@ void RegisterFormatConverter::convert(ConditionalJumpStatement& stmt) {
 }
 
 void RegisterFormatConverter::convert(ReturnStatement& stmt) {
+	if (!stmt.return_value) return;
+	
 	auto& expr = stmt.return_value;
 	replace_with_temp(expr, stmt.is_volatile);
 }

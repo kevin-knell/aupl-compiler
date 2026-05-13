@@ -295,8 +295,13 @@ std::vector<StmtPtr> SymbolBuilder::parse_return(ParserInfo& parser_info) {
     }
     next(); // consume 'return'
 
-    // Parse the returned expression, or nullptr for empty return
-    auto expr = parse_expression(parser_info);
+	ExprPtr expr = nullptr;
+	if (!peek().is_new_line) {
+ 		std::cout << "return" << peek().value;
+		// Parse the returned expression, or nullptr for empty return
+ 		expr = parse_expression(parser_info);
+		std::cout << expr << std::endl;
+	}
 
     return { std::make_shared<ReturnStatement>(expr) };
 }

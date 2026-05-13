@@ -24,6 +24,7 @@ public:
 
     bool parse_constructor(ParserInfo parser_info);
     bool parse_function(ParserInfo parser_info);
+    bool parse_operator(ParserInfo parser_info);
     bool parse_variable(ParserInfo parser_info);
     
     TypePtr parse_type(ParserInfo& parser_info);

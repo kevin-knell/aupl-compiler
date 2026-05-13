@@ -239,7 +239,7 @@ void cmp::CppCodeGenerator::visit(ConditionalJumpStatement &stmt) {
 void cmp::CppCodeGenerator::visit(ReturnStatement &stmt) {
 	cpp_classes << make_indented_stringstream().str();
 	cpp_classes << "return ";
-	stmt.return_value->accept(*this);
+	if (stmt.return_value) stmt.return_value->accept(*this);
 	cpp_classes << ";\n";
 }
 

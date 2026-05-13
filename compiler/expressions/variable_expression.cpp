@@ -77,6 +77,10 @@ void VariableExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 			if (obj_type->get_kind() == Type::NATIVE_CLASS) {
 				NativeClassType& class_type = dynamic_cast<NativeClassType&>(*obj_type);
 				cls = class_type.class_ptr;
+			} else if (obj_type->get_kind() == Type::CLASS) {
+				ClassType& class_type = dynamic_cast<ClassType&>(*obj_type);
+				auto it = name_analysis_info.symbol_table.classes.find(class_type.name);
+				cls = it->second;
 			} else {
 				std::cerr << "invalid obj_type: " << obj_type->to_string() << std::endl;
 				return;

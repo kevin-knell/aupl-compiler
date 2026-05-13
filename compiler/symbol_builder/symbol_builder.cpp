@@ -102,6 +102,7 @@ void SymbolBuilder::parse_class() {
     while (has_more_tokens()) {
         if (parse_constructor(ParserInfo{symbol_table, this_class, nullptr, this_class->static_scope})) continue;
         if (parse_function(ParserInfo{symbol_table, this_class, nullptr, this_class->static_scope})) continue;
+        if (parse_operator(ParserInfo{symbol_table, this_class, nullptr, this_class->static_scope})) continue;
         if (parse_variable(ParserInfo{symbol_table, this_class, nullptr, this_class->static_scope})) continue;
 
         // no match
@@ -402,6 +403,141 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
     function_symbol->is_static = is_static;
     function_symbol->is_const = is_const;
     function_symbol->is_abstract = is_abstract;
+
+    parser_info.cls->functions.insert(std::pair(function_symbol->name, function_symbol));
+
+    return true;
+}
+
+bool SymbolBuilder::parse_operator(ParserInfo parser_info) {
+	size_t start_idx = index;
+
+	ScopePtr scope = std::make_shared<Scope>(Scope::FUNCTION, "(currently parsed)");
+    ScopePtr upper_scope = parser_info.cls->scope;
+    scope->upper_scope = upper_scope;
+    ParserInfo parser_info_header{.symbol_table = symbol_table, .cls = parser_info.cls, .func = nullptr, .scope = scope};
+
+    TypePtr return_type = parse_type(parser_info);
+    if (!return_type) {
+        index = start_idx;
+        return false;
+    }
+
+	if (!expect("operator")) {
+        index = start_idx;
+        return false;
+	}
+	next(); // consume 'operator'
+
+	std::string op;
+	if (match(TokenType::SPECIAL)) {
+	}
+	op = next().value;
+
+	std::cout << op << std::endl;
+
+	std::string name = "operator" + op;
+
+
+
+	// parameters
+	std::vector<VarPtr> parameters;
+	
+	// add pointer to self as arg
+	auto class_type = parser_info.cls->type;
+	auto pointer_type = std::make_shared<PointerType>(class_type);
+	auto this_var = std::make_shared<VariableSymbol>(pointer_type, "this", nullptr);
+	scope->args.push_back(this_var->name);
+	scope->variables[this_var->name] = this_var;
+	this_var->scope = scope;
+
+    if (!expect("(")) {
+        index = start_idx;
+        return false;
+    }
+    next(); // consume (
+
+    while (!expect(")")) {
+        if (!parameters.empty()) {
+            if (!expect(",")) {
+                next();
+                continue;
+            }
+            next(); // consume ,
+        }
+
+        // type
+        TypePtr arg_type = parse_type(parser_info_header);
+        if (!arg_type) {
+            // TODO: add error
+            std::cout << "arg type error: " << peek().value << std::endl;
+            next();
+            continue;
+        }
+
+        // name
+        if (!match(TokenType::IDENTIFIER)) {
+            std::cout << "arg name error: " << peek().value << std::endl;
+            next();
+            continue;
+        }
+        std::string arg_name = next().value;
+
+        VarPtr param = std::make_shared<VariableSymbol>(arg_type, arg_name, nullptr);
+        scope->args.push_back(arg_name);
+		scope->variables[arg_name] = param;
+        parameters.push_back(param);
+    }
+    next(); // consume )
+
+
+
+    // body
+    FuncPtr function_symbol = FunctionSymbol::create(return_type, name, parameters, scope, false);
+    ParserInfo parser_info_body{symbol_table, parser_info.cls, function_symbol, scope};
+
+    if (expect("=")) {
+        next(); // consume =
+
+		if (auto expression = parse_expression(parser_info_body)) {
+			std::shared_ptr<ReturnStatement> return_statement = std::make_shared<ReturnStatement>(expression);
+			function_symbol->scope->body.push_back(return_statement);
+		} else {
+			std::cout << "invalid return statement" << std::endl;
+		}
+    } else if (expect("{")) {
+        next(); // consume {
+
+        while (!expect("}")) {
+			bool is_volatile = false;
+			if (expect("volatile")) {
+				next(); // consume volatile
+				is_volatile = true;
+			}
+
+			StmtVec statements = parse_statement(parser_info_body);
+
+            if (statements.empty()) {
+                std::cout << "no statement in function: " << peek().value << std::endl;
+                next();
+            } else {
+				for (auto st : statements) {
+					st->is_volatile = is_volatile;
+					function_symbol->scope->body.push_back(st);
+				}
+            }
+        }
+        next(); // consume }
+    } else {
+        std::cout << "function has no code" << std::endl;
+    }
+
+    // result
+
+    function_symbol->is_public = true;
+    function_symbol->is_static = false;
+    function_symbol->is_const = false;
+    function_symbol->is_abstract = false;
 
     parser_info.cls->functions.insert(std::pair(function_symbol->name, function_symbol));
 

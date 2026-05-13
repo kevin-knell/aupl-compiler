@@ -14,6 +14,8 @@ namespace {
         "class", "interface", "singleton",
 		// class-like
 		"struct", "impl",
+		//
+		"operator"
 		// member infc
 		"public", "private",
 		"static",

@@ -217,7 +217,7 @@ ExprPtr SymbolBuilder::parse_primary(ParserInfo& parser_info) {
 		return result;
     }
 
-    if (match(TokenType::IDENTIFIER)) {
+    if (match(TokenType::IDENTIFIER) || expect("this")) {
         std::string name = next().value;
         ExprPtr result = std::make_shared<VariableExpression>(name);
         return result;
