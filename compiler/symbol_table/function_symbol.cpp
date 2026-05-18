@@ -4,6 +4,7 @@
 #include <color.hpp>
 #include "class_db.hpp"
 #include "bytecode_generator.hpp"
+#include "type_from_cpp.hpp"
 
 #define TAG(s, b) std::string(b ? s : "")
 
@@ -23,7 +24,7 @@ namespace cmp {
 	}
 
 FunctionSymbol::FunctionSymbol(Private, vm::MethodPair &method_pair)
-		: return_type(PrimitiveType::TYPE_VOID), name(method_pair.name), method_pair(&method_pair), is_constructor(method_pair.is_constructor) {}
+		: return_type(get_type_from_cpp(method_pair.return_type)), name(method_pair.name), method_pair(&method_pair), is_constructor(method_pair.is_constructor) {}
 
 FunctionSymbol::FunctionSymbol(Private, const TypePtr& return_type,
 		const std::string& name,

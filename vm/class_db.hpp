@@ -26,6 +26,7 @@ struct MethodPair {
     MethodFunc value_call;
     MethodFunc pointer_call;
 	bool is_global = false;
+	std::string return_type;
 	std::vector<std::string> arg_types;
 	std::vector<std::string> arg_names;
 	size_t arg_count;
@@ -80,6 +81,7 @@ public:
         pair.pointer_call = bind_constructor<Constructor>();
 
 		auto parsed = FunctionParser::parse(signature);
+		pair.return_type = parsed.return_type;
 		pair.arg_types = parsed.parameter_types;
 		pair.arg_names = parsed.parameters;
 		pair.arg_count = parsed.parameters.size();
@@ -102,6 +104,7 @@ public:
         pair.pointer_call = bind_method(method); //bind_method_ptr_args(method);
 
 		auto parsed = FunctionParser::parse(signature);
+		pair.return_type = parsed.return_type;
 		pair.arg_types = parsed.parameter_types;
 		pair.arg_names = parsed.parameters;
 		pair.arg_count = parsed.parameters.size();
@@ -124,6 +127,7 @@ public:
         pair.pointer_call = bind_static_method(method); //bind_method_ptr_args(method);
 
 		auto parsed = FunctionParser::parse(signature);
+		pair.return_type = parsed.return_type;
 		pair.arg_types = parsed.parameter_types;
 		pair.arg_names = parsed.parameters;
 		pair.arg_count = parsed.parameters.size();

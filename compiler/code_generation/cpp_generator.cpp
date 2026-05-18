@@ -208,13 +208,25 @@ void cmp::CppCodeGenerator::visit(ConditionalJumpStatement &stmt) {
 		
 		if (stmt.cj_kind == CJ_KIND::IF) {
 			cpp_classes << "if (";
+			stmt.condition->accept(*this);
 		} else if (stmt.cj_kind == CJ_KIND::WHILE) {
 			cpp_classes << "while (";
+			stmt.condition->accept(*this);
+		} else if (stmt.cj_kind == CJ_KIND::FOR) {
+			cpp_classes << "for (";
+			std::shared_ptr<BinaryExpression> compare_expr = std::dynamic_pointer_cast<BinaryExpression>(stmt.condition);
+			VarExprPtr it_var_expr = std::dynamic_pointer_cast<VariableExpression>(compare_expr->left);
+			cpp_classes << it_var_expr->get_type()->to_cpp_type_str() << " ";
+			cpp_classes << it_var_expr->name;
+			cpp_classes << " = 0; ";
+			cpp_classes << it_var_expr->name;
+			cpp_classes << " < ";
+			compare_expr->right->accept(*this);
+			cpp_classes << "; ";
 		} else {
 			throw std::runtime_error("invalid jump with condition!");
 		}
 
-		stmt.condition->accept(*this);
 		cpp_classes << ") {\n";
 
 		// block content

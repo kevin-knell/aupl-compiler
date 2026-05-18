@@ -13,7 +13,10 @@ enum class CJ_KIND {
 	IF_RETURN,
 
 	WHILE,
-	WHILE_RETURN
+	WHILE_RETURN,
+
+	FOR,
+	FOR_RETURN
 };
 
 class ConditionalJumpStatement final : public Statement {

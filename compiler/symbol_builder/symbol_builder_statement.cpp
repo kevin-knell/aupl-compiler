@@ -10,7 +10,35 @@
 #include "call_expression.hpp"
 #include "binary_op_expression.hpp"
 #include "shared_type.hpp"
+#include "primitive_type.hpp"
+#include "variable_expression.hpp"
+#include "load_const_expression.hpp"
 #include <iostream>
+
+#define RETURN_IF_NOT(m_value)		\
+	do {							\
+		if (!(m_value)) {			\
+    	    index = start_idx;		\
+    	    return {};				\
+    	}							\
+	} while(0)
+
+#define ERROR_IF_NOT(m_value, m_message)		\
+	do {							\
+		if (!(m_value)) {			\
+    	    parser_info.cls->errors.emplace_back(peek().pos, peek().pos, m_message, Error::CRITICAL);		\
+    	    return {};				\
+    	}							\
+	} while(0)
+
+#define TRY_CONSUME(m_value)		\
+	do {							\
+		if (!expect(m_value)) {		\
+    	    index = start_idx;		\
+    	    return {};				\
+    	}							\
+    	next();						\
+	} while(0)
 
 namespace cmp {
 
@@ -19,6 +47,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_statement(ParserInfo& parser_info) {
     std::vector<StmtPtr> result;
     auto if_stmts = parse_if(parser_info); if (!if_stmts.empty()) return if_stmts;
     auto while_stmts = parse_while(parser_info); if (!while_stmts.empty()) return while_stmts;
+    auto for_stmts = parse_for(parser_info); if (!for_stmts.empty()) return for_stmts;
     auto declare_stmts = parse_declare_statement(parser_info); if (!declare_stmts.empty()) return declare_stmts;
     auto assign_stmts = parse_assign(parser_info); if (!assign_stmts.empty()) return assign_stmts;
     auto return_stmts = parse_return(parser_info); if (!return_stmts.empty()) return return_stmts;
@@ -33,10 +62,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_assign(ParserInfo& parser_info) {
     // Expect identifier for variable name
     auto expr_left = parse_expression(parser_info);
 
-    if (!expr_left) {
-        index = start_idx;
-        return {};
-    }
+	RETURN_IF_NOT(expr_left);
 
 	BinaryExpression::OPERATOR op = BinaryExpression::OPERATOR::NONE;
 
@@ -59,10 +85,8 @@ std::vector<StmtPtr> SymbolBuilder::parse_assign(ParserInfo& parser_info) {
 
     // Parse the assigned expression
     auto expr_right = parse_expression(parser_info);
-    if (!expr_right) {
-        index = start_idx;
-        return {};
-    }
+
+	RETURN_IF_NOT(expr_right);
 
 	ExprPtr bin_expr;
 	
@@ -82,10 +106,8 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
 	StmtVec result;
 
     TypePtr type = parse_type(parser_info);
-    if (!type) {
-        index = start_idx;
-        return {};
-    }
+    
+	RETURN_IF_NOT(type);
 
 	TypePtr constructor_type = type;
 	TypePtr variable_type;
@@ -97,10 +119,8 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
 	}
 
     // Expect identifier for variable name
-    if (!match(TokenType::IDENTIFIER)) {
-        index = start_idx;
-        return {};
-    }
+    RETURN_IF_NOT(match(TokenType::IDENTIFIER));
+
     std::string var_name = next().value;
 
     ExprPtr expr = nullptr;
@@ -182,37 +202,29 @@ ScopePtr SymbolBuilder::parse_block(ParserInfo& parser_info, const std::string& 
 std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
     size_t start_idx = index;
 
-    if (!expect("if")) {
-        index = start_idx;
-        return {};
-    }
-    next(); // consume if
+	TRY_CONSUME("if");
 
     ExprPtr condition_expr = parse_expression(parser_info);
-    if (!condition_expr) {
-        index = start_idx;
-        return {};
-    }
+
+	RETURN_IF_NOT(condition_expr);
 
 	std::string if_ret_name = parser_info.scope->get_label_name("if_return");
 	std::string if_name = parser_info.scope->get_label_name("if");
 	std::string else_name = parser_info.scope->get_label_name("else");
 
     ScopePtr if_scope = parse_block(parser_info, "if");
-    std::shared_ptr<Label> if_label = std::make_shared<Label>(if_scope, if_name);
+    LabelPtr if_label = std::make_shared<Label>(if_scope, if_name);
 
     ScopePtr else_scope = nullptr;
-    std::shared_ptr<Label> else_label = nullptr;
+    LabelPtr else_label = nullptr;
 
     if (expect("else")) {
         next(); // consume else
 
         else_scope = parse_block(parser_info, "else");
 
-        if (!else_scope) {
-            index = start_idx;
-            return {};
-        }
+		RETURN_IF_NOT(else_scope);
+
         else_label = std::make_shared<Label>(else_scope, else_name);
     }
 
@@ -222,7 +234,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
 	std::shared_ptr<LabelStatement> return_label_stmt = std::make_shared<LabelStatement>(if_ret_name);
 	result.push_back(return_label_stmt);
 
-	std::shared_ptr<Label> return_label = std::make_shared<Label>(parser_info.scope, if_ret_name, return_label_stmt);
+	LabelPtr return_label = std::make_shared<Label>(parser_info.scope, if_ret_name, return_label_stmt);
 
 	if_scope->body.push_back(
 		std::make_shared<ConditionalJumpStatement>(CJ_KIND::IF_RETURN, nullptr, return_label, nullptr)
@@ -239,45 +251,92 @@ std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
 
 std::vector<StmtPtr> SymbolBuilder::parse_for(ParserInfo& parser_info) {
     (void)parser_info;
-    //size_t start_idx = index;
-    return {};
+    size_t start_idx = index;
+
+	TRY_CONSUME("for");
+    
+	// for i in 5
+	// for x in list
+	// for i in 5..10
+
+	ERROR_IF_NOT(match(TokenType::IDENTIFIER), "no identifier after for");
+
+	std::string it_name = next().value;
+	
+	TRY_CONSUME("in");
+
+	ExprPtr expr = parse_expression(parser_info);
+
+	ERROR_IF_NOT(expr, "no expression after 'for ... in'");
+
+	VarPtr it_var = std::make_shared<VariableSymbol>(PrimitiveType::TYPE_INT, it_name, nullptr);
+	VarExprPtr it_var_expr = std::make_shared<VariableExpression>(it_var);
+	
+	ExprPtr condition_expr = std::make_shared<BinaryExpression>(it_var_expr, expr, BinaryExpression::OPERATOR::LT);
+
+	std::string for_condition_name = parser_info.scope->get_label_name("for_condition");
+	std::string for_name = parser_info.scope->get_label_name("for");
+
+	ScopePtr for_scope = parse_block(parser_info, "for");
+    LabelPtr for_label = std::make_shared<Label>(for_scope, for_name);
+
+	for_scope->variables[it_name] = it_var;
+
+	StmtVec result;
+
+	std::shared_ptr<LabelStatement> condition_label_stmt = std::make_shared<LabelStatement>(for_condition_name);
+	
+	result.push_back(condition_label_stmt);
+
+	auto for_jump = std::make_shared<ConditionalJumpStatement>(CJ_KIND::FOR, condition_expr, for_label, nullptr);
+	result.push_back(for_jump);
+
+	LabelPtr condition_label = std::make_shared<Label>(parser_info.scope, for_condition_name, condition_label_stmt);
+	
+	vm::Value8* one_value = new vm::Value8(vm::Value8::from(1));
+	ExprPtr one_expr = std::make_shared<LoadConstExpression>(PrimitiveType::TYPE_INT, one_value->v);
+	ExprPtr it_add_expr = std::make_shared<BinaryExpression>(it_var_expr, one_expr, BinaryExpression::OPERATOR::ADD);
+	StmtPtr it_inc_stmt = std::make_shared<AssignmentStatement>(it_var_expr, it_add_expr);
+	for_scope->body.push_back(it_inc_stmt);
+
+	auto for_return_jump = std::make_shared<ConditionalJumpStatement>(CJ_KIND::FOR_RETURN, nullptr, condition_label, nullptr);
+	for_scope->body.push_back(for_return_jump);
+
+	return result;
 }
 
 std::vector<StmtPtr> SymbolBuilder::parse_while(ParserInfo& parser_info) {
     size_t start_idx = index;
-
-    if (!expect("while")) {
-        index = start_idx;
-        return {};
-    }
-    next(); // consume while
+	
+	TRY_CONSUME("while");
 
     ExprPtr condition_expr = parse_expression(parser_info);
-    if (!condition_expr) {
-		parser_info.cls->errors.emplace_back(peek().pos, peek().pos, "no expression after while", Error::CRITICAL);
-		return {};
-    }
 
+	ERROR_IF_NOT(condition_expr, "no expression after while");
+
+	// get names
 	std::string while_condition_name = parser_info.scope->get_label_name("while_condition");
 	//std::string while_ret_name = parser_info.scope->get_label_name("while_return");
 	std::string while_name = parser_info.scope->get_label_name("while");
 
     ScopePtr while_scope = parse_block(parser_info, "while");
-    std::shared_ptr<Label> while_label = std::make_shared<Label>(while_scope, while_name);
+    LabelPtr while_label = std::make_shared<Label>(while_scope, while_name);
 
 	StmtVec result;
 
 	std::shared_ptr<LabelStatement> condition_label_stmt = std::make_shared<LabelStatement>(while_condition_name);
 	//std::shared_ptr<LabelStatement> return_label_stmt = std::make_shared<LabelStatement>(while_ret_name);
 
-	//std::shared_ptr<Label> return_label = std::make_shared<Label>(parser_info.scope, while_ret_name, return_label_stmt);
+	//LabelPtr return_label = std::make_shared<Label>(parser_info.scope, while_ret_name, return_label_stmt);
 	
 	result.push_back(condition_label_stmt);
+
 	auto while_jump = std::make_shared<ConditionalJumpStatement>(CJ_KIND::WHILE, condition_expr, while_label, nullptr);
 	result.push_back(while_jump);
+
 	//result.push_back(return_label_stmt);
 
-	std::shared_ptr<Label> condition_label = std::make_shared<Label>(parser_info.scope, while_condition_name, condition_label_stmt);
+	LabelPtr condition_label = std::make_shared<Label>(parser_info.scope, while_condition_name, condition_label_stmt);
 
 	auto while_return_jump = std::make_shared<ConditionalJumpStatement>(CJ_KIND::WHILE_RETURN, nullptr, condition_label, nullptr);
 	while_scope->body.push_back(while_return_jump);
@@ -287,13 +346,8 @@ std::vector<StmtPtr> SymbolBuilder::parse_while(ParserInfo& parser_info) {
 
 std::vector<StmtPtr> SymbolBuilder::parse_return(ParserInfo& parser_info) {
     size_t start_idx = index;
-
-    // Look for 'return' keyword
-    if (!expect("return")) {
-        index = start_idx;
-        return {};
-    }
-    next(); // consume 'return'
+	
+	TRY_CONSUME("return");
 
 	ExprPtr expr = nullptr;
 	if (!peek().is_new_line) {
@@ -311,10 +365,8 @@ std::vector<StmtPtr> SymbolBuilder::parse_expression_statement(ParserInfo& parse
 
     // Try parsing an expression
     auto expr = parse_expression(parser_info);
-    if (!expr) {
-        index = start_idx;
-        return {};
-    }
+
+	RETURN_IF_NOT(expr);
 
     return { std::make_shared<ExpressionStatement>(expr) };
 }

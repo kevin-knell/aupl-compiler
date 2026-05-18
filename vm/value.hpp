@@ -150,6 +150,8 @@ namespace vm {
                 val.i64 = v;
             else if constexpr (std::is_same_v<T, uint64_t>)
                 val.u64 = v;
+            else if constexpr (std::is_same_v<T, int>)
+                val.u64 = v;
             else if constexpr (std::is_same_v<T, double>)
                 val.f64 = v;
             else
