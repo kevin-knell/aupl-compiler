@@ -105,6 +105,27 @@ void cmp::CppCodeGenerator::generate_cpp_code(std::ofstream &hpp_file, std::ofst
 		append(hpp_classes, "class " + cn + " {");
 		append(hpp_classes, "public:");
 
+		auto static_class_scope = current_class->static_scope;
+
+		for (auto [vn, var] : static_class_scope->variables) {
+			hpp_classes << "\tstatic ";
+			hpp_classes << var->type->to_cpp_type_str();
+			hpp_classes << " ";
+			hpp_classes << vn;
+			// todo: initial value
+			hpp_classes << ";\n";
+
+			cpp_classes << var->type->to_cpp_type_str();
+			cpp_classes << " ";
+			cpp_classes << cn;
+			cpp_classes << "::";
+			cpp_classes << vn;
+			// todo: initial value
+			cpp_classes << ";\n";
+		}
+
+
+
 		auto class_scope = current_class->scope;
 
 		for (auto [vn, var] : class_scope->variables) {
@@ -298,6 +319,7 @@ void cmp::CppCodeGenerator::visit(VariableExpression &expr) {
 void cmp::CppCodeGenerator::visit(UnaryExpression &expr) {
 	cpp_classes << "(";
 	cpp_classes << expr.operator_to_string();
+	cpp_classes << " ";
 	expr.expr->accept(*this);
 	cpp_classes << ")";
 }
