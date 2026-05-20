@@ -64,7 +64,7 @@ void SymbolBuilder::parse_class() {
         parent_name = next().value;
 
         if (symbol_table.classes.find(parent_name) == symbol_table.classes.end()) {
-            parent = std::make_shared<ClassSymbol>(parent_name);
+            parent = ClassSymbol::create(parent_name);
             symbol_table.classes[parent_name] = parent;
             parent->is_declared = false;
         } else {
@@ -78,7 +78,7 @@ void SymbolBuilder::parse_class() {
 
     if (it == symbol_table.classes.end()) {
         // New class
-        this_class = std::make_shared<ClassSymbol>(class_name);
+        this_class = ClassSymbol::create(class_name);
         symbol_table.classes[class_name] = this_class;
         this_class->is_declared = true;
     } else if (!it->second->is_declared) {
@@ -90,9 +90,9 @@ void SymbolBuilder::parse_class() {
         throw std::runtime_error("Class '" + class_name + "' is already declared");
     }
 
-    this_class->static_scope = std::make_shared<Scope>(Scope::STATIC_CLASS, "(static)" + this_class->name);
+    this_class->static_scope = Scope::create(Scope::STATIC_CLASS, "(static)" + this_class->name);
 
-    this_class->scope = std::make_shared<Scope>(Scope::CLASS, this_class->name);
+    this_class->scope = Scope::create(Scope::CLASS, this_class->name);
     
     this_class->scope->upper_scope = this_class->static_scope;
 
@@ -135,7 +135,7 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
     }
     next(); // consume constructor name
 
-    ScopePtr scope = std::make_shared<Scope>(Scope::FUNCTION, "(constructor)");
+    ScopePtr scope = Scope::create(Scope::FUNCTION, "(constructor)");
     scope->upper_scope = parser_info.cls->scope;
     ParserInfo parser_info_header{.symbol_table = symbol_table, .cls = parser_info.cls, .func = nullptr, .scope = scope};
 
@@ -149,7 +149,7 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
 	// add pointer to self as arg
 	auto class_type = parser_info.cls->type;
 	auto pointer_type = std::make_shared<PointerType>(class_type);
-	auto this_var = std::make_shared<VariableSymbol>(pointer_type, "this", nullptr);
+	auto this_var = VariableSymbol::create(pointer_type, "this", nullptr);
 	scope->args.push_back(this_var->name);
 	scope->variables[this_var->name] = this_var;
 	this_var->scope = scope;
@@ -188,7 +188,7 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
             initial_value = parse_expression(parser_info_header);
         }
 
-		auto param = std::make_shared<VariableSymbol>(arg_type, arg_name, initial_value);
+		auto param = VariableSymbol::create(arg_type, arg_name, initial_value);
 		scope->args.push_back(arg_name);
 		scope->variables[arg_name] = param;
 		param->scope = scope;
@@ -269,7 +269,7 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
         next(); // consume static
     }
 
-	ScopePtr scope = std::make_shared<Scope>(Scope::FUNCTION, "(currently parsed)");
+	ScopePtr scope = Scope::create(Scope::FUNCTION, "(currently parsed)");
     ScopePtr upper_scope = is_static ? parser_info.cls->static_scope : parser_info.cls->scope;
     scope->upper_scope = upper_scope;
     ParserInfo parser_info_header{.symbol_table = symbol_table, .cls = parser_info.cls, .func = nullptr, .scope = scope};
@@ -301,7 +301,7 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
 		// add pointer to self as arg
 		auto class_type = parser_info.cls->type;
 		auto pointer_type = std::make_shared<PointerType>(class_type);
-		auto this_var = std::make_shared<VariableSymbol>(pointer_type, "this", nullptr);
+		auto this_var = VariableSymbol::create(pointer_type, "this", nullptr);
 		scope->args.push_back(this_var->name);
 		scope->variables[this_var->name] = this_var;
 		this_var->scope = scope;
@@ -342,7 +342,7 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
             initial_value = parse_expression(parser_info_header);
         }
 
-        VarPtr param = std::make_shared<VariableSymbol>(arg_type, arg_name, initial_value);
+        VarPtr param = VariableSymbol::create(arg_type, arg_name, initial_value);
         scope->args.push_back(arg_name);
 		scope->variables[arg_name] = param;
         parameters.push_back(param);
@@ -412,7 +412,7 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
 bool SymbolBuilder::parse_operator(ParserInfo parser_info) {
 	size_t start_idx = index;
 
-	ScopePtr scope = std::make_shared<Scope>(Scope::FUNCTION, "(currently parsed)");
+	ScopePtr scope = Scope::create(Scope::FUNCTION, "(currently parsed)");
     ScopePtr upper_scope = parser_info.cls->scope;
     scope->upper_scope = upper_scope;
     ParserInfo parser_info_header{.symbol_table = symbol_table, .cls = parser_info.cls, .func = nullptr, .scope = scope};
@@ -446,7 +446,7 @@ bool SymbolBuilder::parse_operator(ParserInfo parser_info) {
 	// add pointer to self as arg
 	auto class_type = parser_info.cls->type;
 	auto pointer_type = std::make_shared<PointerType>(class_type);
-	auto this_var = std::make_shared<VariableSymbol>(pointer_type, "this", nullptr);
+	auto this_var = VariableSymbol::create(pointer_type, "this", nullptr);
 	scope->args.push_back(this_var->name);
 	scope->variables[this_var->name] = this_var;
 	this_var->scope = scope;
@@ -483,7 +483,7 @@ bool SymbolBuilder::parse_operator(ParserInfo parser_info) {
         }
         std::string arg_name = next().value;
 
-        VarPtr param = std::make_shared<VariableSymbol>(arg_type, arg_name, nullptr);
+        VarPtr param = VariableSymbol::create(arg_type, arg_name, nullptr);
         scope->args.push_back(arg_name);
 		scope->variables[arg_name] = param;
         parameters.push_back(param);
@@ -592,7 +592,7 @@ bool SymbolBuilder::parse_variable(ParserInfo parser_info) {
 
     ScopePtr scope = is_static ? parser_info.cls->static_scope : parser_info.cls->scope;
     
-    VarPtr variable_symbol = std::make_shared<VariableSymbol>(type, name, initial_value);
+    VarPtr variable_symbol = VariableSymbol::create(type, name, initial_value);
     variable_symbol->scope = scope;
     variable_symbol->is_public = is_public;
     variable_symbol->is_static = is_static;

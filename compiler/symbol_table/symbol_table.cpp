@@ -6,13 +6,13 @@
 namespace cmp {
 
 SymbolTable::SymbolTable(vm::ClassDB &db) {
-	global_scope = std::make_shared<Scope>(Scope::SCOPE_TYPE::GLOBAL, "global");
+	global_scope = Scope::create(Scope::SCOPE_TYPE::GLOBAL, "global");
 
 	// TODO: add global scope
 
 	for (auto& cls : db.classes) {
-		auto class_symbol = std::make_shared<ClassSymbol>(cls);
-		class_symbol->scope = std::make_shared<Scope>(Scope::CLASS, cls.name);
+		auto class_symbol = ClassSymbol::create(cls);
+		class_symbol->scope = Scope::create(Scope::CLASS, cls.name);
 		
 		std::shared_ptr<NativeClassType> nat = std::dynamic_pointer_cast<NativeClassType>(class_symbol->type);
 		native_types[cls.name] = nat;
@@ -21,7 +21,7 @@ SymbolTable::SymbolTable(vm::ClassDB &db) {
 		std::cout << "native class: " << nat->to_string() << std::endl;
 
 		for (auto& v : cls.variables) {
-			auto nat_var = std::make_shared<VariableSymbol>(v);
+			auto nat_var = VariableSymbol::create(v);
 			nat->class_ptr->scope->variables[v.name] = nat_var;
 			std::cout << "\tnative var: " << nat_var->to_string() << std::endl;
 		}

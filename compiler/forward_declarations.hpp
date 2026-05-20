@@ -33,4 +33,7 @@ class Expression;
 using ExprPtr = std::shared_ptr<Expression>;
 using ExprVec = std::vector<ExprPtr>;
 
+class Label;
+using LabelPtr = std::shared_ptr<Label>;
+
 }

@@ -5,9 +5,6 @@
 
 namespace cmp {
 
-class Label;
-using LabelPtr = std::shared_ptr<Label>;
-
 enum class CJ_KIND {
 	IF,
 	IF_RETURN,

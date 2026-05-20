@@ -16,7 +16,11 @@
 
 namespace cmp {
 
-struct ClassSymbol {
+struct ClassSymbol : public std::enable_shared_from_this<ClassSymbol> {
+private:
+	struct Private{ explicit Private() = default; };
+
+public:
     std::string name;
     std::shared_ptr<ClassSymbol> parent;
 	
@@ -32,17 +36,25 @@ struct ClassSymbol {
     const TypePtr type;
     bool is_declared;
 
-    ClassSymbol(const std::string& name)
+	static ClassPtr create(const std::string& name) {
+		return std::make_shared<ClassSymbol>(Private(), name);
+	}
+
+	static ClassPtr create(const vm::ClassBind& native_class_bind) {
+		return std::make_shared<ClassSymbol>(Private(), native_class_bind);
+	}
+
+    ClassSymbol(Private, const std::string& name)
 			: name(name),
 			native_class_bind(nullptr),
-			static_scope(std::make_shared<Scope>(Scope::STATIC_CLASS, "(static)" + name)),
-			static_var(std::make_shared<VariableSymbol>(std::make_shared<StaticClassType>(name), "(static)" + name)),
+			static_scope(Scope::create(Scope::STATIC_CLASS, "(static)" + name)),
+			static_var(VariableSymbol::create(std::make_shared<StaticClassType>(name), "(static)" + name)),
 			type(std::make_shared<ClassType>(name)) {}
 
-    ClassSymbol(const vm::ClassBind& native_class_bind)
+    ClassSymbol(Private, const vm::ClassBind& native_class_bind)
 			: name(native_class_bind.name),
 			native_class_bind(&native_class_bind),
-			static_var(std::make_shared<VariableSymbol>(std::make_shared<StaticClassType>(name), "(static)" + name)),
+			static_var(VariableSymbol::create(std::make_shared<StaticClassType>(name), "(static)" + name)),
 			type(std::make_shared<NativeClassType>(native_class_bind)),
 			is_declared(true) {}
 };

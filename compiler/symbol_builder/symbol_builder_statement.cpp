@@ -157,7 +157,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
 		expr = std::make_shared<CallExpression>(constructor_type->to_string(), args, nullptr);
 	}
 
-    VarPtr var = std::make_shared<VariableSymbol>(variable_type, var_name, expr);
+    VarPtr var = VariableSymbol::create(variable_type, var_name, expr);
     parser_info.scope->variables[var_name] = var;
     var->scope = parser_info.scope;
     return { std::make_shared<DeclareStatement>(var) };
@@ -172,7 +172,7 @@ ScopePtr SymbolBuilder::parse_block(ParserInfo& parser_info, const std::string& 
     }
     next(); // consume {
 
-    ScopePtr scope = std::make_shared<Scope>(Scope::FUNCTION_SUB, block_name);
+    ScopePtr scope = Scope::create(Scope::FUNCTION_SUB, block_name);
     scope->upper_scope = parser_info.scope;
     parser_info.scope->lower_scopes.push_back(std::weak_ptr<Scope>(scope));
 
@@ -213,7 +213,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
 	std::string else_name = parser_info.scope->get_label_name("else");
 
     ScopePtr if_scope = parse_block(parser_info, "if");
-    LabelPtr if_label = std::make_shared<Label>(if_scope, if_name);
+    LabelPtr if_label = Label::create(if_scope, if_name);
 
     ScopePtr else_scope = nullptr;
     LabelPtr else_label = nullptr;
@@ -225,7 +225,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
 
 		RETURN_IF_NOT(else_scope);
 
-        else_label = std::make_shared<Label>(else_scope, else_name);
+        else_label = Label::create(else_scope, else_name);
     }
 
 	StmtVec result;
@@ -234,7 +234,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
 	std::shared_ptr<LabelStatement> return_label_stmt = std::make_shared<LabelStatement>(if_ret_name);
 	result.push_back(return_label_stmt);
 
-	LabelPtr return_label = std::make_shared<Label>(parser_info.scope, if_ret_name, return_label_stmt);
+	LabelPtr return_label = Label::create(parser_info.scope, if_ret_name, return_label_stmt);
 
 	if_scope->body.push_back(
 		std::make_shared<ConditionalJumpStatement>(CJ_KIND::IF_RETURN, nullptr, return_label, nullptr)
@@ -269,7 +269,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_for(ParserInfo& parser_info) {
 
 	ERROR_IF_NOT(expr, "no expression after 'for ... in'");
 
-	VarPtr it_var = std::make_shared<VariableSymbol>(PrimitiveType::TYPE_INT, it_name, nullptr);
+	VarPtr it_var = VariableSymbol::create(PrimitiveType::TYPE_INT, it_name, nullptr);
 	VarExprPtr it_var_expr = std::make_shared<VariableExpression>(it_var);
 	
 	ExprPtr condition_expr = std::make_shared<BinaryExpression>(it_var_expr, expr, BinaryExpression::OPERATOR::LT);
@@ -278,7 +278,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_for(ParserInfo& parser_info) {
 	std::string for_name = parser_info.scope->get_label_name("for");
 
 	ScopePtr for_scope = parse_block(parser_info, "for");
-    LabelPtr for_label = std::make_shared<Label>(for_scope, for_name);
+    LabelPtr for_label = Label::create(for_scope, for_name);
 
 	for_scope->variables[it_name] = it_var;
 
@@ -291,7 +291,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_for(ParserInfo& parser_info) {
 	auto for_jump = std::make_shared<ConditionalJumpStatement>(CJ_KIND::FOR, condition_expr, for_label, nullptr);
 	result.push_back(for_jump);
 
-	LabelPtr condition_label = std::make_shared<Label>(parser_info.scope, for_condition_name, condition_label_stmt);
+	LabelPtr condition_label = Label::create(parser_info.scope, for_condition_name, condition_label_stmt);
 	
 	vm::Value8* one_value = new vm::Value8(vm::Value8::from(1));
 	ExprPtr one_expr = std::make_shared<LoadConstExpression>(PrimitiveType::TYPE_INT, one_value->v);
@@ -320,14 +320,14 @@ std::vector<StmtPtr> SymbolBuilder::parse_while(ParserInfo& parser_info) {
 	std::string while_name = parser_info.scope->get_label_name("while");
 
     ScopePtr while_scope = parse_block(parser_info, "while");
-    LabelPtr while_label = std::make_shared<Label>(while_scope, while_name);
+    LabelPtr while_label = Label::create(while_scope, while_name);
 
 	StmtVec result;
 
 	std::shared_ptr<LabelStatement> condition_label_stmt = std::make_shared<LabelStatement>(while_condition_name);
 	//std::shared_ptr<LabelStatement> return_label_stmt = std::make_shared<LabelStatement>(while_ret_name);
 
-	//LabelPtr return_label = std::make_shared<Label>(parser_info.scope, while_ret_name, return_label_stmt);
+	//LabelPtr return_label = Label::create(parser_info.scope, while_ret_name, return_label_stmt);
 	
 	result.push_back(condition_label_stmt);
 
@@ -336,7 +336,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_while(ParserInfo& parser_info) {
 
 	//result.push_back(return_label_stmt);
 
-	LabelPtr condition_label = std::make_shared<Label>(parser_info.scope, while_condition_name, condition_label_stmt);
+	LabelPtr condition_label = Label::create(parser_info.scope, while_condition_name, condition_label_stmt);
 
 	auto while_return_jump = std::make_shared<ConditionalJumpStatement>(CJ_KIND::WHILE_RETURN, nullptr, condition_label, nullptr);
 	while_scope->body.push_back(while_return_jump);

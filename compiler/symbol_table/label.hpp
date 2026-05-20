@@ -4,15 +4,24 @@
 #include <iostream>
 #include "scope.hpp"
 #include "label_statement.hpp"
+#include "forward_declarations.hpp"
 
 namespace cmp {
 
-struct Label {
-	std::shared_ptr<Scope> scope;
+struct Label : public std::enable_shared_from_this<Label> {
+private:
+	struct Private{ explicit Private() = default; };
+
+public:
+	ScopePtr scope;
 	std::shared_ptr<LabelStatement> label_stmt; // optional, can be nullptr
 	std::string identifier;
 
-	Label(const std::shared_ptr<Scope>& scope_, const std::string& id, std::shared_ptr<LabelStatement> label_stmt_ = nullptr)
+	static LabelPtr create(const ScopePtr& scope_, const std::string& id, std::shared_ptr<LabelStatement> label_stmt_ = nullptr) {
+		return std::make_shared<Label>(Private(), scope_, id, label_stmt_);
+	}
+
+	Label(Private, const ScopePtr& scope_, const std::string& id, std::shared_ptr<LabelStatement> label_stmt_ = nullptr)
 		: scope(scope_), label_stmt(label_stmt_), identifier(id) {}
 
 	size_t get_address() {

@@ -26,7 +26,7 @@
 
 namespace cmp {
 
-std::shared_ptr<Scope> Scope::find_scope(const std::shared_ptr<Scope>& scope, const std::string& name) {
+ScopePtr Scope::find_scope(const ScopePtr& scope, const std::string& name) {
     if (scope->has(name)) {
         return scope;
     } else if (auto sp = scope->upper_scope.lock()) {
@@ -114,7 +114,7 @@ std::string Scope::structure_to_string() const {
 
 VarPtr Scope::get_temp(TypePtr type, ExprPtr init_val, std::string temp_name) {
     std::string name = "%" + temp_name + std::to_string(temp_count++);
-    VarPtr var = std::make_shared<VariableSymbol>(type, name, init_val);
+    VarPtr var = VariableSymbol::create(type, name, init_val);
     var->is_const = true;
     variables[name] = var;
     return var;

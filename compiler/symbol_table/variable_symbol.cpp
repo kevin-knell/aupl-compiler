@@ -9,7 +9,8 @@
 
 namespace cmp
 {
-	VariableSymbol::VariableSymbol(vm::VariableBind &v)
+
+VariableSymbol::VariableSymbol(Private, vm::VariableBind &v)
 		: type(get_type_from_cpp(v.type)), name(v.name) {}
 
 std::string VariableSymbol::to_string() const {
