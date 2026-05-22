@@ -5,7 +5,9 @@
 
 namespace cmp {
 
-struct Type {
+#define DEFINE_SELF(m_type) std::shared_ptr<m_type> self() { return std::static_pointer_cast<m_type>(shared_from_this()); }
+
+struct Type : public std::enable_shared_from_this<Type> {
 	enum KIND {
 		PRIMITIVE,
 

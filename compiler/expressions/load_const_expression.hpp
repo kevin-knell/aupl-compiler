@@ -11,6 +11,7 @@ struct LoadConstExpression final : Expression {
 	LoadConstExpression(TypePtr type, vm::Value* value) : type(type), value(value) {}
 
 	OVERRIDE_ACCEPT_EXPRESSION_VISITOR
+	DEFINE_SELF(LoadConstExpression)
 
 	std::string value_to_string() const;
 	std::string to_string() const override;

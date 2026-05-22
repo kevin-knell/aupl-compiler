@@ -27,6 +27,7 @@ public:
         : cj_kind(cj_kind), condition(cond), if_label(if_lbl), else_label(else_lbl) {};
 
 	OVERRIDE_ACCEPT_STATMENT_VISITOR
+	DEFINE_SELF(ConditionalJumpStatement)
 
     KIND get_kind() const override { return KIND::IF; } // Or add JUMP if you want a new kind
     std::string to_string() const override;

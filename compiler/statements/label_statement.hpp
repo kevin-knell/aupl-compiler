@@ -10,6 +10,7 @@ struct LabelStatement final : public Statement {
 	LabelStatement(const std::string& id) : identifier(id) {}
 
 	OVERRIDE_ACCEPT_STATMENT_VISITOR
+	DEFINE_SELF(LabelStatement)
 
     KIND get_kind() const override;
 

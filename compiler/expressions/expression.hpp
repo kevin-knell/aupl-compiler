@@ -14,9 +14,11 @@
 	void accept(ExpressionVisitor& visitor) override { visitor.visit(*this); } \
 	void accept(ExpressionAssignmentVisitor& visitor, VarExprPtr var_expr) override { visitor.visit(*this, var_expr); }
 
+#define DEFINE_SELF(m_type) std::shared_ptr<m_type> self() { return std::static_pointer_cast<m_type>(shared_from_this()); }
+
 namespace cmp {
 
-struct Expression {
+struct Expression : public std::enable_shared_from_this<Expression> {
     enum KIND {
         LOAD_CONST,
 

@@ -18,6 +18,7 @@ struct CallExpression final : public Expression {
 		: name(f->name), arguments(arguments), obj_expr(obj_expr), f(f) {}
 	
 	OVERRIDE_ACCEPT_EXPRESSION_VISITOR
+	DEFINE_SELF(CallExpression)
 
     std::string to_string() const override;
     TypePtr get_type() const override;

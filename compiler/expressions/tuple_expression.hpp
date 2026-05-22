@@ -10,6 +10,7 @@ struct TupleExpression final : public Expression {
 	TupleExpression(ExprVec expressions) : expressions(expressions) {}
 
 	OVERRIDE_ACCEPT_EXPRESSION_VISITOR
+	DEFINE_SELF(TupleExpression)
 	
     std::vector<ExprPtr*> get_expressions() override;
 

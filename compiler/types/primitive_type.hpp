@@ -25,6 +25,8 @@ public:
 
 	const vm::BinType vm_bin_type;
 
+	DEFINE_SELF(PrimitiveType)
+
     std::string to_string() const override;
     size_t get_size() const override;
 

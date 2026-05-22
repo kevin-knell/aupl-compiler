@@ -8,10 +8,11 @@
 #include "statement_visitor.hpp"
 
 #define OVERRIDE_ACCEPT_STATMENT_VISITOR void accept(StatementVisitor& visitor) override { visitor.visit(*this); }
+#define DEFINE_SELF(m_type) std::shared_ptr<m_type> self() { return std::static_pointer_cast<m_type>(shared_from_this()); }
 
 namespace cmp {
 
-struct Statement {
+struct Statement : public std::enable_shared_from_this<Statement> {
     enum KIND {
         DECLARE,
         ASSIGN,
@@ -34,7 +35,5 @@ struct Statement {
 
     virtual std::string to_string() const = 0;
 };
-
-using StmtPtr = std::shared_ptr<Statement>;
 
 }

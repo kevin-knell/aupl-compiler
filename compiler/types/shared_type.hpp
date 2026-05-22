@@ -8,6 +8,8 @@ struct SharedType final : public Type {
 	
 	SharedType(TypePtr type);
 
+	DEFINE_SELF(SharedType)
+
     std::string to_string() const override;
 
     size_t get_size() const override;

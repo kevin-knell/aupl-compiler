@@ -19,6 +19,7 @@ struct UnaryExpression final : public Expression {
         : expr(expr), op(op) {}
 	
 	OVERRIDE_ACCEPT_EXPRESSION_VISITOR
+	DEFINE_SELF(UnaryExpression)
 
     std::string to_string() const override;
     std::vector<ExprPtr*> get_expressions() override;

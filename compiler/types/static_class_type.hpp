@@ -7,6 +7,8 @@ namespace cmp
 struct StaticClassType final : public Type {
     std::string name;
 
+	DEFINE_SELF(StaticClassType)
+
     std::string to_string() const override { return name; }
     size_t get_size() const override { return 1; };
 

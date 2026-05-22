@@ -8,6 +8,8 @@ struct PointerType final : public Type {
 	
 	PointerType(TypePtr type);
 
+	DEFINE_SELF(PointerType)
+
     std::string to_string() const override;
 
     size_t get_size() const override;

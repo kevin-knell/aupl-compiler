@@ -15,6 +15,7 @@ struct BinaryExpression final : public Expression {
         : left(left), right(right), op(op) {}
 	
 	OVERRIDE_ACCEPT_EXPRESSION_VISITOR
+	DEFINE_SELF(BinaryExpression)
 
     std::string to_string() const override;
     std::vector<ExprPtr*> get_expressions() override;

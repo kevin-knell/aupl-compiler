@@ -11,6 +11,8 @@ struct TupleType final : public Type {
 
     TupleType(std::vector<TypePtr> types);
 
+	DEFINE_SELF(TupleType)
+
     std::string to_string() const override;
 
     size_t get_size() const override;
