@@ -34,7 +34,7 @@ void vm::register_classes(vm::ClassDB& db) {
 
 	// object types
 	// data structures
-	register_list8_to_db(db);
+	//register_list8_to_db(db);
 	
 	// other
 	File::register_to_db(db);

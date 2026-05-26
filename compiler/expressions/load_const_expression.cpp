@@ -2,7 +2,7 @@
 
 #include "type.hpp"
 #include "primitive_type.hpp"
-#include "color.hpp"
+#include "text_color.hpp"
 #include <assert.h>
 
 namespace cmp {

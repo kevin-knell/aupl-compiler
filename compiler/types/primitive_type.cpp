@@ -1,5 +1,5 @@
 #include "primitive_type.hpp"
-#include "color.hpp"
+#include "text_color.hpp"
 #include <algorithm>
 #include "type_from_cpp.hpp"
 

@@ -1,7 +1,7 @@
 #include "function_symbol.hpp"
 #include "return_statement.hpp"
 #include "statement.hpp"
-#include <color.hpp>
+#include <text_color.hpp>
 #include "class_db.hpp"
 #include "bytecode_generator.hpp"
 #include "type_from_cpp.hpp"

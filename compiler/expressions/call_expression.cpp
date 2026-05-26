@@ -3,7 +3,7 @@
 #include "function_symbol.hpp"
 #include "invalid_type.hpp"
 #include "class_symbol.hpp"
-#include "color.hpp"
+#include "text_color.hpp"
 #include "symbol_table.hpp"
 #include "native_class_type.hpp"
 #include "variable_expression.hpp"

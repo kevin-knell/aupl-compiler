@@ -5,7 +5,7 @@
 #include "binary_op_expression.hpp"
 #include "variable_expression.hpp"
 #include "load_const_expression.hpp"
-#include "color.hpp"
+#include "text_color.hpp"
 #include "call_expression.hpp"
 #include "class_db.hpp"
 #include "string_literal_expression.hpp"

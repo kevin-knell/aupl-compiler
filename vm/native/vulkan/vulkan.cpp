@@ -138,6 +138,20 @@ namespace
 		vkGetDeviceQueue(vk_device, selected_queue_family_idx, 0, &vk_queue);
 		assert(result == VK_SUCCESS);
 	}
+
+	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+		VkPhysicalDeviceMemoryProperties memProps;
+		vkGetPhysicalDeviceMemoryProperties(vk_phys_device, &memProps);
+
+		for (uint32_t i = 0; i < memProps.memoryTypeCount; i++) {
+			if ((typeFilter & (1 << i)) &&
+				(memProps.memoryTypes[i].propertyFlags & properties) == properties) {
+				return i;
+			}
+		}
+
+		throw std::runtime_error("No suitable memory type");
+	}
 } // namespace
 
 void init_vulkan() {
@@ -151,11 +165,14 @@ void init_vulkan() {
 void create_swapchain(Window& window) {
 	const VkFormat image_format = VK_FORMAT_B8G8R8A8_SRGB;
 
+	VkResult result;
+
 	VkSurfaceKHR& surface = window.surface;
 
 	// swapchain
 	VkSurfaceCapabilitiesKHR surface_caps;
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vk_phys_device, surface, &surface_caps);
+	result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vk_phys_device, surface, &surface_caps);
+	assert(result == VK_SUCCESS);
 
 	VkSwapchainCreateInfoKHR swapchain_create_info{
 		.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
@@ -178,8 +195,6 @@ void create_swapchain(Window& window) {
 		.oldSwapchain = {},
 	};
 
-	VkResult result;
-
 	VkSwapchainKHR& swapchain = window.swapchain;
 	result = vkCreateSwapchainKHR(vk_device, &swapchain_create_info, nullptr, &swapchain);
 
@@ -197,7 +212,7 @@ void create_swapchain(Window& window) {
 	assert(result == VK_SUCCESS);
 
 	// image views
-	std::vector<VkImageView> swapchain_image_views(image_count);
+	window.swapchain_image_views.resize(image_count);
 
 	for (uint32_t i = 0; i < image_count; ++i) {
 		VkImageViewCreateInfo create_info{
@@ -226,12 +241,52 @@ void create_swapchain(Window& window) {
 			vk_device,
 			&create_info,
 			nullptr,
-			&swapchain_image_views[i]
+			&window.swapchain_image_views[i]
 		);
 
 		assert(result == VK_SUCCESS);
 	}
+
+	// buffer
+	VkDeviceSize size = sizeof(Window::GlobalData);
+
+	VkBufferCreateInfo buffer_create_info{
+		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.size = size,
+		.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		.queueFamilyIndexCount = 0,
+		.pQueueFamilyIndices = nullptr
+	};
+
+	result = vkCreateBuffer(vk_device, &buffer_create_info, nullptr, &window.buffer);
+	assert(result == VK_SUCCESS);
+
+	VkMemoryRequirements memReq;
+	vkGetBufferMemoryRequirements(vk_device, window.buffer, &memReq);
 	
+	VkPhysicalDeviceMemoryProperties memProps;
+	vkGetPhysicalDeviceMemoryProperties(vk_phys_device, &memProps);
+
+	VkMemoryAllocateInfo allocInfo{
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.pNext = nullptr,
+		.allocationSize = memReq.size,
+		.memoryTypeIndex = findMemoryType(
+			memReq.memoryTypeBits,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		)
+	};
+
+	result = vkAllocateMemory(vk_device, &allocInfo, nullptr, &window.memory);
+	assert(result == VK_SUCCESS);
+
+	result = vkBindBufferMemory(vk_device, window.buffer, window.memory, 0);
+	assert(result == VK_SUCCESS);
+
 	// shader modules & stages
 	VkPipelineShaderStageCreateInfo shader_stages[2];
 	VkShaderModule vertex_shader_module = load_shader("shaders/shader.vert.spv");
@@ -258,19 +313,43 @@ void create_swapchain(Window& window) {
 		.pSpecializationInfo = nullptr
 	};
 
+	// pipeline layout
 	std::cout << "pipeline layout" << std::endl;
 
-	// pipeline layout
-	VkPipelineLayout pipeline_layout;
+	VkPipelineLayout& pipeline_layout = window.pipeline_layout;
+
+	VkPushConstantRange push_const_range{
+		.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+		.offset = 0,
+		.size = sizeof(PushConstant),
+	};
+
+	VkDescriptorSetLayoutBinding globalBinding{};
+	globalBinding.binding = 0;
+	globalBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	globalBinding.descriptorCount = 1;
+	globalBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+	VkDescriptorSetLayoutCreateInfo layoutInfo{
+    	.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+    	.bindingCount = 1,
+    	.pBindings = &globalBinding
+	};
+
+	VkDescriptorSetLayout descriptorSetLayout;
+	result = vkCreateDescriptorSetLayout(vk_device, &layoutInfo, nullptr, &descriptorSetLayout);
+	assert(result == VK_SUCCESS);
 
 	VkPipelineLayoutCreateInfo layout_info{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
-		.setLayoutCount = 0,
-		.pSetLayouts = nullptr,
-		.pushConstantRangeCount = 0,
-		.pPushConstantRanges = nullptr
+		.setLayoutCount = 1,
+		.pSetLayouts = &descriptorSetLayout,
+		.pushConstantRangeCount = 1,
+		.pPushConstantRanges = &push_const_range
 	};
 
 	result = vkCreatePipelineLayout(
@@ -280,6 +359,55 @@ void create_swapchain(Window& window) {
 		&pipeline_layout
 	);
 	assert(result == VK_SUCCESS);
+
+	VkDescriptorPoolSize poolSize{};
+	poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	poolSize.descriptorCount = 100;
+
+	VkDescriptorPoolCreateInfo poolInfo{
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.maxSets = 100,
+		.poolSizeCount = 1,
+		.pPoolSizes = &poolSize
+	};
+
+	VkDescriptorPool descriptorPool;
+	result = vkCreateDescriptorPool(vk_device, &poolInfo, nullptr, &descriptorPool);
+	assert(result == VK_SUCCESS);
+
+	VkDescriptorSetAllocateInfo desc_alloc_info{
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+		.pNext = nullptr,
+		.descriptorPool = descriptorPool,
+		.descriptorSetCount = 1,
+		.pSetLayouts = &descriptorSetLayout
+	};
+
+	result = vkAllocateDescriptorSets(vk_device, &desc_alloc_info, &window.descriptor_set);
+	assert(result == VK_SUCCESS);
+
+	VkDescriptorBufferInfo bufferInfo{
+		.buffer = window.buffer,
+		.offset = 0,
+		.range = sizeof(Window::GlobalData)
+	};
+	
+	VkWriteDescriptorSet write{
+		.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+		.pNext = nullptr,
+		.dstSet = window.descriptor_set,
+		.dstBinding = 0,
+		.dstArrayElement = 0,
+		.descriptorCount = 1,
+		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		.pImageInfo = nullptr,
+		.pBufferInfo = &bufferInfo,
+		.pTexelBufferView = nullptr
+	};
+
+	vkUpdateDescriptorSets(vk_device, 1, &write, 0, nullptr);
 
 	std::cout << "subpass" << std::endl;
 
@@ -340,7 +468,7 @@ void create_swapchain(Window& window) {
 		.pDependencies = &subpass_dependency,
 	};
 
-	VkRenderPass render_pass;
+	VkRenderPass& render_pass = window.render_pass;
 	result = vkCreateRenderPass(vk_device, &render_pass_info, nullptr, &render_pass);
 	assert(result == VK_SUCCESS);
 
@@ -361,7 +489,7 @@ void create_swapchain(Window& window) {
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
-		.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+		.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
 		.primitiveRestartEnable = VK_FALSE
 	};
 
@@ -372,8 +500,8 @@ void create_swapchain(Window& window) {
 		.depthClampEnable = false,
 		.rasterizerDiscardEnable = false,
 		.polygonMode = VK_POLYGON_MODE_FILL,
-		.cullMode = VK_CULL_MODE_BACK_BIT,
-		.frontFace = VK_FRONT_FACE_CLOCKWISE,
+		.cullMode = VK_CULL_MODE_NONE,
+		.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
 		.depthBiasEnable = false,
 		.depthBiasConstantFactor = 0,
 		.depthBiasClamp = 0,
@@ -476,7 +604,7 @@ void create_swapchain(Window& window) {
 		.basePipelineIndex = -1
 	};
 	
-	VkPipeline pipeline;
+	VkPipeline& pipeline = window.pipeline;
 
 	result = vkCreateGraphicsPipelines(
 		vk_device,
@@ -491,7 +619,8 @@ void create_swapchain(Window& window) {
 	// framebuffers
 	std::cout << "framebuffers" << std::endl;
 	
-	VkFramebuffer* framebuffers = new VkFramebuffer[image_count];
+	VkFramebuffer*& framebuffers = window.framebuffers;
+	framebuffers = new VkFramebuffer[image_count];
 
 	for (uint32_t i = 0; i < image_count; ++i) {
 		VkFramebufferCreateInfo framebuffer_create_info{
@@ -500,7 +629,7 @@ void create_swapchain(Window& window) {
 			.flags = 0,
 			.renderPass = render_pass,
 			.attachmentCount = 1,
-			.pAttachments = &(swapchain_image_views[i]),
+			.pAttachments = &(window.swapchain_image_views[i]),
 			.width = window.width,
 			.height = window.height,
 			.layers = 1,
@@ -536,44 +665,6 @@ void create_swapchain(Window& window) {
 	result = vkAllocateCommandBuffers(vk_device, &alloc_info, window.command_buffers);
 	assert(result == VK_SUCCESS);
 
-	// command buffer begin
-	std::cout << "command buffer begin" << std::endl;
-
-	VkCommandBufferBeginInfo cmd_buffer_begin_info{
-		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-		.pNext = nullptr,
-		.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
-		.pInheritanceInfo = nullptr,
-	};
-
-	for (uint32_t i = 0; i < image_count; ++i) {
-		result = vkBeginCommandBuffer(window.command_buffers[i], &cmd_buffer_begin_info);
-		assert(result == VK_SUCCESS);
-
-		VkClearValue clear_value{ 0.0f, 0.0f, 0.0f, 1.0f };
-
-		VkRenderPassBeginInfo render_pass_begin_info{
-			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-			.pNext = nullptr,
-			.renderPass = render_pass,
-			.framebuffer = framebuffers[i],
-			.renderArea = window.scissor,
-			.clearValueCount = 1,
-			.pClearValues = &clear_value,
-		};
-
-		vkCmdBeginRenderPass(window.command_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-
-		vkCmdBindPipeline(window.command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-
-		vkCmdDraw(window.command_buffers[i], 3, 1, 0, 0);
-
-		vkCmdEndRenderPass(window.command_buffers[i]);
-
-		result = vkEndCommandBuffer(window.command_buffers[i]);
-		assert(result == VK_SUCCESS);
-	}
-
 	// semaphores
 	std::cout << "semaphores" << std::endl;
 
@@ -601,6 +692,19 @@ void create_swapchain(Window& window) {
 		&render_finished_semaphore
 	);
 	assert(result == VK_SUCCESS);
+
+	// fence
+	VkFenceCreateInfo fence_info{
+    	.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+		.pNext = nullptr,
+    	.flags = VK_FENCE_CREATE_SIGNALED_BIT
+	};
+
+	result = vkCreateFence(vk_device, &fence_info, nullptr, &window.in_flight_fence);
+	assert(result == VK_SUCCESS);
+
+	// update global uniform
+	window.update_global_uniform();
 }
 
 VkShaderModule load_shader(String path) {

@@ -4,7 +4,7 @@
 
 #include "statement.hpp"
 #include "expression.hpp"
-#include "color.hpp"
+#include "text_color.hpp"
 #include "assign_statement.hpp"
 
 #define NA_DEBUG_PRINT(m_text) \

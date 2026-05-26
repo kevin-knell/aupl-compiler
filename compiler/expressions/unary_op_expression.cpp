@@ -1,6 +1,6 @@
 #include "unary_op_expression.hpp"
 #include "type.hpp"
-#include "color.hpp"
+#include "text_color.hpp"
 
 namespace cmp {
 

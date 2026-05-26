@@ -1,6 +1,6 @@
 #include "variable_symbol.hpp"
 
-#include "color.hpp"
+#include "text_color.hpp"
 #include "scope.hpp"
 #include "type_from_cpp.hpp"
 #include <assert.h>

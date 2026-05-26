@@ -19,6 +19,12 @@ extern VkPhysicalDevice vk_phys_device;
 extern VkDevice vk_device;
 extern VkQueue vk_queue;
 
+struct PushConstant {
+	float position[2];
+	float size[2];
+	Color color;
+};
+
 void init_vulkan();
 void create_swapchain(Window& window);
 VkShaderModule load_shader(String path);

@@ -5,7 +5,7 @@
 #include "variable_symbol.hpp"
 #include "invalid_type.hpp"
 #include "native_class_type.hpp"
-#include "color.hpp"
+#include "text_color.hpp"
 #include "shared_type.hpp"
 #include <assert.h>
 

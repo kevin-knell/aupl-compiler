@@ -4,7 +4,7 @@
 #include <string>
 #include "forward_declarations.hpp"
 #include "assert.h"
-#include "color.hpp"
+#include "text_color.hpp"
 #include "instructions.hpp"
 
 #include "statement_visitor.hpp"

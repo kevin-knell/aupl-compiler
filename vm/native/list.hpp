@@ -1,8 +1,10 @@
 #pragma once
+
 #include "object.hpp"
 #include "native.hpp"
 #include "value.hpp"
 #include <vector>
+#include "class_db.hpp"
 
 namespace vm {
     class ClassDB;
@@ -48,8 +50,13 @@ public:
 	void clear() {
 		data.clear();
 	}
+
+	T& operator[](size_t idx) {
+		return data[idx];
+	}
 };
 
+/*
 using List8 = List<int64_t>;
 
 void register_list8_to_db(vm::ClassDB &db) {
@@ -65,5 +72,6 @@ void register_list8_to_db(vm::ClassDB &db) {
 	REGISTER_METHOD(ID, List8, empty, bool (List8::*)());
 	REGISTER_METHOD(ID, List8, clear, void (List8::*)());
 }
+*/
 
 }

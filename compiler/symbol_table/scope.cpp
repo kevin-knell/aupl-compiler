@@ -5,7 +5,7 @@
 
 #include "variable_symbol.hpp"
 #include "statement.hpp"
-#include "color.hpp"
+#include "text_color.hpp"
 #include <iomanip>
 #include <algorithm>
 

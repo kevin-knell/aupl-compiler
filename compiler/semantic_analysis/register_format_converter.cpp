@@ -10,7 +10,7 @@
 #include "return_statement.hpp"
 #include "conditional_jump_statement.hpp"
 #include "label_statement.hpp"
-#include <color.hpp>
+#include <text_color.hpp>
 #include <assert.h>
 
 #ifdef RF_DEBUG_VERBOSE

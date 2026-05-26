@@ -17,7 +17,7 @@
 #include "register_format_converter.hpp"
 #include "const_folding_optimizer.hpp"
 #include "erase_unused_variable_optimizer.hpp"
-#include "color.hpp"
+#include "text_color.hpp"
 
 #include "bytecode_generator.hpp"
 #include "cpp_generator.hpp"
