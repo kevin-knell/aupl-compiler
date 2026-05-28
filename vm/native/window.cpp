@@ -2,10 +2,23 @@
 #include "vulkan.hpp"
 #include <cstdint>
 #include <numeric>
+#include "class_db.hpp"
 
 namespace auplib {
 
-Window::Window(const unsigned int width, const unsigned int height, const String name)
+void Window::register_to_db(vm::ClassDB &db) {
+	const int16_t ID = REGISTER_CLASS(Window);
+	
+	REGISTER_CONSTRUCTOR(ID, Window(const uint32_t width, const uint32_t height, const String name));
+
+	REGISTER_STATIC_METHOD(ID, Window, poll_events, void (*)());
+
+	REGISTER_METHOD(ID, Window, redraw, void (Window::*)());
+	REGISTER_METHOD(ID, Window, should_close, bool (Window::*)());
+	REGISTER_METHOD(ID, Window, add, void (Window::*)(Shared<ColorRect> r));
+}
+
+Window::Window(const uint32_t width, const uint32_t height, const String name)
 		: width(width), height(height), name(name) {
 	viewport = VkViewport{
 		.x = 0, .y = 0,
@@ -15,6 +28,7 @@ Window::Window(const unsigned int width, const unsigned int height, const String
 
 	scissor = VkRect2D{ 0, 0, width, height };
 	
+	init_vulkan();
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -61,7 +75,7 @@ void Window::record(uint32_t& image_index) {
 	vkCmdBindPipeline(command_buffers[image_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 	for (int64_t i = 0; i < color_rects.size(); ++i) {
-		ColorRect r = color_rects[i];
+		ColorRect r = *color_rects[i];
 
 		PushConstant push{
 			{static_cast<float>(r.position.x), static_cast<float>(r.position.y)},
@@ -172,4 +186,7 @@ void Window::update_global_uniform() {
     vkUnmapMemory(vk_device, memory);
 }
 
+void Window::add(Shared<ColorRect> rect) {
+	color_rects.push(rect);
+}
 }

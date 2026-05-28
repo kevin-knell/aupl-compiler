@@ -33,7 +33,7 @@ public:
 private:
 	void iterate_scope();
 
-	void visit(Statement&) override { throw std::runtime_error("unsuported function!"); }
+	void visit(Statement&) override { throw std::runtime_error("unsuported function! CppCodeGenerator visit Statement"); }
 	void visit(DeclareStatement& stmt) override;
 	void visit(AssignmentStatement& stmt) override;
 	void visit(ConditionalJumpStatement& stmt) override;
@@ -41,13 +41,13 @@ private:
 	void visit(LabelStatement& stmt) override;
 	void visit(ExpressionStatement& stmt) override;
 
-	void visit(Expression&) override { throw std::runtime_error("unsuported function!"); }
+	void visit(Expression&) override { throw std::runtime_error("unsuported function! CppCodeGenerator visit Expression"); }
 	void visit(VariableExpression& expr) override;
 	void visit(UnaryExpression& expr) override;
 	void visit(BinaryExpression& expr) override;
 	void visit(LoadConstExpression& expr) override;
 	void visit(CallExpression& expr) override;
-	void visit(TupleExpression& expr) override { (void) expr; throw std::runtime_error("unsuported function!"); }
+	void visit(TupleExpression& expr) override { (void) expr; throw std::runtime_error("unsuported function! CppCodeGenerator visit Tuple"); }
 	void visit(StringLiteralExpression& expr) override;
 };
 

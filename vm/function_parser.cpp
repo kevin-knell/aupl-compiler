@@ -16,12 +16,12 @@ namespace {
         std::stringstream ss(params);
         std::string param;
 
-		std::regex pattern(R"(^((const\s+)?\w+&?)\s+(\w+)$)");
+		std::regex pattern(R"(^((const\s+)?[\w<>]+&?)\s+(\w+)$)");
 
         while (std::getline(ss, param, ',')) {
             param = trim(param);
             if (param.empty()) continue;
-			//std::cout << "param: " << param << std::endl;
+			std::cout << "param: " << param << std::endl;
 
 			std::smatch match;
 			if (!std::regex_search(param, match, pattern)) continue;
@@ -35,7 +35,7 @@ namespace {
 FunctionSignature FunctionParser::parse(const std::string& code) {
     FunctionSignature sig;
     static const std::regex pattern(
-        R"(^(\w+)\s*(\(\w+::\*\)|\(\*\))?\(([\w\s,&*]*)\)\s*(const)?$)"
+        R"(^(\w+)\s*(\(\w+::\*\)|\(\*\))?\(([\w\s,&<>*]*)\)\s*(const)?$)"
     );
 
     std::smatch match;

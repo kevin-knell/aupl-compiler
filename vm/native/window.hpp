@@ -7,6 +7,7 @@
 #include "string.hpp"
 #include "color_rect.hpp"
 #include "list.hpp"
+#include "shared.hpp"
 
 namespace auplib
 {
@@ -41,11 +42,16 @@ public:
 	uint32_t height;
 	String name;
 
-	List<ColorRect> color_rects;
+	List<Shared<ColorRect>> color_rects;
 
 public:
+	static void register_to_db(vm::ClassDB &db);
+	static void poll_events() {
+		glfwPollEvents();
+	}
+
 	Window() = delete;
-	Window(const unsigned int width, const unsigned int height, const String name);
+	Window(const uint32_t width, const uint32_t height, const String name);
 	~Window();
 
 	bool should_close() {
@@ -55,6 +61,8 @@ public:
 	void record(uint32_t& image_index);
 	void redraw();
 	void update_global_uniform();
+
+	void add(Shared<ColorRect> rect);
 };
 	
 } // namespace auplib

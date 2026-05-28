@@ -12,7 +12,13 @@ struct ClassType final : public Type {
 
 	KIND get_kind() const override { return CLASS; };
 
-	bool is_cpp_type(const std::string&) const override { return false; }
+	bool is_cpp_type(const std::string& cpp_type) const override {
+		std::cout << name << " ==? " << cpp_type << std::endl;
+		return name == cpp_type
+				|| ("const " + name) == cpp_type
+				|| (name + "&") == cpp_type
+				|| ("const " + name + "&") == cpp_type;
+	}
 
     ClassType(const std::string& n) : name(n) {}
 

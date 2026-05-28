@@ -7,6 +7,7 @@
 #include "native_class_type.hpp"
 #include "text_color.hpp"
 #include "shared_type.hpp"
+#include "variable_expression.hpp"
 #include <assert.h>
 
 namespace cmp {
@@ -50,6 +51,11 @@ void VariableExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 		
 		if (obj_type->is_pointer_type()) {
 			Type& inner_type = obj_type->get_inner_type();
+
+			if (obj_expr->get_kind() == Expression::VARIABLE) {
+				auto obj_var_expr = std::static_pointer_cast<VariableExpression>(obj_expr);
+				obj_var_expr->must_be_dereferenced = true;
+			}
 			
 			ClassPtr cls;
 
@@ -96,7 +102,9 @@ void VariableExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 	if (scope) {
         var = scope->variables[name];
 		if (!obj_expr && scope->type == Scope::CLASS) {
-			obj_expr = std::make_shared<VariableExpression>("this");
+			auto obj_var_expr = std::make_shared<VariableExpression>("this");
+			obj_var_expr->must_be_dereferenced = true;
+			obj_expr = obj_var_expr;
 		}
     } else {
         auto it = name_analysis_info.symbol_table.classes.find(name);

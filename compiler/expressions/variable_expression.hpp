@@ -8,6 +8,7 @@ struct VariableExpression final : public Expression {
 	ExprPtr obj_expr;
     VarPtr var;
     std::string name;
+	bool must_be_dereferenced = false;
 
     VariableExpression(const std::string& name) : name(name) {}
     VariableExpression(VarPtr var) : var(var), name(var->name) {}

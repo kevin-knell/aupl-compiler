@@ -78,7 +78,10 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 						break;
 					}
 
-					if (!type || !type->is_cpp_type(cpp_type_name)) {
+					assert(type);
+
+					if (!type->is_cpp_type(cpp_type_name)) {
+						//std::cout << type->to_string() << type->get_kind() << " is not " << cpp_type_name << std::endl;
 						wrong_type = true;
 						break;
 					}
@@ -162,6 +165,8 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 
 		switch (obj_expr->get_kind()) {
 			case Expression::VARIABLE: {
+				//std::cout << "is variable: " << obj_expr->to_string() << std::endl;
+
 				auto var_expr = std::dynamic_pointer_cast<VariableExpression>(obj_expr);
 				auto var = var_expr->var;
 				auto access_type = var_expr->get_type();
@@ -170,6 +175,7 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 
 				if (access_type->is_pointer_type()) {
 					obj_type = &access_type->get_inner_type();
+					var_expr->must_be_dereferenced = true;
 				} else {
 					obj_type = access_type.get();
 					//std::cerr << "invalid type for call: " << access_type->to_string() << std::endl;
@@ -197,12 +203,14 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 						//std::cout << "is native class" << std::endl;
 						auto native_class_type = reinterpret_cast<const NativeClassType*>(obj_type);
 						for (auto f2 : native_class_type->functions) {
+							//std::cout << f2->name << f2->method_pair->arg_count << arguments.size() << std::endl;
 							if (f2->name == name
 									&& f2->method_pair->arg_count == arguments.size()) {
 								f = f2;
 								return;
 							}
 						}
+						std::cerr << "Method in native class not found: " << name << std::endl;
 						break;
 					}
 					case Type::CLASS: {

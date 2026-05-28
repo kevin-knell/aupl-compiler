@@ -70,6 +70,10 @@ void cmp::CppCodeGenerator::generate_cpp_code(std::ofstream &hpp_file, std::ofst
 	append(hpp_includes, "#include \"console.hpp\"");
 	append(hpp_includes, "#include \"math.hpp\"");
 	append(hpp_includes, "#include \"file.hpp\"");
+	append(hpp_includes, "#include \"window.hpp\"");
+	append(hpp_includes, "#include \"color_rect.hpp\"");
+	append(hpp_includes, "#include \"color.hpp\"");
+	append(hpp_includes, "#include \"vec2.hpp\"");
 
 	append(cpp_includes, "#include \"output.hpp\"");
 
@@ -199,7 +203,7 @@ void cmp::CppCodeGenerator::visit(DeclareStatement &stmt) {
 	if (stmt.variable_symbol->type->get_kind() == Type::SHARED) {
 		ss << " = ";
 		ss << stmt.variable_symbol->type->to_cpp_type_str();
-		ss << "::make(";
+		ss << "(new ";
 		cpp_classes << ss.str();
 		stmt.variable_symbol->initial_value->accept(*this);
 		cpp_classes << ")";
@@ -307,7 +311,7 @@ void cmp::CppCodeGenerator::visit(VariableExpression &expr) {
 		cpp_classes << ".";
 	}
 
-	if (expr.get_type()->is_pointer_type()) {
+	if (expr.must_be_dereferenced) {
 		cpp_classes << "(*";
 		cpp_classes << name;
 		cpp_classes << ")";

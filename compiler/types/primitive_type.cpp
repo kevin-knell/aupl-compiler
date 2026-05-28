@@ -24,7 +24,7 @@ const TypePtr PrimitiveType::TYPE_INT = create("int", 8, vm::BinType::INT64, { "
 
 const TypePtr PrimitiveType::TYPE_U8   = create("u8", 1, vm::BinType::UINT8, { "uint8_t" });
 const TypePtr PrimitiveType::TYPE_U16  = create("u16", 2, vm::BinType::UINT16, { "uint16_t" });
-const TypePtr PrimitiveType::TYPE_U32  = create("u32", 4, vm::BinType::UINT32, { "uint32_t" });
+const TypePtr PrimitiveType::TYPE_U32  = create("u32", 4, vm::BinType::UINT32, { "uint32_t", "const uint32_t", "unsigned int", "const unsigned int" });
 const TypePtr PrimitiveType::TYPE_U64  = create("u64", 8, vm::BinType::UINT64, { "uint64_t" });
 
 const TypePtr PrimitiveType::TYPE_F32  = create("f32", 4, vm::BinType::FLOAT, { "float" });
