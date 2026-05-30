@@ -19,7 +19,8 @@ bool NativeClassType::is_cpp_type(const std::string &cpp_type) const {
 	return cls.name == cpp_type
 			|| ("const " + cls.name) == cpp_type
 			|| (cls.name + "&") == cpp_type
-			|| ("const " + cls.name + "&") == cpp_type;
+			|| ("const " + cls.name + "&") == cpp_type
+			|| ("Shared<" + cls.name + ">") == cpp_type;
 }
 
 std::string NativeClassType::to_cpp_type_str() {

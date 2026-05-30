@@ -60,7 +60,7 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 				if (nat_func->name == name
 						&& nat_func->method_pair->arg_count == arguments.size()) {
 					candidates.push_back(nat_func);
-					std::cout << "candidate: " << nat_func->to_string() << std::endl;
+					//std::cout << "candidate: " << nat_func->to_string() << std::endl;
 				}
 			}
 
@@ -81,7 +81,7 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 					assert(type);
 
 					if (!type->is_cpp_type(cpp_type_name)) {
-						//std::cout << type->to_string() << type->get_kind() << " is not " << cpp_type_name << std::endl;
+						//std::cout << type->to_string() << type->get_kind() << (type->get_inner_type().get_kind()) << " is not " << cpp_type_name << std::endl;
 						wrong_type = true;
 						break;
 					}

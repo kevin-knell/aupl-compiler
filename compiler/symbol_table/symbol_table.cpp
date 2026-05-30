@@ -2,6 +2,7 @@
 #include "native_class_type.hpp"
 #include "static_class_type.hpp"
 #include "class_db.hpp"
+#include "type_from_cpp.hpp"
 
 namespace cmp {
 
@@ -17,8 +18,15 @@ SymbolTable::SymbolTable(vm::ClassDB &db) {
 		std::shared_ptr<NativeClassType> nat = std::dynamic_pointer_cast<NativeClassType>(class_symbol->type);
 		native_types[cls.name] = nat;
 		nat->class_ptr = class_symbol;
+
+		named_cpp_types()[cls.name] = nat;
 		
 		std::cout << "native class: " << nat->to_string() << std::endl;
+	}
+
+	for (auto& cls : db.classes) {
+		std::shared_ptr<NativeClassType> nat = std::dynamic_pointer_cast<NativeClassType>(native_types[cls.name]);
+		auto class_symbol = nat->class_ptr;
 
 		for (auto& v : cls.variables) {
 			auto nat_var = VariableSymbol::create(v);

@@ -26,7 +26,7 @@ bool VariableExpression::is_unresolved_symbol() const {
 }
 
 void VariableExpression::resolve(NameAnalysisInfo& name_analysis_info) {
-	std::cout << "resolve var expr: " << to_string() << std::endl;
+	//std::cout << "resolve var expr: " << to_string() << std::endl;
 
 	ScopePtr scope;
 
@@ -76,7 +76,7 @@ void VariableExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 			}
 			
 			scope = Scope::find_scope(cls->scope, name);
-			std::cout << scope->get_full_name() << std::endl;
+			//std::cout << scope->get_full_name() << std::endl;
 		} else {
 			ClassPtr cls;
 

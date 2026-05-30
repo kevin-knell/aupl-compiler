@@ -14,10 +14,20 @@
 namespace auplib
 {
 
-extern VkInstance vk_instance;
-extern VkPhysicalDevice vk_phys_device;
-extern VkDevice vk_device;
-extern VkQueue vk_queue;
+struct VulkanInstance {
+	VkInstance instance;
+	VkPhysicalDevice phys_device;
+	VkDevice device;
+
+	uint32_t selected_queue_family_idx;
+	VkQueue queue;
+
+	VulkanInstance();
+
+	void create_instance();
+	void create_device();
+	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+};
 
 struct PushConstant {
 	float position[2];
@@ -25,9 +35,7 @@ struct PushConstant {
 	Color color;
 };
 
-void init_vulkan();
-void create_swapchain(Window& window);
-VkShaderModule load_shader(String path);
+extern VulkanInstance vulkan_instance;
 
 
 } // namespace auplib

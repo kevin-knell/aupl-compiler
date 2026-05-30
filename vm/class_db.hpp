@@ -69,7 +69,7 @@ public:
 	template<typename ClassType>
     int16_t register_class(std::string name) {
 		using auplib::Object;
-		std::cout << name << IS_OBJECT(ClassType) << std::endl;
+		//std::cout << name << IS_OBJECT(ClassType) << std::endl;
         classes.emplace_back(name, static_cast<int16_t>(classes.size()), sizeof(ClassType), IS_OBJECT(ClassType), IS_TRIVIAL(ClassType));
 		return classes.back().id;
     }

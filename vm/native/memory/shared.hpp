@@ -61,6 +61,17 @@ public:
 		other.data = nullptr;
 	}
 
+	template<typename U>
+    Shared(const Shared<U>& other)
+        	requires std::is_convertible_v<U*, T*>
+	{
+		obj = other.obj;
+		data = other.data;
+
+		if(data)
+			++data->ref_count;
+    }
+
 	Shared& operator=(const Shared& other) noexcept {
 		if (this != &other) {
 			release();

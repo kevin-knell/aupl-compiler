@@ -7,6 +7,7 @@
 // utils
 #include "console.hpp"
 #include "math.hpp"
+#include "time.hpp"
 
 // trivials
 #include "vec2.hpp"
@@ -16,6 +17,12 @@
 #include "list.hpp"
 #include "file.hpp"
 #include "window.hpp"
+#include "viewport.hpp"
+#include "scene.hpp"
+#include "renderer.hpp"
+
+// nodes
+#include "node.hpp"
 #include "color_rect.hpp"
 #endif
 
@@ -35,6 +42,7 @@ void vm::register_classes(vm::ClassDB& db) {
 	// util
 	Console::register_to_db(db);
 	Math::register_to_db(db);
+	Time::register_to_db(db);
 
 	// simple types
 	vec2::register_to_db(db);
@@ -47,6 +55,12 @@ void vm::register_classes(vm::ClassDB& db) {
 	
 	File::register_to_db(db);
 	Window::register_to_db(db);
+	Viewport::register_to_db(db);
+	Scene::register_to_db(db);
+	Renderer::register_to_db(db);
+
+	// nodes
+	Node::register_to_db(db);
 	ColorRect::register_to_db(db);
 #endif
 }

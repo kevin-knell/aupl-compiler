@@ -11,6 +11,11 @@ struct is_trivial {
 
 }
 
+namespace vm
+{
+    class ClassDB;
+} // namespace vm
+
 // Macro to mark a type as primitive, with a compile-time check
 #define MARK_TRIVIAL(TYPE)                                   \
     static_assert(std::is_trivially_copyable<TYPE>::value,     \

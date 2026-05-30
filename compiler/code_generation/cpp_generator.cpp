@@ -74,6 +74,10 @@ void cmp::CppCodeGenerator::generate_cpp_code(std::ofstream &hpp_file, std::ofst
 	append(hpp_includes, "#include \"color_rect.hpp\"");
 	append(hpp_includes, "#include \"color.hpp\"");
 	append(hpp_includes, "#include \"vec2.hpp\"");
+	append(hpp_includes, "#include \"renderer.hpp\"");
+	append(hpp_includes, "#include \"scene.hpp\"");
+	append(hpp_includes, "#include \"node.hpp\"");
+	append(hpp_includes, "#include \"time.hpp\"");
 
 	append(cpp_includes, "#include \"output.hpp\"");
 
@@ -200,7 +204,8 @@ void cmp::CppCodeGenerator::visit(DeclareStatement &stmt) {
 
 	ss << name;
 
-	if (stmt.variable_symbol->type->get_kind() == Type::SHARED) {
+	if (stmt.variable_symbol->type->get_kind() == Type::SHARED
+			&& stmt.variable_symbol->initial_value->get_kind() == Expression::CALL) {
 		ss << " = ";
 		ss << stmt.variable_symbol->type->to_cpp_type_str();
 		ss << "(new ";
@@ -221,8 +226,21 @@ void cmp::CppCodeGenerator::visit(DeclareStatement &stmt) {
 void cmp::CppCodeGenerator::visit(AssignmentStatement &stmt) {
 	cpp_classes << make_indented_stringstream().str();
 	stmt.expr_left->accept(*this);
-	cpp_classes << " = ";
-	stmt.expr_right->accept(*this);
+
+	std::stringstream ss = make_indented_stringstream();
+
+	if (stmt.expr_left->get_type()->get_kind() == Type::SHARED
+			&& stmt.expr_right->get_kind() == Expression::CALL) {
+		ss << " = ";
+		ss << stmt.expr_left->get_type()->to_cpp_type_str();
+		ss << "(new ";
+		cpp_classes << ss.str();
+		stmt.expr_right->accept(*this);
+		cpp_classes << ")";
+	} else {
+		cpp_classes << " = ";
+		stmt.expr_right->accept(*this);
+	}
 	cpp_classes << ";\n";
 }
 

@@ -99,6 +99,9 @@ TypePtr SymbolBuilder::parse_tuple_type(ParserInfo& parser_info) {
         }
 
         TypePtr t = parse_type(parser_info);
+
+		// TODO: default store shared
+
         if (!t) {
             index = idx;
             return nullptr;

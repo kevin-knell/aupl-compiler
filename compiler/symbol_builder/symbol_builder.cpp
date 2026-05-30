@@ -6,6 +6,7 @@
 #include "static_class_type.hpp"
 #include "primitive_type.hpp"
 #include "pointer_type.hpp"
+#include "shared_type.hpp"
 #include <cassert>
 
 namespace cmp {
@@ -569,10 +570,19 @@ bool SymbolBuilder::parse_variable(ParserInfo parser_info) {
     }
 
     TypePtr type = parse_type(parser_info);
-    if (!type) {
+
+	if (!type) {
         index = start_idx;
         return false;
     }
+
+	TypePtr member_type;
+
+	if (type->default_store_shared()) {
+		member_type = std::make_shared<SharedType>(type);
+	} else {
+		member_type = type;
+	}
 
     if (!match(TokenType::IDENTIFIER)) {
         index = start_idx;
@@ -592,13 +602,17 @@ bool SymbolBuilder::parse_variable(ParserInfo parser_info) {
 
     ScopePtr scope = is_static ? parser_info.cls->static_scope : parser_info.cls->scope;
     
-    VarPtr variable_symbol = VariableSymbol::create(type, name, initial_value);
+    VarPtr variable_symbol = VariableSymbol::create(member_type, name, initial_value);
     variable_symbol->scope = scope;
     variable_symbol->is_public = is_public;
     variable_symbol->is_static = is_static;
     variable_symbol->is_const = is_const;
     
     scope->variables[name] = variable_symbol;
+
+	if (is_static) {
+		std::cout << "static var: " << variable_symbol->to_string() << std::endl;
+	}
 
     return true;
 }

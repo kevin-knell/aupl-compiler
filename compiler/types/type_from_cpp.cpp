@@ -6,8 +6,8 @@ namespace cmp
 {
 
 std::map<std::string, TypePtr>& named_cpp_types() {
-    static std::map<std::string, TypePtr> instance;
-    return instance;
+	static std::map<std::string, TypePtr> instance;
+	return instance;
 }
 
 TypePtr get_type_from_cpp(std::string name) {

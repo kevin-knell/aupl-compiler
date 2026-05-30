@@ -21,7 +21,7 @@ namespace {
         while (std::getline(ss, param, ',')) {
             param = trim(param);
             if (param.empty()) continue;
-			std::cout << "param: " << param << std::endl;
+			//std::cout << "param: " << param << std::endl;
 
 			std::smatch match;
 			if (!std::regex_search(param, match, pattern)) continue;

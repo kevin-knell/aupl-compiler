@@ -22,7 +22,7 @@ void find_variable_references(std::vector<ExprPtr*> expressions, std::set<VarPtr
         if (expr->get_kind() == Expression::VARIABLE) {
             VarExprPtr var_expr = std::dynamic_pointer_cast<VariableExpression>(expr);
             result.emplace(var_expr->var);
-            std::cout << "var ref: " << var_expr->to_string() << "\n" << std::endl;
+            //std::cout << "var ref: " << var_expr->to_string() << "\n" << std::endl;
         }
 
         find_variable_references(expr->get_expressions(), result);
@@ -40,10 +40,10 @@ void cmp::EraseUnusedVariableOptimizer::optimize(SymbolTable &st) const {
 
             for (auto stmt : f->scope->body) {
                 if (stmt->get_kind() == Statement::DECLARE) {
-                    std::cout << "declaration: " << stmt->to_string() << std::endl;
+                    //std::cout << "declaration: " << stmt->to_string() << std::endl;
                     unread_declarations.emplace(stmt);
                 } else {
-                    std::cout << stmt->to_string() << std::endl;
+                    //std::cout << stmt->to_string() << std::endl;
                 }
                 
                 std::set<VarPtr> var_refs;
@@ -60,10 +60,10 @@ void cmp::EraseUnusedVariableOptimizer::optimize(SymbolTable &st) const {
                     if (var_refs.find(decl->variable_symbol) != var_refs.end()) {
                         it = unread_declarations.erase(it);
                     } else if (!decl->variable_symbol->initial_value->is_pure()) {
-                        std::cout << "keep impure: " << stmt->to_string() << std::endl;
+                        //std::cout << "keep impure: " << stmt->to_string() << std::endl;
                         it = unread_declarations.erase(it);
                     } else if ((*it)->is_volatile) {
-                        std::cout << "keep volatile: " << stmt->to_string() << std::endl;
+                        //std::cout << "keep volatile: " << stmt->to_string() << std::endl;
                         it = unread_declarations.erase(it);
                     } else {
                         ++it;
@@ -87,7 +87,7 @@ void cmp::EraseUnusedVariableOptimizer::optimize(SymbolTable &st) const {
                 }
             }
 
-            std::cout << f->to_string() << std::endl;
+            //std::cout << f->to_string() << std::endl;
         }
     }
 }

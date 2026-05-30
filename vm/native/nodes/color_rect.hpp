@@ -1,13 +1,13 @@
 #pragma once
 
-#include "object.hpp"
+#include "canvas_item.hpp"
 #include "vec2.hpp"
 #include "color.hpp"
 
 namespace auplib
 {
 
-struct ColorRect : public Object {
+struct ColorRect : public CanvasItem {
 	vec2 position;
 	vec2 size;
 	Color color;

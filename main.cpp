@@ -95,8 +95,8 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	cmp::NameAnalyzer::na_debug_print = true;
-	cmp::NameAnalyzer::na_debug_print_verbose = true;
+	cmp::NameAnalyzer::na_debug_print = false;
+	cmp::NameAnalyzer::na_debug_print_verbose = false;
 
 	// compile
 
