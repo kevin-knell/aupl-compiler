@@ -8,6 +8,7 @@
 #include "console.hpp"
 #include "math.hpp"
 #include "time.hpp"
+#include "input.hpp"
 
 // trivials
 #include "vec2.hpp"
@@ -43,6 +44,7 @@ void vm::register_classes(vm::ClassDB& db) {
 	Console::register_to_db(db);
 	Math::register_to_db(db);
 	Time::register_to_db(db);
+	Input::register_to_db(db);
 
 	// simple types
 	vec2::register_to_db(db);

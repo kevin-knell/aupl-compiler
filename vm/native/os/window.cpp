@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <numeric>
 #include "class_db.hpp"
+#include "input.hpp"
 
 namespace auplib {
 
@@ -29,6 +30,8 @@ Window::Window(const uint32_t width, const uint32_t height, const String name)
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	glfw_window = glfwCreateWindow(width, height, name, nullptr, nullptr);
 	glfwCreateWindowSurface(vulkan_instance.instance, glfw_window, nullptr, &viewport->surface);
+
+	Input::window = glfw_window;
 }
 
 Window::~Window() {
