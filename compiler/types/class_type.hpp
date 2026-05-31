@@ -19,6 +19,8 @@ struct ClassType final : public Type {
 				|| (name + "&") == cpp_type
 				|| ("const " + name + "&") == cpp_type;
 	}
+	
+	bool is_convertable_to_cpp_type(const std::string&) const override { return false; }
 
     ClassType(const std::string& n) : name(n) {}
 

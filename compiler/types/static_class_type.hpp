@@ -16,6 +16,7 @@ struct StaticClassType final : public Type {
     StaticClassType(const std::string& n) : name(n) {}
 
 	bool is_cpp_type(const std::string&) const override { return false; }
+	bool is_convertable_to_cpp_type(const std::string&) const override { return false; }
 };
 
 } // namespace cmp

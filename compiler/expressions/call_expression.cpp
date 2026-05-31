@@ -73,8 +73,11 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 				}
 			}
 
+			FuncVec secondary_candidates;
+
 			for (auto nat_func : candidates) {
-				bool wrong_type = false;
+				bool has_different_type = false;
+				bool has_incompatible_type = false;
 				
 				for (size_t i = 0; i < nat_func->method_pair->arg_types.size(); i++) {
 					std::string cpp_type_name = nat_func->method_pair->arg_types[i];
@@ -83,22 +86,42 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 
 					if (!type) {
 						std::cerr << "type == null_ptr! " << arg->to_string() << std::endl;
-						wrong_type = true;
-						break;
+						has_different_type = true;
 					}
 
 					assert(type);
 
 					if (!type->is_cpp_type(cpp_type_name)) {
 						//std::cout << type->to_string() << type->get_kind() << (type->get_inner_type().get_kind()) << " is not " << cpp_type_name << std::endl;
-						wrong_type = true;
-						break;
+						has_different_type = true;
+
+						if (!type->is_convertable_to_cpp_type(cpp_type_name)) {
+							has_incompatible_type = true;
+							std::cout << type->to_string() << " not convertable to " << cpp_type_name << std::endl;
+						}
 					}
 				}
 
-				if (!wrong_type) {
+				if (!has_different_type) {
 					f = nat_func;
 					return;
+				}
+
+				if (!has_incompatible_type) {
+					secondary_candidates.push_back(nat_func);
+				}
+			}
+
+			if (secondary_candidates.size() == 1) {
+				f = secondary_candidates.front();
+				return;
+			}
+
+			if (secondary_candidates.size() > 1) {
+				std::cerr << "function call " << to_string() << " is ambigous!" << std::endl;
+				
+				for (auto nat_func : candidates) {
+					std::cerr << nat_func->to_string() << std::endl;
 				}
 			}
 

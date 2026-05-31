@@ -33,17 +33,24 @@ public:
 	KIND get_kind() const override;
 
 	bool is_cpp_type(const std::string& cpp_type) const override;
+	bool is_convertable_to_cpp_type(const std::string&) const override;
 
 	std::string to_cpp_type_str() override;
 private:
     const std::string name; // "int", "bool", etc.
     const size_t size;
-	const std::vector<std::string> cpp_types;
+	const std::vector<std::string> cpp_types_synonymous;
+	const std::vector<std::string> cpp_types_convertable;
 
-    explicit PrimitiveType(const std::string& n, size_t s, vm::BinType bin_type, std::vector<std::string> cpp_types)
-		: vm_bin_type(bin_type), name(n), size(s), cpp_types(cpp_types) {}
+    explicit PrimitiveType(
+			const std::string& n,
+			size_t s,
+			vm::BinType bin_type,
+			std::vector<std::string> cpp_types_synonymous,
+			std::vector<std::string> cpp_types_convertable)
+		: vm_bin_type(bin_type), name(n), size(s), cpp_types_synonymous(cpp_types_synonymous), cpp_types_convertable(cpp_types_convertable) {}
 
-    friend TypePtr create(std::string n, size_t s, vm::BinType bin_type, std::vector<std::string> cpp_types);
+    friend TypePtr create(std::string n, size_t s, vm::BinType bin_type, std::vector<std::string> cpp_types_synonymous, std::vector<std::string> cpp_types_convertable);
 };
 
 } // namespace cmp
