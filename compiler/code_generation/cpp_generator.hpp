@@ -47,8 +47,9 @@ private:
 	void visit(BinaryExpression& expr) override;
 	void visit(LoadConstExpression& expr) override;
 	void visit(CallExpression& expr) override;
-	void visit(TupleExpression& expr) override { (void) expr; throw std::runtime_error("unsuported function! CppCodeGenerator visit Tuple"); }
+	void visit(TupleExpression& expr) override;
 	void visit(StringLiteralExpression& expr) override;
+	void visit(IndexExpression& expr) override;
 };
 
 }

@@ -99,7 +99,13 @@ Type::KIND PrimitiveType::get_kind() const {
 }
 
 bool PrimitiveType::is_cpp_type(const std::string &cpp_type) const {
-	return std::find(cpp_types_synonymous.begin(), cpp_types_synonymous.end(), cpp_type) != cpp_types_synonymous.end();
+	std::string cpp_type_normalize = cpp_type;
+
+	if (cpp_type.starts_with("const")) {
+		cpp_type_normalize = cpp_type.substr(std::strlen("const "));
+	}
+
+	return std::find(cpp_types_synonymous.begin(), cpp_types_synonymous.end(), cpp_type_normalize) != cpp_types_synonymous.end();
 }
 
 bool PrimitiveType::is_convertable_to_cpp_type(const std::string &cpp_type) const {

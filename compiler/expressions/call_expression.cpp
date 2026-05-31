@@ -149,6 +149,7 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 				TypePtr type = arguments[i]->get_type();
 
 				if (!type->is_cpp_type(cpp_type_name)) {
+					//std::cout << type->to_string() << " is not " << cpp_type_name << std::endl;
 					wrong_type = true;
 					break;
 				}

@@ -36,6 +36,8 @@ TypePtr TupleExpression::get_type() const {
 }
 
 bool TupleExpression::is_constexpr() const {
+	return false;
+	
 	for (auto& e : expressions) {
 		if (!e->is_constexpr()) return false;
 	}

@@ -12,6 +12,7 @@ class LoadConstExpression;
 class CallExpression;
 class TupleExpression;
 class StringLiteralExpression;
+class IndexExpression;
 
 using VarExprPtr = std::shared_ptr<VariableExpression>;
 
@@ -27,6 +28,7 @@ private:
 	virtual void visit(CallExpression& expr) = 0;
 	virtual void visit(TupleExpression& expr) = 0;
 	virtual void visit(StringLiteralExpression& expr) = 0;
+	virtual void visit(IndexExpression& expr) = 0;
 
 	friend class Expression;
 	friend class VariableExpression;
@@ -36,6 +38,7 @@ private:
 	friend class CallExpression;
 	friend class TupleExpression;
 	friend class StringLiteralExpression;
+	friend class IndexExpression;
 };
 
 class ExpressionAssignmentVisitor {
@@ -50,6 +53,7 @@ private:
 	virtual void visit(CallExpression& expr, VarExprPtr var_expr) = 0;
 	virtual void visit(TupleExpression& expr, VarExprPtr var_expr) = 0;
 	virtual void visit(StringLiteralExpression& expr, VarExprPtr var_expr) = 0;
+	virtual void visit(IndexExpression& expr, VarExprPtr var_expr) = 0;
 
 	friend class Expression;
 	friend class VariableExpression;
@@ -59,6 +63,7 @@ private:
 	friend class CallExpression;
 	friend class TupleExpression;
 	friend class StringLiteralExpression;
+	friend class IndexExpression;
 };
 
 } // namespace cmp

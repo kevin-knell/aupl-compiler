@@ -16,7 +16,7 @@ struct TupleExpression final : public Expression {
 
     std::string to_string() const override;
     TypePtr get_type() const override;
-    KIND get_kind() const override { return INT_LIT; }
+    KIND get_kind() const override { return TUPLE; }
     bool is_constexpr() const override;
     vm::Value* eval_constexpr() const override;
 

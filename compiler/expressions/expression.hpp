@@ -33,10 +33,13 @@ struct Expression : public std::enable_shared_from_this<Expression> {
         CALL,
 
         ACCESS,
+		INDEX,
 
         UNARY,
         BINARY,
-        TERNARY
+        TERNARY,
+
+		TUPLE
     };
 
     virtual ~Expression() = default;

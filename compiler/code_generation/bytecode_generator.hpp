@@ -119,6 +119,7 @@ private:
 	void visit(CallExpression& expr, VarExprPtr var_expr) override { generate_bytecode(expr, var_expr); }
 	void visit(TupleExpression& expr, VarExprPtr var_expr) override { generate_bytecode(expr, var_expr); }
 	void visit(StringLiteralExpression& expr, VarExprPtr var_expr) override { generate_bytecode(expr, var_expr); }
+	void visit(IndexExpression& expr, VarExprPtr var_expr) override { }
 
 	void generate_bytecode(const Expression& expr, VarExprPtr dest_var);
 	void generate_bytecode(const VariableExpression& expr, VarExprPtr dest_var);
@@ -508,6 +509,7 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const ConditionalJum
 		void visit(CallExpression&) override { self.add_error(); }
 		void visit(TupleExpression&) override { self.add_error(); }
 		void visit(StringLiteralExpression&) override { self.add_error(); }
+		void visit(IndexExpression&) override { self.add_error(); }
 
 
 	};

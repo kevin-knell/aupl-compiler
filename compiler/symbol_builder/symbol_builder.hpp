@@ -61,12 +61,16 @@ public:
     ExprPtr parse_comparison(ParserInfo& parser_info);
     ExprPtr parse_add(ParserInfo& parser_info);
     ExprPtr parse_mul(ParserInfo& parser_info);
-    ExprPtr parse_access(ParserInfo& parser_info);
+
+    //ExprPtr parse_access(ParserInfo& parser_info);
+    //ExprPtr parse_index(ParserInfo& parser_info);
+    ExprPtr parse_postfix(ParserInfo& parser_info);
     
     ExprPtr parse_primary(ParserInfo& parser_info);
     ExprPtr parse_call(ParserInfo& parser_info);
 
     ExprPtr parse_tuple(ParserInfo& parser_info);
+    ExprPtr parse_initializer_list(ParserInfo& parser_info);
 
 private:
     const std::vector<Token>& tokens;

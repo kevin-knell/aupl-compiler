@@ -15,6 +15,8 @@
 #include "string_literal_expression.hpp"
 #include "unary_op_expression.hpp"
 #include "call_expression.hpp"
+#include "index_expression.hpp"
+#include "tuple_expression.hpp"
 
 #include "label.hpp"
 #include <assert.h>
@@ -409,8 +411,26 @@ void cmp::CppCodeGenerator::visit(CallExpression &expr)
 	cpp_classes << ")";
 }
 
+void cmp::CppCodeGenerator::visit(TupleExpression &expr) {
+	cpp_classes << "{";
+
+	for (ExprPtr e : expr.expressions) {
+		e->accept(*this);
+		cpp_classes << ",";
+	}
+
+	cpp_classes << "}";
+}
+
 void cmp::CppCodeGenerator::visit(StringLiteralExpression &expr) {
 	cpp_classes << "\"";
 	cpp_classes << expr.value;
 	cpp_classes << "\"";
+}
+
+void cmp::CppCodeGenerator::visit(IndexExpression &expr) {
+	expr.left_expr->accept(*this);
+	cpp_classes << "[";
+	expr.index_expr->accept(*this);
+	cpp_classes << "]";
 }

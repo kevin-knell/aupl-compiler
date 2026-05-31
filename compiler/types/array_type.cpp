@@ -13,4 +13,7 @@ std::string ArrayType::to_string() const {
 Type::KIND ArrayType::get_kind() const {
 	return ARRAY;
 }
+std::string ArrayType::to_cpp_type_str() {
+	return "List<" + base_type->to_cpp_type_str() + ">";
+}
 }

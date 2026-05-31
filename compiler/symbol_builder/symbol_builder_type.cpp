@@ -5,6 +5,7 @@
 #include "array_type.hpp"
 #include "load_const_expression.hpp"
 #include "value.hpp"
+#include "generic_type.hpp"
 #include <map>
 
 namespace cmp {

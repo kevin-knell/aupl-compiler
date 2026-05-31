@@ -32,6 +32,23 @@ void register_shared_to_db(vm::ClassDB& db) {
 	CREATE_GENERICS(REGISTER_SHARED)
 }
 
+void register_list_to_db(vm::ClassDB& db) {
+	using namespace auplib;
+	using T = vm::Value;
+	const int16_t ID = REGISTER_CLASS(List<T>);
+
+	REGISTER_CONSTRUCTOR(ID, List<T>());
+	
+	REGISTER_METHOD(ID, List<T>, push, void (List<T>::*)(T value));
+	REGISTER_METHOD(ID, List<T>, pop, T (List<T>::*)());
+	REGISTER_METHOD(ID, List<T>, get, T (List<T>::*)(size_t idx));
+	REGISTER_METHOD(ID, List<T>, set, void (List<T>::*)(size_t idx, T value));
+	REGISTER_METHOD(ID, List<T>, size, size_t (List<T>::*)());
+	REGISTER_METHOD(ID, List<T>, empty, bool (List<T>::*)());
+	REGISTER_METHOD(ID, List<T>, clear, void (List<T>::*)());
+	REGISTER_METHOD(ID, List<T>, operator[], T& (List<T>::*)(size_t idx));
+}
+
 void vm::register_classes(vm::ClassDB& db) {
 	using namespace auplib;
 	
@@ -53,7 +70,7 @@ void vm::register_classes(vm::ClassDB& db) {
 
 	// object types
 	// data structures
-	//register_list8_to_db(db);
+	register_list_to_db(db);
 	
 	File::register_to_db(db);
 	Window::register_to_db(db);

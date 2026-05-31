@@ -10,6 +10,7 @@
 #include "string.hpp"
 #include "string_literal_expression.hpp"
 #include "shared_type.hpp"
+#include "index_expression.hpp"
 #include <iostream>
 #include <cassert>
 
@@ -123,23 +124,23 @@ ExprPtr SymbolBuilder::parse_add(ParserInfo& parser_info) {
 
 // * / %
 ExprPtr SymbolBuilder::parse_mul(ParserInfo& parser_info) {
-    ExprPtr left = parse_access(parser_info);
+    ExprPtr left = parse_postfix(parser_info);
     if (!left) return nullptr;
 
     while (expect("*") || expect("/") || expect("%")) {
         if (expect("*")) {
             next(); // consume *
-            ExprPtr right = parse_access(parser_info);
+            ExprPtr right = parse_postfix(parser_info);
             if (!right) return nullptr;
             left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::MUL);
         } else if (expect("/")) {
             next(); // consume /
-            ExprPtr right = parse_access(parser_info);
+            ExprPtr right = parse_postfix(parser_info);
             if (!right) return nullptr;
             left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::DIV);
         } else if (expect("%")) {
             next(); // consume %
-            ExprPtr right = parse_access(parser_info);
+            ExprPtr right = parse_postfix(parser_info);
             if (!right) return nullptr;
             left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::MOD);
         }
@@ -147,8 +148,9 @@ ExprPtr SymbolBuilder::parse_mul(ParserInfo& parser_info) {
     return left;
 }
 
+/*
 ExprPtr SymbolBuilder::parse_access(ParserInfo& parser_info) {
-    ExprPtr left = parse_primary(parser_info);
+    ExprPtr left = parse_index(parser_info);
     if (!left) return nullptr;
 
     while (expect(".")) {
@@ -174,10 +176,89 @@ ExprPtr SymbolBuilder::parse_access(ParserInfo& parser_info) {
 
     return left;
 }
+*/
+
+/*
+ExprPtr SymbolBuilder::parse_index(ParserInfo &parser_info) {
+    ExprPtr left = parse_access(parser_info);
+    if (!left) return nullptr;
+
+	if (!expect("[")) {
+		return left;
+	}
+	next(); // consume '['
+
+	ExprPtr index_expr = parse_expression(parser_info);
+	if (!index_expr) {
+		std::cerr << "error! no index expression!" << std::endl;
+		exit(1);
+	}
+
+	if (!expect("]")) {
+		std::cerr << "error! ] expected in indexing operator!" << std::endl;
+		exit(1);
+	}
+	next(); // consume ']'
+
+	std::cout << left->to_string() << "[" << index_expr->to_string() << "]" << std::endl;
+
+	exit(1);
+
+	return ExprPtr();
+}
+*/
+
+ExprPtr SymbolBuilder::parse_postfix(ParserInfo& parser_info) {
+    ExprPtr expr = parse_primary(parser_info);
+    if (!expr) return nullptr;
+
+    while (true) {
+        if (expect(".")) {
+            next(); // consume '.'
+
+            ExprPtr right = parse_primary(parser_info);
+            if (!right) return nullptr;
+
+            if (right->get_kind() == Expression::CALL) {
+                auto call_expr = std::dynamic_pointer_cast<CallExpression>(right);
+                call_expr->obj_expr = expr;
+                expr = call_expr;
+            } else if (right->get_kind() == Expression::VARIABLE) {
+                auto var_expr = std::dynamic_pointer_cast<VariableExpression>(right);
+                var_expr->obj_expr = expr;
+                expr = var_expr;
+            } else {
+                std::cerr << "invalid member access: " << right->to_string() << std::endl;
+                return nullptr;
+            }
+        } else if (expect("[")) {
+            next(); // consume '['
+
+            ExprPtr index_expr = parse_expression(parser_info);
+            if (!index_expr) {
+                std::cerr << "missing index expression" << std::endl;
+                exit(1);
+            }
+
+            if (!expect("]")) {
+                std::cerr << "expected ']'" << std::endl;
+                exit(1);
+            }
+            next(); // consume ']'
+
+            expr = std::make_shared<IndexExpression>(expr, index_expr);
+        } else {
+            break;
+        }
+    }
+
+    return expr;
+}
 
 ExprPtr SymbolBuilder::parse_primary(ParserInfo& parser_info) {
 	if (auto call_expr = parse_call(parser_info)) return call_expr;
     if (auto tuple_expr = parse_tuple(parser_info)) return tuple_expr;
+    if (auto init_list_expr = parse_initializer_list(parser_info)) return init_list_expr;
 	
     if (match(TokenType::INT_LITERAL)) {
         vm::Value8* value8 = new vm::Value8();
@@ -293,6 +374,39 @@ ExprPtr SymbolBuilder::parse_tuple(ParserInfo &parser_info) {
         expressions.push_back(t);
     }
     next(); // consume )
+
+    return std::make_shared<TupleExpression>(expressions);
+}
+
+ExprPtr SymbolBuilder::parse_initializer_list(ParserInfo &parser_info) {
+    size_t idx = index;
+
+    if (!expect("{")) {
+		index = idx;
+        return nullptr;
+    }
+    next(); // consume {
+
+    ExprVec expressions;
+
+    while (!expect("}")) {
+        if (!expressions.empty()) {
+			if (expect(",")) {
+				next(); // consume ,
+			} else {
+				index = idx;
+				return nullptr;
+			}
+        }
+
+        ExprPtr t = parse_expression(parser_info);
+        if (!t) {
+            index = idx;
+            return nullptr;
+        }
+        expressions.push_back(t);
+    }
+    next(); // consume }
 
     return std::make_shared<TupleExpression>(expressions);
 }

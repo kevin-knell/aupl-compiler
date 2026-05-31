@@ -4,11 +4,13 @@
 
 namespace auplib {
 
+/*
 namespace {
 	int translate(Key key) {
 		return static_cast<int>(key);
 	}
 } // namespace
+*/
 
 GLFWwindow* Input::window;
 

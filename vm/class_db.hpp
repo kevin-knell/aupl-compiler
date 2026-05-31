@@ -39,6 +39,7 @@ struct MethodPair {
 struct ClassBind {
 	// meta
     const std::string name;
+	const std::vector<std::string> type_names;
     const int16_t id;
 	const size_t size;
 	const bool is_object;
@@ -52,13 +53,57 @@ struct ClassBind {
 	std::vector<VariableBind> variables;
     std::vector<MethodPair> methods;
 
-	ClassBind(const std::string& name, int16_t id, size_t size, bool is_object, bool is_trivial)
-		: name(name), id(id), size(size), is_object(is_object), is_trivial(is_trivial) {}
+	ClassBind(const std::string& name, std::vector<std::string> type_names, int16_t id, size_t size, bool is_object, bool is_trivial)
+		: name(name), type_names(type_names), id(id), size(size), is_object(is_object), is_trivial(is_trivial) {}
 };
 
 namespace {
 	std::string replace_member_pointer_with_name(const std::string& input, const std::string& funcName) {
-    	return std::regex_replace(input, std::regex(R"(\(\w+::\*\)|\(\*\))"), funcName);
+    	return std::regex_replace(input, std::regex(R"(\(\w+(<\w+>)?::\*\)|\(\*\))"), funcName);
+	}
+
+	std::vector<std::string> ExtractTypeNames(const std::string& s) {
+		std::vector<std::string> result;
+		std::string token;
+		int depth = 0;
+
+		auto flushToken = [&]()
+		{
+			if (!token.empty())
+			{
+				result.push_back(token);
+				token.clear();
+			}
+		};
+
+		for (char c : s)
+		{
+			if (std::isalnum(static_cast<unsigned char>(c)) || c == '_')
+			{
+				token += c;
+			}
+			else if (c == '<')
+			{
+				flushToken();
+				++depth;
+			}
+			else if (c == '>')
+			{
+				flushToken();
+				--depth;
+			}
+			else if (c == ',')
+			{
+				flushToken();
+			}
+			else
+			{
+				flushToken();
+			}
+		}
+
+		flushToken();
+		return result;
 	}
 }
 
@@ -70,7 +115,21 @@ public:
     int16_t register_class(std::string name) {
 		using auplib::Object;
 		//std::cout << name << IS_OBJECT(ClassType) << std::endl;
-        classes.emplace_back(name, static_cast<int16_t>(classes.size()), sizeof(ClassType), IS_OBJECT(ClassType), IS_TRIVIAL(ClassType));
+
+		std::vector<std::string> names = ExtractTypeNames(name);
+
+		std::string class_name = names.front();
+		std::vector<std::string> type_names(names.size() - 1);
+		std::copy(names.begin() + 1, names.end(), type_names.begin());
+
+        classes.emplace_back(
+			class_name,
+			type_names,
+			static_cast<int16_t>(classes.size()),
+			sizeof(ClassType),
+			IS_OBJECT(ClassType),
+			IS_TRIVIAL(ClassType)
+		);
 		return classes.back().id;
     }
 

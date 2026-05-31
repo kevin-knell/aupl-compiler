@@ -21,6 +21,12 @@ private:
 	std::vector<T> data;
 
 public:
+	List() {}
+
+	List(std::initializer_list<T> init_list) {
+		data = init_list;
+	}
+
 	void push(T value) {
 		data.push_back(value);
 	}
@@ -55,23 +61,5 @@ public:
 		return data[idx];
 	}
 };
-
-/*
-using List8 = List<int64_t>;
-
-void register_list8_to_db(vm::ClassDB &db) {
-	const int16_t ID = REGISTER_CLASS(List8);
-
-	REGISTER_CONSTRUCTOR(ID, List8());
-	
-	REGISTER_METHOD(ID, List8, push, void (List8::*)(int64_t value));
-	REGISTER_METHOD(ID, List8, pop, int64_t (List8::*)());
-	REGISTER_METHOD(ID, List8, get, int64_t (List8::*)(int64_t idx));
-	REGISTER_METHOD(ID, List8, set, void (List8::*)(int64_t idx, int64_t value));
-	REGISTER_METHOD(ID, List8, size, int64_t (List8::*)());
-	REGISTER_METHOD(ID, List8, empty, bool (List8::*)());
-	REGISTER_METHOD(ID, List8, clear, void (List8::*)());
-}
-*/
 
 }
