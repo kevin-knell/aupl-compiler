@@ -143,7 +143,7 @@ GraphicsPipeline::GraphicsPipeline(
 		.pNext = &pipeline_rendering_info,
 		.flags = 0,
 
-		.stageCount = shader_stages.size(),
+		.stageCount = static_cast<uint32_t>(shader_stages.size()),
 		.pStages = shader_stages.data(),
 
 		.pVertexInputState = &vertex_input,

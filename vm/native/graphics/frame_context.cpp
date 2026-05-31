@@ -99,6 +99,7 @@ void FrameContext::record_begin(const RenderTarget& render_target) {
 	// barrier
 	VkImageMemoryBarrier barrier{
 		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+		.pNext = nullptr,
 		.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
 		.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
@@ -166,6 +167,7 @@ void FrameContext::record_end(const RenderTarget& render_target) {
 
 	VkImageMemoryBarrier barrier{
 		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+		.pNext = nullptr,
 		.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,
 		.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -197,6 +199,7 @@ void FrameContext::record_end(const RenderTarget& render_target) {
 }
 
 void FrameContext::record(GraphicsPipeline& pipeline, RenderTarget render_target) {
+	(void)render_target;
 	vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
 	for (int64_t i = 0; i < 1; ++i) {
