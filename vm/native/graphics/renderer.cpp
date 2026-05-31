@@ -175,7 +175,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 		.pNext = nullptr,
 		.commandPool = command_pool,
 		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-		.commandBufferCount = command_buffers.size()
+		.commandBufferCount = static_cast<uint32_t>(command_buffers.size())
 	};
 
 	result = vkAllocateCommandBuffers(vulkan_instance.device, &alloc_info, command_buffers.data());
@@ -196,9 +196,9 @@ Renderer::~Renderer() {
 void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
 	if (ColorRect* r = dynamic_cast<ColorRect*>(node.get())) {
 		PushConstant push{
-			{r->position.x, r->position.y},
-			{r->size.x, r->size.y},
-			{r->color}
+			{ static_cast<float>(r->position.x), static_cast<float>(r->position.y) },
+			{ static_cast<float>(r->size.x), static_cast<float>(r->size.y) },
+			{ r->color }
 		};
 		
 		vkCmdPushConstants(

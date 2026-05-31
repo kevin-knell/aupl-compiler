@@ -51,7 +51,7 @@ void VulkanInstance::create_instance() {
 		.pApplicationInfo = &app_info,
 		.enabledLayerCount = 1,
 		.ppEnabledLayerNames = layers,
-		.enabledExtensionCount = extension_names.size(),
+		.enabledExtensionCount = static_cast<uint32_t>(extension_names.size()),
 		.ppEnabledExtensionNames = extension_names.data()
 	};
 	

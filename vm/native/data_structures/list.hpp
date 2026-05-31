@@ -31,15 +31,15 @@ public:
 		return back;
 	}
 
-	T get(int64_t idx) {
+	T get(size_t idx) {
 		return data[idx];
 	}
 
-	void set(int64_t idx, T value) {
+	void set(size_t idx, T value) {
 		data[idx] = value;
 	}
 
-	int64_t size() {
+	size_t size() {
 		return data.size();
 	}
 
