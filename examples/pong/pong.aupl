@@ -1,0 +1,111 @@
+class Pong
+
+static Window win
+static Renderer renderer
+static ColorRect p1
+static ColorRect p2
+static ColorRect ball
+static vec2 ball_velocity
+
+
+static void main() {
+	win = Window(500, 500, "Pong")
+	Viewport viewport = win.viewport
+	renderer = Renderer(viewport)
+
+	p1 = ColorRect(
+		vec2(20.0, 200.0),
+		vec2(20.0, 100.0),
+		Color(1.0, 1.0, 1.0, 1.0)
+	)
+
+	p2 = ColorRect(
+		vec2(460.0, 200.0),
+		vec2(20.0, 100.0),
+		Color(1.0, 1.0, 1.0, 1.0)
+	)
+
+	ball = ColorRect(
+		vec2(230.0, 230.0),
+		vec2(40.0, 40.0),
+		Color(1.0, 1.0, 1.0, 1.0)
+	)
+
+	Scene scene()
+	viewport.scene = scene
+
+	Node root()
+	scene.root = root
+
+	root.add_child(p1)
+	root.add_child(p2)
+	root.add_child(ball)
+
+	ball_velocity = vec2(0.5, 0.25)
+
+	while not win.should_close() {
+		u64 t1 = Time.sys_usec()
+		u64 t2 = Time.sys_usec()
+
+		while t2 - t1 < 1666 {
+			t2 = Time.sys_usec()
+		}
+
+		process()
+		renderer.render()
+
+		win.poll_events()
+	}
+}
+
+static void process() {
+	if Input.is_key_down(87) {
+		p1.position.y -= 1
+	}
+
+	if Input.is_key_down(83) {
+		p1.position.y += 1
+	}
+	if Input.is_key_down(265) {
+		p2.position.y -= 1
+	}
+
+	if Input.is_key_down(264) {
+		p2.position.y += 1
+	}
+
+	ball.position = ball.position + ball_velocity
+
+	vec2 bpos = ball.position
+	vec2 bend = bpos + ball.size
+
+	vec2 pos1 = p1.position
+	vec2 end1 = p1.position + p1.size
+
+	vec2 pos2 = p2.position
+	vec2 end2 = p2.position + p2.size
+
+	bool is_p1_height = bend.y > pos1.y and bpos.y < end1.y
+	bool is_p2_height = bend.y > pos2.y and bpos.y < end2.y
+
+	if bend.x == pos2.x and is_p2_height {
+		ball_velocity.x = 0 - ball_velocity.x
+	}
+
+	if bpos.x == end1.x and is_p1_height {
+		ball_velocity.x = 0 - ball_velocity.x
+	}
+
+	if bpos.y <= 0 {
+		ball_velocity.y = 0 - ball_velocity.y
+	}
+
+	if bend.y >= 500 {
+		ball_velocity.y = 0 - ball_velocity.y
+	}
+
+	if bpos.x < 0 or bend.x > 500 {
+		ball.position = vec2(250.0, 250.0)
+		ball_velocity.x = 0 - ball_velocity.x
+	}
+}
