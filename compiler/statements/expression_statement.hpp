@@ -16,7 +16,7 @@ struct ExpressionStatement final : public Statement {
     }
 	
 	OVERRIDE_ACCEPT_STATMENT_VISITOR
-	DEFINE_SELF(ExpressionStatement)
+	DEFINE_SELF_STMT(ExpressionStatement)
 
     std::vector<ExprPtr*> get_expressions() override {
         return {&expression};

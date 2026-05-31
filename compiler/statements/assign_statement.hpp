@@ -18,7 +18,7 @@ struct AssignmentStatement final : public Statement {
 
     virtual KIND get_kind() const override { return ASSIGN; }
 
-	DEFINE_SELF(AssignmentStatement)
+	DEFINE_SELF_STMT(AssignmentStatement)
 };
 
 } // namespace cmp

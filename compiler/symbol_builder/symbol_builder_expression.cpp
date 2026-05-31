@@ -159,13 +159,16 @@ ExprPtr SymbolBuilder::parse_access(ParserInfo& parser_info) {
 		if (right->get_kind() == Expression::CALL) {
 			auto call_expr = std::dynamic_pointer_cast<CallExpression>(right);
 			call_expr->obj_expr = left;
-			return call_expr;
+			left = call_expr;
+			continue;
 		} else if (right->get_kind() == Expression::VARIABLE) {
 			auto var_expr = std::dynamic_pointer_cast<VariableExpression>(right);
 			var_expr->obj_expr = left;
-			return var_expr;
+			left = var_expr;
+			continue;
 		} else {
 			std::cerr << "unknown access expression: " << right->to_string() << std::endl;
+			exit(1);
 		}
     }
 

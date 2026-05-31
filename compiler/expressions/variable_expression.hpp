@@ -14,7 +14,7 @@ struct VariableExpression final : public Expression {
     VariableExpression(VarPtr var) : var(var), name(var->name) {}
 
 	OVERRIDE_ACCEPT_EXPRESSION_VISITOR
-	DEFINE_SELF(VariableExpression)
+	DEFINE_SELF_EXPR(VariableExpression)
 	
     std::vector<ExprPtr*> get_expressions() override;
 

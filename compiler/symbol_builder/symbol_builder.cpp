@@ -390,6 +390,7 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
 				for (auto st : statements) {
 					st->is_volatile = is_volatile;
 					function_symbol->scope->body.push_back(st);
+					//std::cout << st->to_string() << std::endl;
 				}
             }
         }

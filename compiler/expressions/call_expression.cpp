@@ -37,6 +37,15 @@ std::string CallExpression::to_string() const {
     return result;
 }
 
+int CallExpression::get_level() {
+	int super_level = Expression::get_level();
+	if (super_level == 0) {
+		return 1;
+	} else {
+		return super_level;
+	}
+}
+
 bool CallExpression::is_unresolved_symbol() const {
     return !f || (obj_expr && obj_expr->is_unresolved_symbol());
 }

@@ -8,7 +8,9 @@
 #include "statement_visitor.hpp"
 
 #define OVERRIDE_ACCEPT_STATMENT_VISITOR void accept(StatementVisitor& visitor) override { visitor.visit(*this); }
-#define DEFINE_SELF(m_type) std::shared_ptr<m_type> self() { return std::static_pointer_cast<m_type>(shared_from_this()); }
+#define DEFINE_SELF_STMT(m_type) \
+	std::shared_ptr<m_type> self() { return std::static_pointer_cast<m_type>(shared_from_this()); } \
+	StmtPtr clone() const override { return std::make_shared<m_type>(*this); }
 
 namespace cmp {
 
@@ -34,6 +36,8 @@ struct Statement : public std::enable_shared_from_this<Statement> {
     virtual KIND get_kind() const = 0;
 
     virtual std::string to_string() const = 0;
+
+	virtual StmtPtr clone() const = 0;
 };
 
 }

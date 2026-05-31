@@ -13,7 +13,7 @@ struct ReturnStatement final : public Statement {
         : return_value(std::move(val)) {}
 
 	OVERRIDE_ACCEPT_STATMENT_VISITOR
-	DEFINE_SELF(ReturnStatement)
+	DEFINE_SELF_STMT(ReturnStatement)
 
     std::vector<ExprPtr*> get_expressions() override;
 

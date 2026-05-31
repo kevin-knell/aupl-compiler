@@ -18,9 +18,10 @@ struct CallExpression final : public Expression {
 		: name(f->name), arguments(arguments), obj_expr(obj_expr), f(f) {}
 	
 	OVERRIDE_ACCEPT_EXPRESSION_VISITOR
-	DEFINE_SELF(CallExpression)
+	DEFINE_SELF_EXPR(CallExpression)
 
     std::string to_string() const override;
+	int get_level() override;
     TypePtr get_type() const override;
     bool is_unresolved_symbol() const override;
     void resolve(NameAnalysisInfo& name_analysis_info) override;

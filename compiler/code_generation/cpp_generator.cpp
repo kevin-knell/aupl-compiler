@@ -253,9 +253,12 @@ void cmp::CppCodeGenerator::visit(ConditionalJumpStatement &stmt) {
 		if (stmt.cj_kind == CJ_KIND::IF) {
 			cpp_classes << "if (";
 			stmt.condition->accept(*this);
+			cpp_classes << ") {\n";
 		} else if (stmt.cj_kind == CJ_KIND::WHILE) {
-			cpp_classes << "while (";
+			cpp_classes << "while (true) { ";
+			cpp_classes << "if (not (";
 			stmt.condition->accept(*this);
+			cpp_classes << ")) break;\n";
 		} else if (stmt.cj_kind == CJ_KIND::FOR) {
 			cpp_classes << "for (";
 			std::shared_ptr<BinaryExpression> compare_expr = std::dynamic_pointer_cast<BinaryExpression>(stmt.condition);
@@ -267,11 +270,10 @@ void cmp::CppCodeGenerator::visit(ConditionalJumpStatement &stmt) {
 			cpp_classes << " < ";
 			compare_expr->right->accept(*this);
 			cpp_classes << "; ";
+			cpp_classes << ") {\n";
 		} else {
 			throw std::runtime_error("invalid jump with condition!");
 		}
-
-		cpp_classes << ") {\n";
 
 		// block content
 		scope = stmt.if_label->scope;
@@ -284,6 +286,13 @@ void cmp::CppCodeGenerator::visit(ConditionalJumpStatement &stmt) {
 
 		// block end
 		cpp_classes << make_indented_stringstream().str();
+
+		if (stmt.cj_kind == CJ_KIND::WHILE) {
+			cpp_classes << "if (not (";
+			stmt.condition->accept(*this);
+			cpp_classes << ")) break;\n";
+		}
+
 		cpp_classes << "}\n";
 	} else {
 		cpp_classes << make_indented_stringstream().str();

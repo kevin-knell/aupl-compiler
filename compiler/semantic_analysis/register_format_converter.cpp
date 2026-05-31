@@ -10,8 +10,11 @@
 #include "return_statement.hpp"
 #include "conditional_jump_statement.hpp"
 #include "label_statement.hpp"
+#include "label.hpp"
 #include <text_color.hpp>
 #include <assert.h>
+
+//#define RF_DEBUG_VERBOSE
 
 #ifdef RF_DEBUG_VERBOSE
 #define RF_DEBUG_PRINT(m_text) std::cout << m_text << std::endl
@@ -41,7 +44,10 @@ void RegisterFormatConverter::convert_scope(cmp::ScopePtr current_scope) {
 		RF_DEBUG_PRINT("statement: " << stmt->to_string());
 
 		statements.clear();
+
+		assert(stmt);
 		stmt->accept(*this);
+
 		statements.push_back(stmt);
 
 		RF_DEBUG_PRINT_V(statements.size() << " new statements:");
@@ -51,6 +57,20 @@ void RegisterFormatConverter::convert_scope(cmp::ScopePtr current_scope) {
 		}
 
 		new_body.insert(new_body.end(), statements.begin(), statements.end());
+
+		if (stmt->get_kind() == Statement::IF) {
+			std::shared_ptr<ConditionalJumpStatement> jump_stmt = std::static_pointer_cast<ConditionalJumpStatement>(stmt);
+
+			if (jump_stmt->cj_kind == CJ_KIND::WHILE) {
+				StmtVec& block_body = jump_stmt->if_label->scope->body;
+				//block_body.insert(block_body.end(), statements.begin(), statements.end());
+				for (size_t i = 0; i < statements.size() - 1; ++i) {
+					StmtPtr& s = statements[i];
+					//std::cout << "new: " << s->to_string() << std::endl;
+					block_body.push_back(s->clone());
+				}
+			}
+		}
 
 		RF_DEBUG_PRINT_V("statement changed to: " << stmt->to_string());
 	}
@@ -106,6 +126,8 @@ void RegisterFormatConverter::replace_with_temp(ExprPtr& expr, bool is_volatile)
 // Statement Conversions
 // ================================================================================================
 void RegisterFormatConverter::convert(DeclareStatement& stmt) {
+	if (!stmt.variable_symbol->initial_value) return;
+
 	auto& expr = stmt.variable_symbol->initial_value;
 	convert_to_register_format(expr, stmt.is_volatile);
 }

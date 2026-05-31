@@ -10,7 +10,7 @@ struct StringLiteralExpression final : Expression {
 	StringLiteralExpression(TypePtr type, std::string value) : type(type), value(value) {}
 
 	OVERRIDE_ACCEPT_EXPRESSION_VISITOR
-	DEFINE_SELF(StringLiteralExpression)
+	DEFINE_SELF_EXPR(StringLiteralExpression)
 
 	std::string to_string() const override;
 	std::vector<ExprPtr*> get_expressions() override;

@@ -14,7 +14,10 @@
 	void accept(ExpressionVisitor& visitor) override { visitor.visit(*this); } \
 	void accept(ExpressionAssignmentVisitor& visitor, VarExprPtr var_expr) override { visitor.visit(*this, var_expr); }
 
-#define DEFINE_SELF(m_type) std::shared_ptr<m_type> self() { return std::static_pointer_cast<m_type>(shared_from_this()); }
+#define DEFINE_SELF_EXPR(m_type) \
+	std::shared_ptr<m_type> self() { return std::static_pointer_cast<m_type>(shared_from_this()); } \
+	ExprPtr clone() const override { return std::make_shared<m_type>(*this); }
+
 
 namespace cmp {
 
@@ -60,6 +63,8 @@ struct Expression : public std::enable_shared_from_this<Expression> {
     virtual vm::Value* eval_pure() const { return is_constexpr() ? eval_constexpr() : nullptr; };
 
     virtual KIND get_kind() const = 0;
+
+	virtual ExprPtr clone() const = 0;
 };
 using ExprPtr = std::shared_ptr<Expression>;
 

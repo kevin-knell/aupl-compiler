@@ -13,6 +13,7 @@
 #include "primitive_type.hpp"
 #include "variable_expression.hpp"
 #include "load_const_expression.hpp"
+#include "assert.h"
 #include <iostream>
 
 #define RETURN_IF_NOT(m_value)		\
@@ -91,7 +92,11 @@ std::vector<StmtPtr> SymbolBuilder::parse_assign(ParserInfo& parser_info) {
 	ExprPtr bin_expr;
 	
 	if (op != BinaryExpression::OPERATOR::NONE) {
-		bin_expr = std::make_shared<BinaryExpression>(expr_left, expr_right, op);
+		assert(expr_left->get_kind() == Expression::VARIABLE);
+
+		ExprPtr left_copy = expr_left->clone();
+
+		bin_expr = std::make_shared<BinaryExpression>(left_copy, expr_right, op);
 	} else {
 		bin_expr = expr_right;
 	}
@@ -192,6 +197,7 @@ ScopePtr SymbolBuilder::parse_block(ParserInfo& parser_info, const std::string& 
 		for (auto st : stmts) {
         	st->is_volatile = is_volatile;
         	scope->body.push_back(st);
+			std::cout << st->to_string() << std::endl;
 		}
     }
     next(); // consume }

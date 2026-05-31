@@ -6,6 +6,7 @@
 #include "expression.hpp"
 #include "text_color.hpp"
 #include "assign_statement.hpp"
+#include <assert.h>
 
 #define NA_DEBUG_PRINT(m_text) \
 	if (NameAnalyzer::na_debug_print) { \
@@ -52,6 +53,9 @@ static void resolve_expressions(NameAnalysisInfo& name_analysis_info, std::vecto
 }
 
 void NameAnalyzer::resolve_variables() const {
+	NA_DEBUG_PRINT("===== ===== ===== ===== ===== ===== ===== ===== ===== =====");
+	NA_DEBUG_PRINT("Resolve Variables");
+	NA_DEBUG_PRINT("===== ===== ===== ===== ===== ===== ===== ===== ===== =====");
     for (auto& [class_name, cls] : symbol_table.classes) {
 		if (cls->native_class_bind) continue;
 
@@ -74,6 +78,8 @@ void NameAnalyzer::resolve_variables() const {
 				}
 
 				NA_DEBUG_PRINT(C_BRACE_R);
+
+				assert(scope);
                 
 				for (auto& lower : scope->lower_scopes) {
 					if (auto lower_scope = lower.lock())
@@ -87,6 +93,10 @@ void NameAnalyzer::resolve_variables() const {
         }
 		NA_DEBUG_PRINT("")
     }
+
+	NA_DEBUG_PRINT("===== ===== ===== ===== ===== ===== ===== ===== ===== =====");
+	NA_DEBUG_PRINT("Resolve Variables Completed");
+	NA_DEBUG_PRINT("===== ===== ===== ===== ===== ===== ===== ===== ===== =====");
 }
 
 }

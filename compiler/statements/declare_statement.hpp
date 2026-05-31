@@ -13,7 +13,7 @@ struct DeclareStatement final : public Statement {
     std::string to_string() const override;
 
 	OVERRIDE_ACCEPT_STATMENT_VISITOR
-	DEFINE_SELF(DeclareStatement)
+	DEFINE_SELF_STMT(DeclareStatement)
 
     std::vector<ExprPtr*> get_expressions() override;
 
