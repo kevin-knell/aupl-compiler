@@ -7,8 +7,9 @@ Another Unnecessary Programming Language
 - every ```.aupl``` file is a class or similar language element.
 
 ## Syntax
-### Class Header
-A class **Class Header** consists of one of the following 2 options:
+### File Header
+#### Class Files
+the file header of a class consists of one of the following 2 options:
 
 1. implicitly extend ```Object```:
 ```
@@ -21,8 +22,12 @@ class ClassName : ParentName
 ```
 
 #### Abstract Classes
+Abstract classes inherit in the same way, but cannot be created
 ```
 abstract class ClassName
+```
+```
+abstract class ClassName : Base
 ```
 
 ### Class Elements
@@ -42,7 +47,7 @@ Type name(Type arg, Type arg...) {
 
 A function may directly return a value:
 ```
-int sum(a, b) = a + b
+static int sum(a, b) = a + b
 ```
 
 Functions may be abstract:
@@ -54,8 +59,112 @@ void do_noise() = abstract
 Functions of parent classes may be overridden. It does not matter wether the parent function was abstract or not. (syntax might change):
 ```
 class Dog : Animal
-override void do_noise() {
+override do_noise() {
 	print("bark!")
+}
+```
+
+#### Inner Classes
+```
+class MyInnerClass {
+	...
+}
+```
+
+#### Singletons
+Singletons are classes that are automatically created as a static member.
+```
+singleton MySingleton {
+	...
+}
+```
+...is similar to:
+```
+class MySingletonClass { ... }
+static MySingletonClass instance
+```
+
+singleton values can be accessed by using the name of the singleton:
+```
+singleton MySingleton {
+	int value = 5
+}
+
+void do_smth() {
+	print(MySingleton.value)
+}
+```
+
+Singletons can inherit from classes:
+```
+class Base {}
+singleton Derived : Base {}
+```
+
+#### Singletons instead of Static Members
+Instead of:
+```
+static int x
+static int y
+static int z
+```
+...Users are encouraged to use:
+```
+private class BaseData {
+	int x
+	int y
+	int z
+}
+singleton Data : BaseData {}
+```
+
+#### Implementations
+```
+class MyObject
+
+int value
+
+impl Comparable {
+	int main(MyObject obj) = compare(obj)
+
+	int compare(MyObject obj) {
+		return obj.value - owner.value
+	}
+}
+```
+calling:
+```
+MyObject a
+MyObject b
+a.Comparable(b)
+a.Comparable.main(b)
+a.Comparable.compare(b)
+```
+using as instance:
+```
+MyObject a
+MyObject b
+Comparable c = a.Comparable
+c(b)
+c.main(b)
+c.compare(b)
+```
+this Program compares 2 classes:
+```
+generic<T>
+int compare(Comparable<T> a, Comparable<T> b) {
+	return a(b)
+}
+
+static void main() {
+	Dog dog_1(5)
+	Dog dog_2(6)
+
+	Cat cat_1(1)
+	Cat cat_2(2)
+
+	print(compare(dog_1.Comparable, dog_2.Comparable))
+	print(compare(cat_1.Comparable, cat_2.Comparable))
 }
 ```
 
@@ -190,6 +299,74 @@ int my_function() = 5
 ```
 
 ### Expressions
+
+#### Literals
+```
+int x = 5
+float y = 5.0
+bool b = true
+String text = "Hello World"
+Regex pattern = /\w+/
+```
+
+#### Variables
+```
+int x = 5
+int y = x
+```
+
+#### Function Calls
+```
+my_func(5, 3, 7)
+```
+
+Maybe there will be the option to omit parenthesis for calls with exactly 1 argument
+```
+do_something()
+
+print "without parens"
+print("with parens")
+
+func_with_3_args(x, y, z)
+```
+They can only be omitted as a single statement or when surrounded by parenthesis / other separators:
+```
+do_something(3, my_func(5), 8)
+do_something(3, my_func 5, 8)
+```
+
+#### Unary Operations
+```
+-
+not
+```
+
+#### Binary Operations
+```
++ - * / %
+and or
+== != < > <= >=
+```
+Elvis Operator
+```
+MyObject obj = get_obj() ?: fallback
+```
+
+#### Ternary Operations
+```
+bool result = condition ? on_true : on_false
+```
+
+#### Tuples & Initializer Lists
+```
+(int, int) my_tuple = (2, 2)
+int[4] array = { 5, 6, 2, 3 }
+```
+right not there is no destinction between tuples and initializer lists except for syntax
+```
+(int, float) tuple_from_init_list = { 5, 6.0 }
+int[4] array_from_tuple = ( 5, 6, 2, 3 )
+```
 
 ### Types
 #### Basic Types
