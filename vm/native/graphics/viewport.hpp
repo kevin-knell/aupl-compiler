@@ -3,6 +3,7 @@
 
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <functional>
 
 #include "scene.hpp"
 #include "shared.hpp"
@@ -18,24 +19,15 @@ public:
 	VkRect2D scissor;
 
 	Shared<Scene> scene;
+
+	void* resize_raw_obj;
+	std::function<void(void* raw_obj)> on_resize;
 	
 	static void register_to_db(vm::ClassDB &db);
 
-	Viewport(const uint32_t width, const uint32_t height) {
-		vk_viewport = VkViewport{
-			.x = 0,
-			.y = 0,
-			.width = static_cast<float>(width),
-			.height = static_cast<float>(height),
-			.minDepth = 0.0f,
-			.maxDepth = 1.0f
-		};
+	Viewport(const uint32_t width, const uint32_t height);
 
-		scissor = VkRect2D{
-			.offset = { .x = 0, .y = 0 },
-			.extent = { .width = width, .height = height }
-		};
-	}
+	void resize(const uint32_t width, const uint32_t height);
 };
 
 } // namespace auplib

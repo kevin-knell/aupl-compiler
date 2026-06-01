@@ -8,6 +8,7 @@
 #include "color_rect.hpp"
 
 namespace auplib {
+
 void Renderer::register_to_db(vm::ClassDB &db) {
 	const int16_t ID = REGISTER_CLASS(Renderer);
 	
@@ -21,6 +22,9 @@ void Renderer::register_to_db(vm::ClassDB &db) {
 
 Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 	VkResult result;
+
+	viewport->resize_raw_obj = reinterpret_cast<void*>(this);
+	viewport->on_resize = &on_resize_renderer;
 
 	// create frame contexts
 	frames.resize(2);
@@ -105,7 +109,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 		VkDescriptorBufferInfo bufferInfo{
 			.buffer = f.global_uniform_buffer,
 			.offset = 0,
-			.range = sizeof(Window::GlobalData)
+			.range = sizeof(FrameContext::GlobalData)
 		};
 		
 		VkWriteDescriptorSet write{
@@ -183,7 +187,9 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 
 	for (size_t i = 0; i < frames.size(); ++i) {
 		frames[i].command_buffer = command_buffers[i];
-		frames[i].update_global_uniform();
+		frames[i].update_global_uniform({
+			.screen_size = { viewport->vk_viewport.width, viewport->vk_viewport.height }
+		});
 	}
 
 	current_frame = 0;
@@ -259,7 +265,7 @@ void Renderer::render() {
 	
 	result = vkAcquireNextImageKHR(
 		vulkan_instance.device,
-		swapchain.swapchain,
+		swapchain.vk_swapchain,
 		std::numeric_limits<uint64_t>::max(),
 		frames[current_frame].image_available_semaphore,
 		VK_NULL_HANDLE,
@@ -271,14 +277,37 @@ void Renderer::render() {
 	
 	frame.record_begin(render_target);
 
+	// draw scene
 	Scene& scene = *viewport->scene;
 
+	// TEMPORARY CODE START
+	// bind pipeline
 	vkCmdBindPipeline(
         frame.command_buffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         test_pipeline.pipeline);
 	
+	// dynamic states
+	VkViewport viewport{
+		.x = 0.0f,
+		.y = 0.0f,
+		.width = static_cast<float>(render_target.extent.width),
+		.height = static_cast<float>(render_target.extent.height),
+		.minDepth = 0.0f,
+		.maxDepth = 1.0f
+	};
+	vkCmdSetViewport(frame.command_buffer, 0, 1, &viewport);
+	
+	VkRect2D scissor{
+		.offset{},
+		.extent = render_target.extent
+	};
+	vkCmdSetScissor(frame.command_buffer, 0, 1, &scissor);
+	
+	// draw
 	draw_node(scene.root, frame);
+
+	// TEMPORARY CODE END
 
 	frame.record_end(render_target);
 
@@ -308,7 +337,7 @@ void Renderer::render() {
 		.waitSemaphoreCount = 1,
 		.pWaitSemaphores = &frame.render_finished_semaphore,
 		.swapchainCount = 1,
-		.pSwapchains = &swapchain.swapchain,
+		.pSwapchains = &swapchain.vk_swapchain,
 		.pImageIndices = &image_index,
 		.pResults = nullptr
 	};
@@ -317,6 +346,23 @@ void Renderer::render() {
 	assert(result == VK_SUCCESS);
 
 	current_frame = (current_frame + 1) % 2;
+}
+
+void Renderer::on_resize() {
+	vkDeviceWaitIdle(vulkan_instance.device);
+
+	swapchain.recreate(viewport->scissor.extent);
+
+	for (size_t i = 0; i < frames.size(); ++i) {
+		frames[i].update_global_uniform({
+			.screen_size = { viewport->vk_viewport.width, viewport->vk_viewport.height }
+		});
+	}
+}
+
+void on_resize_renderer(void* raw_obj) {
+	Renderer& renderer = *reinterpret_cast<Renderer*>(raw_obj);
+	renderer.on_resize();
 }
 
 }

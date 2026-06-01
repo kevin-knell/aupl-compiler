@@ -33,6 +33,10 @@ public:
 
 	void draw_node(Shared<Node> node, FrameContext& frame);
 	void render();
+
+	void on_resize();
 };
+
+void on_resize_renderer(void* raw_obj);
 
 } // namespace auplib

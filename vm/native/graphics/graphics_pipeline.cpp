@@ -102,8 +102,8 @@ GraphicsPipeline::GraphicsPipeline(
 	};
 
 	const VkDynamicState dynamic_states[] = {
-		VK_DYNAMIC_STATE_SCISSOR_WITH_COUNT,
-		VK_DYNAMIC_STATE_VIEWPORT_WITH_COUNT
+		VK_DYNAMIC_STATE_SCISSOR,
+		VK_DYNAMIC_STATE_VIEWPORT
 	};
 
 	VkPipelineDynamicStateCreateInfo dynamic_state{

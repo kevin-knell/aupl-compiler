@@ -3,6 +3,8 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include <map>
+
 #include "object.hpp"
 #include "string.hpp"
 #include "color_rect.hpp"
@@ -13,12 +15,10 @@
 namespace auplib
 {
 
+void window_size_callback(GLFWwindow* window, int width, int height);
+
 class Window : public Object {
 public:
-	struct GlobalData {
-		float screen_size[2];
-	};
-
 	GLFWwindow* glfw_window;
 	Shared<Viewport> viewport;
 	
@@ -27,6 +27,8 @@ public:
 	String name;
 
 public:
+	static std::map<GLFWwindow*, Window*> active_windows;
+
 	static void register_to_db(vm::ClassDB &db);
 	static void poll_events();
 
@@ -35,6 +37,8 @@ public:
 	~Window();
 
 	bool should_close();
+
+	void on_resize(int width, int height);
 };
 	
 } // namespace auplib

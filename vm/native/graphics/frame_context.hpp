@@ -8,6 +8,10 @@ namespace auplib
 {
 
 struct FrameContext {
+	struct GlobalData {
+		float screen_size[2];
+	};
+
 	VkCommandBuffer command_buffer;
 
 	VkDescriptorSet global_descriptor_set;
@@ -31,7 +35,7 @@ struct FrameContext {
 	void record_end(const RenderTarget& render_target);
 
 	void record(GraphicsPipeline& pipeline, RenderTarget render_target);
-	void update_global_uniform();
+	void update_global_uniform(GlobalData data);
 };
 
 } // namespace auplib

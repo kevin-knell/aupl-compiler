@@ -7,6 +7,8 @@
 
 namespace auplib {
 
+std::map<GLFWwindow*, Window*> Window::active_windows;
+
 void Window::register_to_db(vm::ClassDB &db) {
 	const int16_t ID = REGISTER_CLASS(Window);
 	
@@ -27,11 +29,13 @@ Window::Window(const uint32_t width, const uint32_t height, const String name)
 	
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 	glfw_window = glfwCreateWindow(width, height, name, nullptr, nullptr);
 	glfwCreateWindowSurface(vulkan_instance.instance, glfw_window, nullptr, &viewport->surface);
+	glfwSetWindowSizeCallback(glfw_window, &window_size_callback);
 
 	Input::window = glfw_window;
+	active_windows[glfw_window] = this;
 }
 
 Window::~Window() {
@@ -41,6 +45,17 @@ Window::~Window() {
 
 bool Window::should_close() {
 	return glfwWindowShouldClose(glfw_window);
+}
+
+void Window::on_resize(int width, int height) {
+	assert(width > 0);
+	assert(height > 0);
+	viewport->resize(width, height);
+	
+}
+
+void window_size_callback(GLFWwindow* window, int width, int height) {
+	Window::active_windows[window]->on_resize(width, height);
 }
 
 }

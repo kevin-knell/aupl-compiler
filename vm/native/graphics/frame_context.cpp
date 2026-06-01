@@ -9,7 +9,7 @@ FrameContext::FrameContext() {
 	VkResult result;
 
 	// global uniform buffer
-	VkDeviceSize size = sizeof(Window::GlobalData);
+	VkDeviceSize size = sizeof(GlobalData);
 
 	VkBufferCreateInfo buffer_create_info{
 		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -199,7 +199,6 @@ void FrameContext::record_end(const RenderTarget& render_target) {
 }
 
 void FrameContext::record(GraphicsPipeline& pipeline, RenderTarget render_target) {
-	(void)render_target;
 	vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
 	for (int64_t i = 0; i < 1; ++i) {
@@ -233,15 +232,8 @@ void FrameContext::record(GraphicsPipeline& pipeline, RenderTarget render_target
 	}
 }
 
-void FrameContext::update_global_uniform() {
+void FrameContext::update_global_uniform(GlobalData data) {
     VkResult result;
-	
-	uint32_t width = 500;
-	uint32_t height = 500;
-
-	Window::GlobalData data;
-    data.screen_size[0] = static_cast<float>(width);
-    data.screen_size[1] = static_cast<float>(height);
 
     void* mapped;
     result = vkMapMemory(vulkan_instance.device, global_uniform_memory, 0, sizeof(data), 0, &mapped);
