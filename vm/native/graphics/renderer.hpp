@@ -14,12 +14,12 @@ class Renderer : public Object {
 public:
 	Shared<Viewport> viewport;
 
+	VkBuffer vertex_buffer;
+	VkDeviceMemory vertex_memory;
+
 	VkCommandPool command_pool;
 	std::vector<FrameContext> frames;
 	uint32_t current_frame;
-
-	VkDescriptorPool desc_pool;
-	VkDescriptorSetLayout desc_set_layout;
 
 	GraphicsPipeline test_pipeline;
 	VkPipelineLayout pipeline_layout;

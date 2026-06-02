@@ -8,8 +8,8 @@ namespace auplib {
 FrameContext::FrameContext() {
 	VkResult result;
 
-	// global uniform buffer
-	VkDeviceSize size = sizeof(GlobalData);
+	// frame uniform buffer
+	VkDeviceSize size = sizeof(FrameUniformData);
 
 	VkBufferCreateInfo buffer_create_info{
 		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -22,12 +22,12 @@ FrameContext::FrameContext() {
 		.pQueueFamilyIndices = nullptr
 	};
 
-	result = vkCreateBuffer(vulkan_instance.device, &buffer_create_info, nullptr, &global_uniform_buffer);
+	result = vkCreateBuffer(vulkan_instance.device, &buffer_create_info, nullptr, &frame_uniform_buffer);
 	assert(result == VK_SUCCESS);
 
-	// global uniform memory
+	// frame uniform memory
 	VkMemoryRequirements memReq;
-	vkGetBufferMemoryRequirements(vulkan_instance.device, global_uniform_buffer, &memReq);
+	vkGetBufferMemoryRequirements(vulkan_instance.device, frame_uniform_buffer, &memReq);
 
 	VkMemoryAllocateInfo allocInfo{
 		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
@@ -40,10 +40,10 @@ FrameContext::FrameContext() {
 		)
 	};
 
-	result = vkAllocateMemory(vulkan_instance.device, &allocInfo, nullptr, &global_uniform_memory);
+	result = vkAllocateMemory(vulkan_instance.device, &allocInfo, nullptr, &frame_uniform_memory);
 	assert(result == VK_SUCCESS);
 
-	result = vkBindBufferMemory(vulkan_instance.device, global_uniform_buffer, global_uniform_memory, 0);
+	result = vkBindBufferMemory(vulkan_instance.device, frame_uniform_buffer, frame_uniform_memory, 0);
 	assert(result == VK_SUCCESS);
 
 	// semaphores
@@ -202,28 +202,13 @@ void FrameContext::record(GraphicsPipeline& pipeline, RenderTarget render_target
 	vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
 	for (int64_t i = 0; i < 1; ++i) {
-		PushConstant push{
-			{125.0f, 125.0f},
-			{250.0f, 250.0f},
-			{1.0f, 0.0f, 1.0f, 1.0f}
-		};
-		
-		vkCmdPushConstants(
-			command_buffer,
-			pipeline.layout,
-			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			0,
-			sizeof(push),
-			&push
-		);
-
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			pipeline.layout,
 			0,
 			1,
-			&global_descriptor_set,
+			&frame_descriptor_set,
 			0,
 			nullptr
 		);
@@ -232,14 +217,14 @@ void FrameContext::record(GraphicsPipeline& pipeline, RenderTarget render_target
 	}
 }
 
-void FrameContext::update_global_uniform(GlobalData data) {
+void FrameContext::update_frame_uniform(FrameUniformData data) {
     VkResult result;
 
     void* mapped;
-    result = vkMapMemory(vulkan_instance.device, global_uniform_memory, 0, sizeof(data), 0, &mapped);
+    result = vkMapMemory(vulkan_instance.device, frame_uniform_memory, 0, sizeof(data), 0, &mapped);
 	assert(result == VK_SUCCESS);
     memcpy(mapped, &data, sizeof(data));
-    vkUnmapMemory(vulkan_instance.device, global_uniform_memory);
+    vkUnmapMemory(vulkan_instance.device, frame_uniform_memory);
 }
 
 }

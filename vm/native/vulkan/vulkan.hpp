@@ -21,17 +21,15 @@ struct VulkanInstance {
 	uint32_t selected_queue_family_idx;
 	VkQueue queue;
 
+	VkDescriptorPool desc_pool;
+	VkDescriptorSetLayout desc_set_layout_frame;
+	VkDescriptorSetLayout desc_set_layout_object;
+
 	VulkanInstance();
 
 	void create_instance();
 	void create_device();
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-};
-
-struct PushConstant {
-	float position[2];
-	float size[2];
-	Color color;
 };
 
 extern VulkanInstance vulkan_instance;

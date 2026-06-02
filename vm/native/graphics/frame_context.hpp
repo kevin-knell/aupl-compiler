@@ -3,21 +3,38 @@
 
 #include "graphics_pipeline.hpp"
 #include "render_target.hpp"
+#include "mat4.hpp"
+#include "vec3.hpp"
+#include "vec2.hpp"
 
 namespace auplib
 {
 
 struct FrameContext {
-	struct GlobalData {
-		float screen_size[2];
+	struct FrameUniformData {
+		mat4 view;
+		mat4 projection;
+		mat4 view_projection;
+
+		mat4 inv_view;
+		mat4 inv_projection;
+		mat4 inv_view_projection;
+
+		vec3 camera_position;
+		float time;
+
+		vec2 viewport_size;
+		vec2 inv_viewport_size;
+
+		float delta_time;
 	};
 
 	VkCommandBuffer command_buffer;
 
-	VkDescriptorSet global_descriptor_set;
+	VkDescriptorSet frame_descriptor_set;
 
-	VkBuffer global_uniform_buffer;
-	VkDeviceMemory global_uniform_memory;
+	VkBuffer frame_uniform_buffer;
+	VkDeviceMemory frame_uniform_memory;
 
 	VkSemaphore image_available_semaphore;
 	VkSemaphore render_finished_semaphore;
@@ -35,7 +52,7 @@ struct FrameContext {
 	void record_end(const RenderTarget& render_target);
 
 	void record(GraphicsPipeline& pipeline, RenderTarget render_target);
-	void update_global_uniform(GlobalData data);
+	void update_frame_uniform(FrameUniformData data);
 };
 
 } // namespace auplib

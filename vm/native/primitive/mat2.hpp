@@ -1,11 +1,12 @@
+#pragma once
 #include "native.hpp"
 
 namespace auplib {
 
-class mat3x3 {
+class mat2 {
 
 };
 
-MARK_TRIVIAL(mat3x3)
+MARK_TRIVIAL(mat2)
 
 }

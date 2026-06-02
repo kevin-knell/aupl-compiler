@@ -1,11 +1,14 @@
+#pragma once
 #include "native.hpp"
 
 namespace auplib {
 
-class vec3 {
-
+struct vec3 {
+	float x, y, z;
 };
 
 MARK_TRIVIAL(vec3)
+
+static_assert(sizeof(vec3) == 12);
 
 }

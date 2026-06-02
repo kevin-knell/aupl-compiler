@@ -10,8 +10,7 @@ namespace vm {
 
 namespace auplib {
 
-class vec2 {
-public:
+struct vec2 {
     static void register_to_db(vm::ClassDB& db);
 
     static const vec2 ZERO;
@@ -19,18 +18,18 @@ public:
     static const vec2 EX;
     static const vec2 EY;
 
-    double x, y;
+    float x, y;
 
 
     vec2() = default;
 
-    vec2(double x, double y) : x(x), y(y) {}
+    vec2(float x, float y) : x(x), y(y) {}
 
-    void set_x(double _x);
-    double get_x() const;
+    void set_x(float _x);
+    float get_x() const;
     
-    void set_y(double _y);
-    double get_y() const;
+    void set_y(float _y);
+    float get_y() const;
 
     // swizzle
     void set_yx(vec2 v);
@@ -43,13 +42,13 @@ public:
 
     // vector functions
 
-    double dot(vec2 v) const;
+    float dot(vec2 v) const;
 
-    double length_squared() const {
+    float length_squared() const {
         return x * x + y * y;
     }
 
-    double length() const;
+    float length() const;
 
     // operators
     vec2 operator+(const vec2& other) const {
@@ -64,15 +63,15 @@ public:
         return vec2(-x, -y);
     }
 
-    vec2 operator*(const double& s) const {
+    vec2 operator*(const float& s) const {
         return vec2(x * s, y * s);
     }
 
-    vec2 operator/(const double& s) const {
+    vec2 operator/(const float& s) const {
         return vec2(x / s, y / s);
     }
 };
-static_assert(sizeof(vec2) == 16);
+static_assert(sizeof(vec2) == 8);
 
 MARK_TRIVIAL(vec2)
 

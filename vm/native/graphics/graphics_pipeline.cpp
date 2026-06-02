@@ -3,6 +3,7 @@
 #include <assert.h>
 
 #include "vulkan.hpp"
+#include "vertex.hpp"
 
 namespace auplib {
 
@@ -13,15 +14,36 @@ GraphicsPipeline::GraphicsPipeline(
 	VkResult result;
 
 	VkFormat image_format = VK_FORMAT_B8G8R8A8_SRGB;
+
+	VkVertexInputBindingDescription vertex_binding_desc {
+		.binding = 0,
+		.stride = sizeof(Vertex),
+		.inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+	};
+	
+	std::vector<VkVertexInputAttributeDescription> vertex_attribute_desc = {
+		{
+			.location = 0,
+			.binding = 0,
+			.format = VK_FORMAT_R32G32_SFLOAT,
+			.offset = 0,
+		},
+		{
+			.location = 1,
+			.binding = 0,
+			.format = VK_FORMAT_R32G32B32_SFLOAT,
+			.offset = offsetof(Vertex, color),
+		}
+	};
 	
 	VkPipelineVertexInputStateCreateInfo vertex_input{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
-		.vertexBindingDescriptionCount = 0,
-		.pVertexBindingDescriptions = nullptr,
-		.vertexAttributeDescriptionCount = 0,
-		.pVertexAttributeDescriptions = nullptr
+		.vertexBindingDescriptionCount = 1,
+		.pVertexBindingDescriptions = &vertex_binding_desc,
+		.vertexAttributeDescriptionCount = vertex_attribute_desc.size(),
+		.pVertexAttributeDescriptions = vertex_attribute_desc.data()
 	};
 
 	VkPipelineInputAssemblyStateCreateInfo input_assembly{
@@ -39,7 +61,7 @@ GraphicsPipeline::GraphicsPipeline(
 		.depthClampEnable = false,
 		.rasterizerDiscardEnable = VK_FALSE,
 		.polygonMode = VK_POLYGON_MODE_FILL,
-		.cullMode = VK_CULL_MODE_BACK_BIT,
+		.cullMode = VK_CULL_MODE_NONE,
 		.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
 		.depthBiasEnable = false,
 		.depthBiasConstantFactor = 0,

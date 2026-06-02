@@ -6,6 +6,9 @@
 #include "graphics_pipeline.hpp"
 #include "shader_loader.hpp"
 #include "color_rect.hpp"
+#include "vertex.hpp"
+#include "vec2.hpp"
+#include "mat4.hpp"
 
 namespace auplib {
 
@@ -51,8 +54,13 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 	std::cout << "desc pool" << std::endl;
 
 	// descriptor pool
-	std::array<VkDescriptorPoolSize, 1> pool_sizes = {
-		// Global Uniform
+	std::vector<VkDescriptorPoolSize> pool_sizes = {
+		// Frame Uniform
+		VkDescriptorPoolSize{
+			.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.descriptorCount = 100
+		},
+		// Object Uniform
 		VkDescriptorPoolSize{
 			.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			.descriptorCount = 100
@@ -63,16 +71,16 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
-		.maxSets = 100,
+		.maxSets = 200,
 		.poolSizeCount = pool_sizes.size(),
 		.pPoolSizes = pool_sizes.data()
 	};
 	
-	result = vkCreateDescriptorPool(vulkan_instance.device, &pool_create_info, nullptr, &desc_pool);
+	result = vkCreateDescriptorPool(vulkan_instance.device, &pool_create_info, nullptr, &vulkan_instance.desc_pool);
 	assert(result == VK_SUCCESS);
 	
-	// descriptor set layout
-	VkDescriptorSetLayoutBinding global_uniform_binding{
+	// frame desc set layout
+	VkDescriptorSetLayoutBinding frame_uniform_binding{
 		.binding = 0,
 		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 		.descriptorCount = 1,
@@ -80,42 +88,62 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 		.pImmutableSamplers = nullptr
 	};
 
-	VkDescriptorSetLayoutCreateInfo desc_set_layout_create_info{
+	VkDescriptorSetLayoutCreateInfo frame_desc_set_layout_create_info{
     	.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
     	.bindingCount = 1,
-    	.pBindings = &global_uniform_binding
+    	.pBindings = &frame_uniform_binding
 	};
 	
-	result = vkCreateDescriptorSetLayout(vulkan_instance.device, &desc_set_layout_create_info, nullptr, &desc_set_layout);
+	result = vkCreateDescriptorSetLayout(vulkan_instance.device, &frame_desc_set_layout_create_info, nullptr, &vulkan_instance.desc_set_layout_frame);
 	assert(result == VK_SUCCESS);
 
-	// descriptor sets
+	// object desc set layout
+	VkDescriptorSetLayoutBinding object_uniform_binding{
+		.binding = 0,
+		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		.descriptorCount = 1,
+		.stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+		.pImmutableSamplers = nullptr
+	};
+
+	VkDescriptorSetLayoutCreateInfo object_desc_set_layout_create_info{
+    	.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+    	.bindingCount = 1,
+    	.pBindings = &frame_uniform_binding
+	};
+	
+	result = vkCreateDescriptorSetLayout(vulkan_instance.device, &object_desc_set_layout_create_info, nullptr, &vulkan_instance.desc_set_layout_object);
+	assert(result == VK_SUCCESS);
+
+	// frame descriptor sets
 	VkDescriptorSetAllocateInfo desc_alloc_info{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
 		.pNext = nullptr,
-		.descriptorPool = desc_pool,
+		.descriptorPool = vulkan_instance.desc_pool,
 		.descriptorSetCount = 1,
-		.pSetLayouts = &desc_set_layout
+		.pSetLayouts = &vulkan_instance.desc_set_layout_frame
 	};
 
 	for (FrameContext& f : frames) {
 		// allocate desc set
-		result = vkAllocateDescriptorSets(vulkan_instance.device, &desc_alloc_info, &f.global_descriptor_set);
+		result = vkAllocateDescriptorSets(vulkan_instance.device, &desc_alloc_info, &f.frame_descriptor_set);
 		assert(result == VK_SUCCESS);
 
 		// update desc set
 		VkDescriptorBufferInfo bufferInfo{
-			.buffer = f.global_uniform_buffer,
+			.buffer = f.frame_uniform_buffer,
 			.offset = 0,
-			.range = sizeof(FrameContext::GlobalData)
+			.range = sizeof(FrameContext::FrameUniformData)
 		};
 		
 		VkWriteDescriptorSet write{
 			.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
 			.pNext = nullptr,
-			.dstSet = f.global_descriptor_set,
+			.dstSet = f.frame_descriptor_set,
 			.dstBinding = 0,
 			.dstArrayElement = 0,
 			.descriptorCount = 1,
@@ -129,20 +157,19 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 	}
 
 	// pipeline layout
-	VkPushConstantRange push_const_range{
-		.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-		.offset = 0,
-		.size = sizeof(PushConstant),
+	std::vector<VkDescriptorSetLayout> set_layouts = {
+		vulkan_instance.desc_set_layout_frame,
+		vulkan_instance.desc_set_layout_object
 	};
 
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
-		.setLayoutCount = 1,
-		.pSetLayouts = &desc_set_layout,
-		.pushConstantRangeCount = 1,
-		.pPushConstantRanges = &push_const_range
+		.setLayoutCount = set_layouts.size(),
+		.pSetLayouts = set_layouts.data(),
+		.pushConstantRangeCount = 0,
+		.pPushConstantRanges = nullptr
 	};
 	
 	result = vkCreatePipelineLayout(
@@ -158,6 +185,55 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 	};
 
 	test_pipeline = GraphicsPipeline(pipeline_layout, shader_stages);
+
+	// vertex buffer
+	std::vector<Vertex> vertices = {
+		Vertex{{0.0, 0.0}, {1.0, 0.0, 0.0}},
+		Vertex{{0.0, 1.0}, {1.0, 1.0, 0.0}},
+		Vertex{{1.0, 0.0}, {0.0, 1.0, 1.0}},
+		Vertex{{1.0, 1.0}, {1.0, 0.0, 1.0}}
+	};
+
+	VkBufferCreateInfo vertex_buffer_create_info = {
+		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.size = sizeof(Vertex) * vertices.size(),
+		.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		.queueFamilyIndexCount = 0,
+		.pQueueFamilyIndices = 0,
+	};
+
+	result = vkCreateBuffer(vulkan_instance.device, &vertex_buffer_create_info, nullptr, &vertex_buffer);
+	assert(result == VK_SUCCESS);
+
+	VkMemoryRequirements mem_req;
+	vkGetBufferMemoryRequirements(vulkan_instance.device, vertex_buffer, &mem_req);
+
+	VkMemoryAllocateInfo mem_alloc_info = {
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.pNext = nullptr,
+		.allocationSize = mem_req.size,
+		.memoryTypeIndex = vulkan_instance.findMemoryType(
+			mem_req.memoryTypeBits,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		)
+	};
+
+	result = vkAllocateMemory(vulkan_instance.device, &mem_alloc_info, nullptr, &vertex_memory);
+	assert(result == VK_SUCCESS);
+
+	result = vkBindBufferMemory(vulkan_instance.device, vertex_buffer, vertex_memory, 0);
+	assert(result == VK_SUCCESS);
+
+	void* raw_data;
+	vkMapMemory(vulkan_instance.device, vertex_memory, 0, vertex_buffer_create_info.size, 0, &raw_data);
+
+	std::memcpy(raw_data, vertices.data(), vertex_buffer_create_info.size);
+	
+	vkUnmapMemory(vulkan_instance.device, vertex_memory);
 
 	// command pool
 	VkCommandPoolCreateInfo pool_info{
@@ -187,8 +263,11 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 
 	for (size_t i = 0; i < frames.size(); ++i) {
 		frames[i].command_buffer = command_buffers[i];
-		frames[i].update_global_uniform({
-			.screen_size = { viewport->vk_viewport.width, viewport->vk_viewport.height }
+		frames[i].update_frame_uniform(FrameContext::FrameUniformData{
+			.viewport_size = vec2(
+				viewport->vk_viewport.width,
+				viewport->vk_viewport.height
+			)
 		});
 	}
 
@@ -200,32 +279,53 @@ Renderer::~Renderer() {
 }
 
 void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
-	if (ColorRect* r = dynamic_cast<ColorRect*>(node.get())) {
-		PushConstant push{
-			{ static_cast<float>(r->position.x), static_cast<float>(r->position.y) },
-			{ static_cast<float>(r->size.x), static_cast<float>(r->size.y) },
-			{ r->color }
-		};
-		
-		vkCmdPushConstants(
-			frame.command_buffer,
-			pipeline_layout,
-			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			0,
-			sizeof(push),
-			&push
-		);
+	VkResult result;
 
+	if (ColorRect* r = dynamic_cast<ColorRect*>(node.get())) {
+		mat4 model = {
+			.rows = {
+				{ r->size.x, 0.0, 0.0, 0.0 },
+				{ 0.0, r->size.y, 0.0, 0.0 },
+				{ 0.0, 0.0, 1.0, 0.0 },
+				{ r->position.x, r->position.y, 0.0, 1.0 },
+			}
+		};
+
+
+		r->object_data.model = model;
+
+		memcpy(
+			r->object_uniform_mapped,
+			&r->object_data,
+			sizeof(CanvasItem::ObjectUniformData)
+		);
+		
+		// descriptor sets
 		vkCmdBindDescriptorSets(
 			frame.command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			pipeline_layout,
 			0,
 			1,
-			&frame.global_descriptor_set,
+			&frame.frame_descriptor_set,
 			0,
 			nullptr
 		);
+
+		vkCmdBindDescriptorSets(
+			frame.command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			pipeline_layout,
+			1,
+			1,
+			&r->object_descriptor_set,
+			0,
+			nullptr
+		);
+
+
+		VkDeviceSize offset{ 0 };
+		vkCmdBindVertexBuffers(frame.command_buffer, 0, 1, &vertex_buffer, &offset);
 
 		vkCmdDraw(
 			frame.command_buffer,
@@ -354,8 +454,11 @@ void Renderer::on_resize() {
 	swapchain.recreate(viewport->scissor.extent);
 
 	for (size_t i = 0; i < frames.size(); ++i) {
-		frames[i].update_global_uniform({
-			.screen_size = { viewport->vk_viewport.width, viewport->vk_viewport.height }
+		frames[i].update_frame_uniform(FrameContext::FrameUniformData{
+			.viewport_size = vec2(
+				viewport->vk_viewport.width,
+				viewport->vk_viewport.height
+			)
 		});
 	}
 }

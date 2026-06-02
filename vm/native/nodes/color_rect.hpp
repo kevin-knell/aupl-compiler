@@ -14,7 +14,10 @@ struct ColorRect : public CanvasItem {
 
 	static void register_to_db(vm::ClassDB& db);
 
-	ColorRect(vec2 position, vec2 size, Color color) : position(position), size(size), color(color) {}
+	ColorRect(vec2 position, vec2 size, Color color) : CanvasItem(), position(position), size(size), color(color) {}
+
+	ColorRect(const ColorRect&) = delete;
+	ColorRect& operator=(ColorRect&) = delete;
 };
 
 } // namespace auplib
