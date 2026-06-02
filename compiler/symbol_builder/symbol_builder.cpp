@@ -167,12 +167,20 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
         }
 
         // type
-        TypePtr arg_type = parse_type(parser_info_header);
-        if (!arg_type) {
+        TypePtr parsed_param_type = parse_type(parser_info_header);
+        if (!parsed_param_type) {
             std::cout << "arg type error: " << peek().value << std::endl;
             next();
             continue;
         }
+
+		TypePtr param_type;
+
+		if (parsed_param_type->default_store_shared()) {
+			param_type = std::make_shared<SharedType>(parsed_param_type);
+		} else {
+			param_type = parsed_param_type;
+		}
 
         // name
         if (!match(TokenType::IDENTIFIER)) {
@@ -189,7 +197,7 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
             initial_value = parse_expression(parser_info_header);
         }
 
-		auto param = VariableSymbol::create(arg_type, arg_name, initial_value);
+		auto param = VariableSymbol::create(param_type, arg_name, initial_value);
 		scope->args.push_back(arg_name);
 		scope->variables[arg_name] = param;
 		param->scope = scope;
@@ -320,13 +328,21 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
         }
 
         // type
-        TypePtr arg_type = parse_type(parser_info_header);
-        if (!arg_type) {
+        TypePtr parsed_param_type = parse_type(parser_info_header);
+        if (!parsed_param_type) {
             // TODO: add error
             std::cout << "arg type error: " << peek().value << std::endl;
             next();
             continue;
         }
+
+		TypePtr param_type;
+
+		if (parsed_param_type->default_store_shared()) {
+			param_type = std::make_shared<SharedType>(parsed_param_type);
+		} else {
+			param_type = parsed_param_type;
+		}
 
         // name
         if (!match(TokenType::IDENTIFIER)) {
@@ -343,7 +359,7 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
             initial_value = parse_expression(parser_info_header);
         }
 
-        VarPtr param = VariableSymbol::create(arg_type, arg_name, initial_value);
+        VarPtr param = VariableSymbol::create(param_type, arg_name, initial_value);
         scope->args.push_back(arg_name);
 		scope->variables[arg_name] = param;
         parameters.push_back(param);

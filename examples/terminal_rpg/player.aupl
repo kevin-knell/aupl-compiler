@@ -1,0 +1,32 @@
+class Player
+
+String name
+
+Job job
+
+int lv
+int xp
+
+int stat_str
+int stat_dex
+int stat_con
+int stat_int
+int stat_wis
+int stat_cha
+
+Player(String n, Job j) {
+	print("Player created!")
+
+	name = n
+	job = j
+
+	lv = 1
+	xp = 0
+
+	stat_str = job.base_str
+	stat_dex = job.base_dex
+	stat_con = job.base_con
+	stat_int = job.base_int
+	stat_wis = job.base_wis
+	stat_cha = job.base_cha
+}

@@ -1,0 +1,14 @@
+class Job
+
+String name
+
+int base_str
+int base_dex
+int base_con
+int base_int
+int base_wis
+int base_cha
+
+Job(String n) {
+	name = n
+}

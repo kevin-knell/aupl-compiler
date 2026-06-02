@@ -1,6 +1,7 @@
 #pragma once
 #include "native.hpp"
 #include "object.hpp"
+#include "shared.hpp"
 #include <fstream>
 
 namespace vm {
@@ -22,7 +23,7 @@ public:
 
 	static void register_to_db(vm::ClassDB& db);
 
-	static File open(const String& path, int64_t open_flag);
+	static Shared<File> open(const String& path, int64_t open_flag);
 
 	File() = default;
 	File(const String& path, int64_t open_flag);

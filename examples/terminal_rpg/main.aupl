@@ -1,0 +1,121 @@
+class Main
+
+static vec2i pos
+
+static void main() {
+	init_game()
+	process_game()
+}
+
+
+static void init_game() {
+	print("enter name")
+	String name = Console.scan()
+
+	Job mage = Job("Mage")
+	mage.base_str = 1
+	mage.base_dex = 2
+	mage.base_con = 1
+	mage.base_int = 5
+	mage.base_wis = 5
+	mage.base_cha = 1
+
+	Player p(name, mage)
+
+	File f = File.open("examples/terminal_rpg/map.txt", 1)
+
+	pos = vec2i(0, 0)
+
+	Console.initscr()
+	Console.move(pos)
+
+	bool running = not f.end()
+
+	while running {
+		String line = f.get_line()
+		Console.move(pos)
+		Console.printw(line)
+
+		pos = vec2i(0, pos.y + 1)
+
+		running = not f.end()
+	}
+
+	pos = vec2i(35, 1)
+	Console.move(pos)
+	Console.printw(p.name)
+
+	pos = vec2i(35, 2)
+	Console.move(pos)
+	Console.printw(p.job.name)
+
+	pos = vec2i(48, 4)
+	Console.move(pos)
+	Console.printw(p.lv)
+
+	pos = vec2i(48, 5)
+	Console.move(pos)
+	Console.printw(p.xp)
+
+	pos = vec2i(48, 10)
+	Console.move(pos)
+	Console.printw(p.stat_str)
+
+	pos = vec2i(48, 11)
+	Console.move(pos)
+	Console.printw(p.stat_dex)
+
+	pos = vec2i(48, 12)
+	Console.move(pos)
+	Console.printw(p.stat_con)
+
+	pos = vec2i(48, 13)
+	Console.move(pos)
+	Console.printw(p.stat_int)
+
+	pos = vec2i(48, 14)
+	Console.move(pos)
+	Console.printw(p.stat_wis)
+
+	pos = vec2i(48, 15)
+	Console.move(pos)
+	Console.printw(p.stat_cha)
+
+	pos = vec2i(15, 8)
+	Console.move(pos)
+}
+
+static void process_game() {
+	bool running = true
+	
+	while running {
+		int c = Console.get_char()
+
+		Console.printw(" ")
+		Console.move(pos)
+		Console.printw("@")
+		Console.refresh()
+
+		if c == 97 and pos.x > 1 {
+			pos.x -= 1
+		}
+
+		if c == 100 and pos.x < 30 {
+			pos.x += 1
+		}
+
+		if c == 119 and pos.y > 1 {
+			pos.y -= 1
+		}
+
+		if c == 115 and pos.y < 16 {
+			pos.y += 1
+		}
+
+		if c == 65 {
+			running = false
+		}
+	}
+
+	Console.endwin()
+}

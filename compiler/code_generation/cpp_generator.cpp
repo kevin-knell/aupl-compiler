@@ -207,8 +207,16 @@ void cmp::CppCodeGenerator::visit(DeclareStatement &stmt) {
 
 	ss << name;
 
+	bool needs_make_shared = false;
+
 	if (stmt.variable_symbol->type->get_kind() == Type::SHARED
 			&& stmt.variable_symbol->initial_value->get_kind() == Expression::CALL) {
+		std::shared_ptr<CallExpression> call_expr = std::static_pointer_cast<CallExpression>(stmt.variable_symbol->initial_value);
+		
+		needs_make_shared = call_expr->f->is_constructor;
+	}
+
+	if (needs_make_shared) {
 		ss << " = ";
 		ss << stmt.variable_symbol->type->to_cpp_type_str();
 		ss << "(new ";
@@ -232,8 +240,16 @@ void cmp::CppCodeGenerator::visit(AssignmentStatement &stmt) {
 
 	std::stringstream ss = make_indented_stringstream();
 
+	bool needs_make_shared = false;
+
 	if (stmt.expr_left->get_type()->get_kind() == Type::SHARED
 			&& stmt.expr_right->get_kind() == Expression::CALL) {
+		std::shared_ptr<CallExpression> call_expr = std::static_pointer_cast<CallExpression>(stmt.expr_right);
+		
+		needs_make_shared = call_expr->f->is_constructor;
+	}
+
+	if (needs_make_shared) {
 		ss << " = ";
 		ss << stmt.expr_left->get_type()->to_cpp_type_str();
 		ss << "(new ";

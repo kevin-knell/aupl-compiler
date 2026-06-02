@@ -107,11 +107,17 @@ void RegisterFormatConverter::replace_with_temp(ExprPtr& expr, bool is_volatile)
 	// create temp
 	TypePtr type = expr->get_type();
 	VarPtr tmp = scope->get_temp(type, expr);
-	ExprPtr tmp_expr = std::make_shared<VariableExpression>(tmp);
+	VarExprPtr tmp_expr = std::make_shared<VariableExpression>(tmp);
 	StmtPtr tmp_decl = std::make_shared<DeclareStatement>(tmp);
 	tmp_decl->is_volatile = is_volatile;
 	tmp->scope = scope;
 	//RF_DEBUG_PRINT_V("\tcreated temp: " << tmp->name_to_string());
+
+	if (expr->get_kind() == Expression::VARIABLE && expr->get_type()->is_pointer_type()) {
+		VarExprPtr var_expr = std::static_pointer_cast<VariableExpression>(expr);
+		var_expr->must_be_dereferenced = false;
+		tmp_expr->must_be_dereferenced = true;
+	}
 
 	// recursion
 	convert_to_register_format(expr, is_volatile);
@@ -119,6 +125,7 @@ void RegisterFormatConverter::replace_with_temp(ExprPtr& expr, bool is_volatile)
 	// replace
 	RF_DEBUG_PRINT("\treplacing " << expr->to_string() << " with " << tmp_expr->to_string());
 	expr = tmp_expr;
+
 	statements.push_back(tmp_decl);
 
 }

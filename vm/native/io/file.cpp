@@ -11,7 +11,7 @@ void File::register_to_db(vm::ClassDB &db) {
 	
 	//REGISTER_CONSTRUCTOR(ID, File(const String& path, int64_t open_flag));
 
-	REGISTER_STATIC_METHOD(ID, File, open, File (*)(const String& path, int64_t open_flag));
+	REGISTER_STATIC_METHOD(ID, File, open, Shared<File> (*)(const String& path, int64_t open_flag));
 
 	REGISTER_METHOD(ID, File, get_line, String (File::*)());
 	REGISTER_METHOD(ID, File, end, bool (File::*)() const);
@@ -44,8 +44,8 @@ File::File(const String& path, int64_t open_flag) {
 	file_access.open(path.str(), open_mode);
 }
 
-File File::open(const String& path, int64_t open_flag) {
-	return File(path, open_flag);
+Shared<File> File::open(const String& path, int64_t open_flag) {
+	return Shared<File>::make(path, open_flag);
 }
 
 File::~File() {
