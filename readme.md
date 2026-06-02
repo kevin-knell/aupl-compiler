@@ -5,6 +5,27 @@
 
 AUPL is a free and open-source high-level programming language designed for fast compilation and concise syntax. The language is currently in very early stages and the compiler cannot yet compile programs.
 
+## Building
+
+Build **parser** only
+`make compiler`
+
+Build **VM** only
+`make vm`
+
+Transpile `AUPL` program to `C++` and build
+`make generated`
+
+Full **compile + generate + run**
+`make run`
+
+Build **all three binaries**
+`make build-all`
+
+Different project
+`make run PROJECT=pong`
+`make run PROJECT=terminal_rpg`
+
 ## Overview
 
 - AUPL programs are intended to run in a custom virtual machine (VM).
