@@ -70,8 +70,16 @@ void SymbolBuilder::parse_class() {
             parent->is_declared = false;
         } else {
             parent = symbol_table.classes[parent_name];
+
+			if (auto nat = parent->native_class_bind) {
+				if (!nat->is_object) {
+			        throw std::runtime_error("Parent Class must inherit from 'Object'!");
+				}
+			}
         }
-    }
+    } else {
+		parent = symbol_table.classes["Object"];
+	}
 
     auto it = symbol_table.classes.find(class_name);
 
@@ -86,10 +94,11 @@ void SymbolBuilder::parse_class() {
         // Forward-declared; complete it
         this_class = it->second;
         this_class->is_declared = true;
-        this_class->parent = parent;
     } else {
         throw std::runtime_error("Class '" + class_name + "' is already declared");
     }
+
+	this_class->parent = parent;
 
     this_class->static_scope = Scope::create(Scope::STATIC_CLASS, "(static)" + this_class->name);
 
@@ -255,7 +264,16 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
 }
 
 bool SymbolBuilder::parse_function(ParserInfo parser_info) {
-    size_t start_idx = index;
+	size_t start_idx = index;
+	
+	bool is_override = false;
+	
+	if (expect("override")) {
+		next(); // consume 'override'
+		is_override = true;
+	}
+
+	// TODO: generic<T>
 
     // public
     bool is_public = false;
@@ -284,11 +302,18 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
     ParserInfo parser_info_header{.symbol_table = symbol_table, .cls = parser_info.cls, .func = nullptr, .scope = scope};
 
     // return type
-    TypePtr return_type = parse_type(parser_info_header);
-    if (!return_type) {
-        index = start_idx;
-        return false;
-    }
+	TypePtr return_type;
+
+	if (!is_override) {
+		return_type = parse_type(parser_info_header);
+		
+		if (!return_type) {
+			index = start_idx;
+			return false;
+		}
+	} else {
+		return_type = nullptr;
+	}
 
     // identifier
     if (!match(TokenType::IDENTIFIER)) {
@@ -296,8 +321,6 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
         return false;
     }
     std::string name = next().value;
-
-    // TODO f<T>(...)
 
     // args
     if (!expect("(")) {
@@ -369,8 +392,14 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
     // body
     bool is_abstract = false;
 
-    FuncPtr function_symbol = FunctionSymbol::create(return_type, name, parameters, scope, false);
-    ParserInfo parser_info_body{symbol_table, parser_info.cls, function_symbol, scope};
+    FuncPtr function_symbol;
+	
+	if (is_override) {
+		function_symbol = FunctionSymbol::create(name, parameters, scope, false);
+	} else {
+		function_symbol = FunctionSymbol::create(return_type, name, parameters, scope, false);
+	}
+	ParserInfo parser_info_body{symbol_table, parser_info.cls, function_symbol, scope};
 
     if (expect("=")) {
         next(); // consume =
@@ -404,9 +433,12 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
                 next();
             } else {
 				for (auto st : statements) {
+					assert(st);
 					st->is_volatile = is_volatile;
+					assert(function_symbol);
+					assert(function_symbol->scope);
 					function_symbol->scope->body.push_back(st);
-					//std::cout << st->to_string() << std::endl;
+					std::cout << st->to_string() << std::endl;
 				}
             }
         }

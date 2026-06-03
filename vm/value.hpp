@@ -2,8 +2,6 @@
 #include <cstdint>
 #include <memory>
 
-class Object;
-
 namespace vm {
     struct Value {
         union {

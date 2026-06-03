@@ -1,7 +1,9 @@
 #include "class_registrator.hpp"
 
+#include "object.hpp"
 #include "string.hpp"
 #include "shared.hpp"
+#include "list.hpp"
 
 #ifndef MINIMAL_VM
 // utils
@@ -15,7 +17,6 @@
 #include "color.hpp"
 
 // objects
-#include "list.hpp"
 #include "file.hpp"
 #include "window.hpp"
 #include "viewport.hpp"
@@ -55,6 +56,8 @@ void vm::register_classes(vm::ClassDB& db) {
 	// lang-integrated
 	String::register_to_db(db);
 	register_shared_to_db(db);
+	Object::register_to_db(db);
+	register_list_to_db(db);
 	
 #ifndef MINIMAL_VM
 	// util
@@ -70,8 +73,6 @@ void vm::register_classes(vm::ClassDB& db) {
 
 	// object types
 	// data structures
-	register_list_to_db(db);
-	
 	File::register_to_db(db);
 	Window::register_to_db(db);
 	Viewport::register_to_db(db);

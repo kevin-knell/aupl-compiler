@@ -61,6 +61,10 @@ void NameAnalyzer::resolve_variables() const {
 
         NA_DEBUG_PRINT(C_KEYWORD("Class ") << cls->name);
         for (auto& [func_name, f] : cls->functions) {
+			if (f->is_override) {
+				f->return_type = cls->parent->functions[func_name]->return_type;
+			}
+
 			std::function<void(cmp::ScopePtr)> resolve_scope = [&](cmp::ScopePtr scope) {
 				NA_DEBUG_PRINT(scope->get_full_name() << " " << C_BRACE_L);
 				

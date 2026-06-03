@@ -113,7 +113,11 @@ void cmp::CppCodeGenerator::generate_cpp_code(std::ofstream &hpp_file, std::ofst
 
 		append(hpp_forward_declarations, "class " + cn + ";");
 
-		append(hpp_classes, "class " + cn + " {");
+		if (cls->parent) {
+			append(hpp_classes, "class " + cn + " : public " + cls->parent->name + " {");
+		} else {
+			append(hpp_classes, "class " + cn + " {");
+		}
 		append(hpp_classes, "public:");
 
 		auto static_class_scope = current_class->static_scope;

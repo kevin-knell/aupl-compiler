@@ -30,11 +30,24 @@ public:
 		const std::vector<VarPtr>& parameters,
 		const ScopePtr& scope,
 		const bool is_constructor);
+	
+	static FuncPtr create(
+			const std::string &name,
+			const std::vector<VarPtr> &parameters,
+			const ScopePtr &scope,
+			const bool is_constructor);
 
 public:
 	FunctionSymbol(
 		Private,
 		const TypePtr& return_type,
+		const std::string& name,
+		const std::vector<VarPtr>& parameters,
+		const ScopePtr& scope,
+		const bool is_constructor);
+
+	FunctionSymbol(
+		Private,
 		const std::string& name,
 		const std::vector<VarPtr>& parameters,
 		const ScopePtr& scope,
@@ -49,6 +62,7 @@ public:
 	vm::MethodPair* method_pair = nullptr;
 	bool is_constructor = false;
 
+	bool is_override = false;
 	bool is_public = false;
 	bool is_static = false;
 	bool is_const = false;

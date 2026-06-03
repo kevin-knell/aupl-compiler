@@ -9,43 +9,76 @@
 #define TAG(s, b) std::string(b ? s : "")
 
 namespace cmp {
-	FuncPtr FunctionSymbol::create(vm::MethodPair &method_pair) {
-		return std::make_shared<FunctionSymbol>(Private(), method_pair);
-	}
 
-	FuncPtr FunctionSymbol::create(
-			const TypePtr &return_type,
-			const std::string &name,
-			const std::vector<VarPtr> &parameters,
-			const ScopePtr &scope,
-			const bool is_constructor
-			) {
-		return std::make_shared<FunctionSymbol>(Private(), return_type, name, parameters, scope, is_constructor);
-	}
+FuncPtr FunctionSymbol::create(vm::MethodPair &method_pair) {
+	return std::make_shared<FunctionSymbol>(Private(), method_pair);
+}
+
+FuncPtr FunctionSymbol::create(
+		const TypePtr &return_type,
+		const std::string &name,
+		const std::vector<VarPtr> &parameters,
+		const ScopePtr &scope,
+		const bool is_constructor
+		) {
+	return std::make_shared<FunctionSymbol>(Private(), return_type, name, parameters, scope, is_constructor);
+}
+
+FuncPtr FunctionSymbol::create(
+		const std::string &name,
+		const std::vector<VarPtr> &parameters,
+		const ScopePtr &scope,
+		const bool is_constructor
+		) {
+	return std::make_shared<FunctionSymbol>(Private(), name, parameters, scope, is_constructor);
+}
 
 FunctionSymbol::FunctionSymbol(Private, vm::MethodPair &method_pair)
 		: return_type(get_type_from_cpp(method_pair.return_type)), name(method_pair.name), method_pair(&method_pair), is_constructor(method_pair.is_constructor) {}
 
-FunctionSymbol::FunctionSymbol(Private, const TypePtr& return_type,
+FunctionSymbol::FunctionSymbol(
+		Private,
+		const TypePtr& return_type,
 		const std::string& name,
 		const std::vector<VarPtr>& parameters,
 		const ScopePtr& scope, const bool is_constructor)
-				: return_type(std::move(return_type)), name(name), parameters(parameters), scope(std::move(scope)), is_constructor(is_constructor)
-	{
-		scope->name = head_to_string();
-	}
-	
+		:	return_type(std::move(return_type)),
+			name(name),
+			parameters(parameters),
+			scope(std::move(scope)),
+			is_override(false),
+			is_constructor(is_constructor)
+{
+	scope->name = head_to_string();
+}
+
+FunctionSymbol::FunctionSymbol(
+		Private,
+		const std::string &name,
+		const std::vector<VarPtr> &parameters,
+		const ScopePtr &scope,
+		const bool is_constructor)
+		:	return_type(std::move(return_type)),
+			name(name),
+			parameters(parameters),
+			is_override(true),
+			scope(std::move(scope)),
+			is_constructor(is_constructor)
+{
+	scope->name = head_to_string();
+}
+
 std::string FunctionSymbol::head_to_string() {
 	if (method_pair) {
 		return method_pair->signature;
 	}
 
-	assert(return_type);
-
-    std::string begin = TAG("public ", is_public) +
+    std::string begin =
+			TAG("override ", is_override) +
+			TAG("public ", is_public) +
             TAG("static ", is_static) +
             TAG("const ", is_const) +
-            return_type->to_string() + " " +
+            TAG(return_type->to_string() + " ", !is_override) +
             name;
     
     std::string args = "(";
@@ -113,11 +146,15 @@ std::string FunctionSymbol::to_string() {
 std::string FunctionSymbol::to_cpp_string_prototype() {
 	std::stringstream ss;
 
-	if (is_static) {
-		ss << "static ";
-	}
+	assert(return_type);
 
 	if (!is_constructor) {
+		if (is_static) {
+			ss << "static ";
+		} else {
+			ss << "virtual ";
+		}
+
 		ss << return_type->to_cpp_type_str();
 		ss << " ";
 	}
@@ -140,7 +177,10 @@ std::string FunctionSymbol::to_cpp_string_prototype() {
 	ss << ")";
 
 	// TODO: const
-	// TODO: override
+
+	if (is_override) {
+		ss << " override ";
+	}
 
 	ss << ";";
 
@@ -152,6 +192,8 @@ std::string FunctionSymbol::to_cpp_string(std::string context) {
 	}
 
 	std::stringstream ss;
+
+	assert(return_type);
 
 	if (!is_constructor) {
 		ss << return_type->to_cpp_type_str();
