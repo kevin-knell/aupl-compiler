@@ -199,6 +199,7 @@ void FrameContext::record_end(const RenderTarget& render_target) {
 }
 
 void FrameContext::record(GraphicsPipeline& pipeline, RenderTarget render_target) {
+	(void) render_target;
 	vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
 	for (int64_t i = 0; i < 1; ++i) {

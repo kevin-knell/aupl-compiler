@@ -72,7 +72,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 		.pNext = nullptr,
 		.flags = 0,
 		.maxSets = 200,
-		.poolSizeCount = pool_sizes.size(),
+		.poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
 		.pPoolSizes = pool_sizes.data()
 	};
 	
@@ -113,7 +113,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 		.pNext = nullptr,
 		.flags = 0,
     	.bindingCount = 1,
-    	.pBindings = &frame_uniform_binding
+    	.pBindings = &object_uniform_binding
 	};
 	
 	result = vkCreateDescriptorSetLayout(vulkan_instance.device, &object_desc_set_layout_create_info, nullptr, &vulkan_instance.desc_set_layout_object);
@@ -166,7 +166,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
-		.setLayoutCount = set_layouts.size(),
+		.setLayoutCount = static_cast<uint32_t>(set_layouts.size()),
 		.pSetLayouts = set_layouts.data(),
 		.pushConstantRangeCount = 0,
 		.pPushConstantRanges = nullptr
@@ -263,12 +263,14 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 
 	for (size_t i = 0; i < frames.size(); ++i) {
 		frames[i].command_buffer = command_buffers[i];
-		frames[i].update_frame_uniform(FrameContext::FrameUniformData{
-			.viewport_size = vec2(
-				viewport->vk_viewport.width,
-				viewport->vk_viewport.height
-			)
-		});
+		
+		FrameContext::FrameUniformData frame_uniform_data{};
+		frame_uniform_data.viewport_size = vec2(
+			viewport->vk_viewport.width,
+			viewport->vk_viewport.height
+		);
+		
+		frames[i].update_frame_uniform(frame_uniform_data);
 	}
 
 	current_frame = 0;
@@ -279,8 +281,6 @@ Renderer::~Renderer() {
 }
 
 void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
-	VkResult result;
-
 	if (ColorRect* r = dynamic_cast<ColorRect*>(node.get())) {
 		mat4 model = {
 			.rows = {
@@ -454,12 +454,14 @@ void Renderer::on_resize() {
 	swapchain.recreate(viewport->scissor.extent);
 
 	for (size_t i = 0; i < frames.size(); ++i) {
-		frames[i].update_frame_uniform(FrameContext::FrameUniformData{
-			.viewport_size = vec2(
-				viewport->vk_viewport.width,
-				viewport->vk_viewport.height
-			)
-		});
+		FrameContext::FrameUniformData frame_uniform_data{};
+		
+		frame_uniform_data.viewport_size = vec2(
+			viewport->vk_viewport.width,
+			viewport->vk_viewport.height
+		);
+
+		frames[i].update_frame_uniform(frame_uniform_data);
 	}
 }
 

@@ -30,18 +30,18 @@ void VulkanInstance::create_instance() {
 
 	std::vector<const char*> extension_names;
 
-	std::cout << "extensions:" << std::endl;
+	//std::cout << "extensions:" << std::endl;
 	for (uint32_t i = 0; i < glfw_extensions_amount; ++i) {
-		std::cout << "\t" << glfw_extension_names[i] << std::endl;
+		//std::cout << "\t" << glfw_extension_names[i] << std::endl;
 		extension_names.push_back(glfw_extension_names[i]);
 	}
 
 	extension_names.push_back("VK_KHR_get_surface_capabilities2");
 	//extension_names.push_back("VK_EXT_extended_dynamic_state");
 
-	for (auto n : extension_names) {
+	/*for (auto n : extension_names) {
 		std::cout << n << std::endl;
-	}
+	}*/
 
 
 	VkInstanceCreateInfo vk_instance_create_info {
@@ -70,11 +70,11 @@ void VulkanInstance::create_device() {
 	result = vkEnumeratePhysicalDevices(instance, &amount_physical_devices, phys_devices);
 	assert(result == VK_SUCCESS);
 
-	std::cout << "physical devices:" << std::endl;
+	//std::cout << "physical devices:" << std::endl;
 	for (uint32_t i = 0; i < amount_physical_devices; ++i) {
 		VkPhysicalDeviceProperties device_properties;
 		vkGetPhysicalDeviceProperties(phys_devices[i], &device_properties);
-		std::cout << "\t" << device_properties.deviceName << std::endl;
+		//std::cout << "\t" << device_properties.deviceName << std::endl;
 	}
 
 	phys_device = phys_devices[0];

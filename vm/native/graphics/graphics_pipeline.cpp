@@ -42,7 +42,7 @@ GraphicsPipeline::GraphicsPipeline(
 		.flags = 0,
 		.vertexBindingDescriptionCount = 1,
 		.pVertexBindingDescriptions = &vertex_binding_desc,
-		.vertexAttributeDescriptionCount = vertex_attribute_desc.size(),
+		.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_attribute_desc.size()),
 		.pVertexAttributeDescriptions = vertex_attribute_desc.data()
 	};
 
