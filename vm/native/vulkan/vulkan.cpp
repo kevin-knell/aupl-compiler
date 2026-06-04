@@ -56,7 +56,7 @@ void VulkanInstance::create_instance() {
 	};
 	
 	VkResult result = vkCreateInstance(&vk_instance_create_info, nullptr, &instance);
-	std::cerr << result << std::endl;
+	//std::cerr << result << std::endl;
 	assert(result == VK_SUCCESS);
 }
 
