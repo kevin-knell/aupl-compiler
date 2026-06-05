@@ -2,7 +2,7 @@
 
 #include "tuple_type.hpp"
 #include <cstring>
-#include <assert.h>
+#include "compiler_error.hpp"
 
 namespace cmp
 {
@@ -58,7 +58,7 @@ vm::Value* TupleExpression::eval_constexpr() const {
 		i += size;
 	}
 	std::cout << i << " " << type_size << std::endl;
-	assert(i == type_size);
+	COMPILER_ASSERT(i == type_size, "");
 
 	return result;
 }

@@ -19,7 +19,7 @@
 #include "tuple_expression.hpp"
 
 #include "label.hpp"
-#include <assert.h>
+#include "compiler_error.hpp"
 
 
 
@@ -303,7 +303,7 @@ void cmp::CppCodeGenerator::visit(ConditionalJumpStatement &stmt) {
 		iterate_scope();
 
 		ScopePtr upper_scope = scope->upper_scope.lock();
-		assert(upper_scope);
+		COMPILER_ASSERT(upper_scope, "");
 		scope = upper_scope;
 
 		// block end

@@ -4,7 +4,6 @@
 #include "variable_expression.hpp"
 #include "binary_op_expression.hpp"
 #include "bytecode_generator.hpp"
-#include <assert.h>
 
 namespace cmp {
 

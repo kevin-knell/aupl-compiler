@@ -1,25 +1,49 @@
 #pragma once
 #include <string>
 
+#include "text_color.hpp"
+
 namespace cmp {
 
 struct Error {
 	enum Level {
-		CRITICAL,
-		ERROR,
+		HINT,
 		WARNING,
-		HINT
+		ERROR,
+		CRITICAL,
 	};
 
+	const std::string file_path;
     const size_t start;
 	const size_t end;
+	const int line;
+	const int col;
     const std::string message;
 	const Level level;
 
-    Error(size_t start, size_t end, std::string message, Level level)
-			: start(start), end(end), message(message), level(level) {
-		if (level == CRITICAL) {
-			abort();
+    Error(
+			std::string file_path,
+			size_t start,
+			size_t end,
+			int line,
+			int col,
+			std::string message,
+			Level level)
+				:	file_path(file_path),
+					start(start),
+					end(end),
+					line(line),
+					col(col),
+					message(message),
+					level(level) {}
+
+	std::string get_error_text() const {
+		switch (level) {
+			case HINT:		return C_HINT("hint: ");
+			case WARNING:	return C_WARNING("warning: ");
+			case ERROR:		return C_ERROR("error: ");
+			case CRITICAL:	return C_CRITICAL("critical: ");
+			default: throw std::runtime_error("invalid error level: " + static_cast<int>(level));
 		}
 	}
 };

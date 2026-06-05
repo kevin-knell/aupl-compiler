@@ -3,7 +3,7 @@
 #include "text_color.hpp"
 #include "scope.hpp"
 #include "type_from_cpp.hpp"
-#include <assert.h>
+#include "compiler_error.hpp"
 
 #define TAG(s, b) std::string(b ? s : "")
 
@@ -30,8 +30,8 @@ std::string VariableSymbol::name_to_string() const {
 }
 
 size_t VariableSymbol::get_index() const {
-	assert(scope);
-	assert(scope->has(name));
+	COMPILER_ASSERT(scope, "");
+	COMPILER_ASSERT(scope->has(name), "");
 	return Scope::get_variable_index(scope, name);
 }
 

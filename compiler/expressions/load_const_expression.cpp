@@ -3,7 +3,6 @@
 #include "type.hpp"
 #include "primitive_type.hpp"
 #include "text_color.hpp"
-#include <assert.h>
 
 namespace cmp {
 

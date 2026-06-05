@@ -13,7 +13,7 @@
 #include "primitive_type.hpp"
 #include "variable_expression.hpp"
 #include "load_const_expression.hpp"
-#include "assert.h"
+#include "compiler_error.hpp"
 #include <iostream>
 
 #define RETURN_IF_NOT(m_value)		\
@@ -27,7 +27,7 @@
 #define ERROR_IF_NOT(m_value, m_message)		\
 	do {							\
 		if (!(m_value)) {			\
-    	    parser_info.cls->errors.emplace_back(peek().pos, peek().pos, m_message, Error::CRITICAL);		\
+    	    add_error(0, m_message, Error::CRITICAL);		\
     	    return {};				\
     	}							\
 	} while(0)
@@ -92,7 +92,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_assign(ParserInfo& parser_info) {
 	ExprPtr bin_expr;
 	
 	if (op != BinaryExpression::OPERATOR::NONE) {
-		assert(expr_left->get_kind() == Expression::VARIABLE);
+		COMPILER_ASSERT(expr_left->get_kind() == Expression::VARIABLE, "");
 
 		ExprPtr left_copy = expr_left->clone();
 
@@ -360,7 +360,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_return(ParserInfo& parser_info) {
  		std::cout << "return" << peek().value;
 		// Parse the returned expression, or nullptr for empty return
  		expr = parse_expression(parser_info);
-		std::cout << expr << std::endl;
+		//std::cout << expr << std::endl;
 	}
 
     return { std::make_shared<ReturnStatement>(expr) };

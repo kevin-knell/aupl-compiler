@@ -8,7 +8,7 @@
 #include "text_color.hpp"
 #include "shared_type.hpp"
 #include "variable_expression.hpp"
-#include <assert.h>
+#include "compiler_error.hpp"
 
 namespace cmp {
 std::vector<ExprPtr *> VariableExpression::get_expressions() {
@@ -94,7 +94,7 @@ void VariableExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 			
 			scope = Scope::find_scope(cls->scope, name);
 		}
-		assert(scope);
+		COMPILER_ASSERT(scope, "");
 	} else {
 		scope = Scope::find_scope(name_analysis_info.scope, name);
 	}

@@ -2,7 +2,7 @@
 #include "variable_symbol.hpp"
 #include "variable_expression.hpp"
 #include "declare_statement.hpp"
-#include <assert.h>
+#include "compiler_error.hpp"
 
 namespace cmp {
 

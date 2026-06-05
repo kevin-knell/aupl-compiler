@@ -7,12 +7,18 @@
 #include "primitive_type.hpp"
 #include "pointer_type.hpp"
 #include "shared_type.hpp"
-#include <cassert>
+#include "compiler_error.hpp"
+#include <format>
 
 namespace cmp {
 
-SymbolBuilder::SymbolBuilder(const std::vector<Token>& tokens, SymbolTable& symbol_table)
-    : tokens(tokens), symbol_table(symbol_table), index(0) {}
+SymbolBuilder::SymbolBuilder(
+		const SourceFile& source_file,
+		SymbolTable& symbol_table)
+    		:	source_file(source_file),
+				tokens(source_file.tokens),
+				symbol_table(symbol_table),
+				index(0) {}
 
 bool SymbolBuilder::has_more_tokens() const {
     return index < tokens.size();
@@ -36,22 +42,31 @@ bool SymbolBuilder::expect(const std::string& value) {
     return index < tokens.size() && tokens[index].value == value;
 }
 
+Error& SymbolBuilder::add_error(size_t start_idx, const std::string message, Error::Level level) {
+	return symbol_table.add_error(source_file, start_idx, index, message, level);
+}
+
 void SymbolBuilder::parse_class() {
     // ==============================================================
     // parse header
     // ==============================================================
 
+	// class name
+	//		'class' IDENTIFIER
     if (!expect("class")) {
-        throw std::runtime_error("Expected 'class'");
-    }
-    next(); // consume 'class'
+		add_error(0, "Expected 'class'", Error::ERROR);
+    } else {
+		(void) next(); // consume 'class'
+	}
 
     if (!match(TokenType::IDENTIFIER)) {
-        throw std::runtime_error("Expected class name identifier");
-    }
+		add_error(0, "Expected class name identifier", Error::ERROR);
+    } else {
+		class_name = next().value;
+	}
 
-    std::string class_name = next().value;
-
+	// parent
+	//		':' IDENTIFIER
     std::string parent_name;
     std::shared_ptr<ClassSymbol> parent;
 
@@ -95,7 +110,8 @@ void SymbolBuilder::parse_class() {
         this_class = it->second;
         this_class->is_declared = true;
     } else {
-        throw std::runtime_error("Class '" + class_name + "' is already declared");
+		add_error(index, "Class '" + class_name + "' is already declared", Error::CRITICAL);
+		return;
     }
 
 	this_class->parent = parent;
@@ -103,13 +119,24 @@ void SymbolBuilder::parse_class() {
     this_class->static_scope = Scope::create(Scope::STATIC_CLASS, "(static)" + this_class->name);
 
     this_class->scope = Scope::create(Scope::CLASS, this_class->name);
-    
     this_class->scope->upper_scope = this_class->static_scope;
 
     // ==============================================================
     // parse members / functions
     // ==============================================================
     while (has_more_tokens()) {
+		size_t error_start = index;
+		
+		while (has_more_tokens()
+				&& !peek().has_flag(TokenFlagBits::FILE_ELEMENT_BEGIN)) {
+			next();
+		}
+
+		if (error_start != index) {
+			add_error(error_start, "Invalid start for header element: " + tokens[error_start].value, Error::ERROR);
+			continue;
+		}
+
         if (parse_constructor(ParserInfo{symbol_table, this_class, nullptr, this_class->static_scope})) continue;
         if (parse_function(ParserInfo{symbol_table, this_class, nullptr, this_class->static_scope})) continue;
         if (parse_operator(ParserInfo{symbol_table, this_class, nullptr, this_class->static_scope})) continue;
@@ -215,50 +242,22 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
     next(); // consume )
 
     // body
-    bool is_abstract = false;
-
     //std::cout << "parse body" << std::endl;
 
     TypePtr return_type = PrimitiveType::TYPE_VOID;
-    assert(return_type);
+    COMPILER_ASSERT(return_type, "");
     FuncPtr constructor_symbol = FunctionSymbol::create(return_type, parser_info.cls->name, parameters, scope, true);
     constructor_symbol->is_static = true; // treat constructor as static
 
     ParserInfo parser_info_body{symbol_table, parser_info.cls, constructor_symbol, scope};
 
-    if (expect("=")) {
-        next(); // consume =
-
-        if (expect("abstract")) {
-            is_abstract = true;
-            next(); // consume abstract
-        } else {
-            std::cout << "invalid constructor body" << std::endl;
-        }
-    } else if (expect("{")) {
-        next(); // consume {
-
-        while (!expect("}")) {
-            StmtVec statements = parse_statement(parser_info_body);
-
-            if (statements.empty()) {
-                std::cout << "no statement in constructor: " << peek().value << std::endl;
-                next();
-            } else {
-                constructor_symbol->scope->body.insert(constructor_symbol->scope->body.end(), statements.begin(), statements.end());
-            }
-        }
-        next(); // consume }
-    } else {
-        std::cout << "constructor has no code" << std::endl;
-    }
+    parse_body(parser_info_body, constructor_symbol);
 
     constructor_symbol->is_public = is_public;
     constructor_symbol->is_static = false;
     constructor_symbol->is_const = is_const;
-    constructor_symbol->is_abstract = is_abstract;
 	
-    parser_info.cls->functions.insert(std::pair("(constructor)", constructor_symbol));
+    parser_info.cls->functions["(constructor)"] = constructor_symbol;
 
     return true;
 }
@@ -390,7 +389,6 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
     next(); // consume )
 
     // body
-    bool is_abstract = false;
 
     FuncPtr function_symbol;
 	
@@ -401,58 +399,13 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
 	}
 	ParserInfo parser_info_body{symbol_table, parser_info.cls, function_symbol, scope};
 
-    if (expect("=")) {
-        next(); // consume =
-
-        if (expect("abstract")) {
-            is_abstract = true;
-            next(); // consume abstract
-        } else {
-            auto expression = parse_expression(parser_info_body);
-            if (expression) {
-                std::shared_ptr<ReturnStatement> return_statement = std::make_shared<ReturnStatement>(expression);
-                function_symbol->scope->body.push_back(return_statement);
-            } else {
-                std::cout << "invalid return statement" << std::endl;
-            }
-        }
-    } else if (expect("{")) {
-        next(); // consume {
-
-        while (!expect("}")) {
-			bool is_volatile = false;
-			if (expect("volatile")) {
-				next(); // consume volatile
-				is_volatile = true;
-			}
-
-			StmtVec statements = parse_statement(parser_info_body);
-
-            if (statements.empty()) {
-                std::cout << "no statement in function: " << peek().value << std::endl;
-                next();
-            } else {
-				for (auto st : statements) {
-					assert(st);
-					st->is_volatile = is_volatile;
-					assert(function_symbol);
-					assert(function_symbol->scope);
-					function_symbol->scope->body.push_back(st);
-					std::cout << st->to_string() << std::endl;
-				}
-            }
-        }
-        next(); // consume }
-    } else {
-        std::cout << "function has no code" << std::endl;
-    }
+    parse_body(parser_info_body, function_symbol);
 
     // result
 
     function_symbol->is_public = is_public;
     function_symbol->is_static = is_static;
     function_symbol->is_const = is_const;
-    function_symbol->is_abstract = is_abstract;
 
     parser_info.cls->functions.insert(std::pair(function_symbol->name, function_symbol));
 
@@ -484,7 +437,7 @@ bool SymbolBuilder::parse_operator(ParserInfo parser_info) {
 	}
 	op = next().value;
 
-	std::cout << op << std::endl;
+	//std::cout << op << std::endl;
 
 	std::string name = "operator" + op;
 
@@ -520,14 +473,14 @@ bool SymbolBuilder::parse_operator(ParserInfo parser_info) {
         TypePtr arg_type = parse_type(parser_info_header);
         if (!arg_type) {
             // TODO: add error
-            std::cout << "arg type error: " << peek().value << std::endl;
+            std::cerr << "arg type error: " << peek().value << std::endl;
             next();
             continue;
         }
 
         // name
         if (!match(TokenType::IDENTIFIER)) {
-            std::cout << "arg name error: " << peek().value << std::endl;
+            std::cerr << "arg name error: " << peek().value << std::endl;
             next();
             continue;
         }
@@ -546,48 +499,13 @@ bool SymbolBuilder::parse_operator(ParserInfo parser_info) {
     FuncPtr function_symbol = FunctionSymbol::create(return_type, name, parameters, scope, false);
     ParserInfo parser_info_body{symbol_table, parser_info.cls, function_symbol, scope};
 
-    if (expect("=")) {
-        next(); // consume =
-
-		if (auto expression = parse_expression(parser_info_body)) {
-			std::shared_ptr<ReturnStatement> return_statement = std::make_shared<ReturnStatement>(expression);
-			function_symbol->scope->body.push_back(return_statement);
-		} else {
-			std::cout << "invalid return statement" << std::endl;
-		}
-    } else if (expect("{")) {
-        next(); // consume {
-
-        while (!expect("}")) {
-			bool is_volatile = false;
-			if (expect("volatile")) {
-				next(); // consume volatile
-				is_volatile = true;
-			}
-
-			StmtVec statements = parse_statement(parser_info_body);
-
-            if (statements.empty()) {
-                std::cout << "no statement in function: " << peek().value << std::endl;
-                next();
-            } else {
-				for (auto st : statements) {
-					st->is_volatile = is_volatile;
-					function_symbol->scope->body.push_back(st);
-				}
-            }
-        }
-        next(); // consume }
-    } else {
-        std::cout << "function has no code" << std::endl;
-    }
+	parse_body(parser_info_body, function_symbol);
 
     // result
 
     function_symbol->is_public = true;
     function_symbol->is_static = false;
     function_symbol->is_const = false;
-    function_symbol->is_abstract = false;
 
     parser_info.cls->functions.insert(std::pair(function_symbol->name, function_symbol));
 
@@ -659,11 +577,102 @@ bool SymbolBuilder::parse_variable(ParserInfo parser_info) {
     
     scope->variables[name] = variable_symbol;
 
-	if (is_static) {
-		std::cout << "static var: " << variable_symbol->to_string() << std::endl;
+    return true;
+}
+
+void SymbolBuilder::parse_body(ParserInfo parser_info, FuncPtr function_symbol) {
+	COMPILER_ASSERT(function_symbol, "");
+
+	bool expect_expr;		// =
+	bool expect_body;		// { }
+
+	if (expect("=")) {
+        next(); // consume '='
+
+		if (expect("abstract")) {
+            next(); // consume 'abstract'
+            function_symbol->is_abstract = true;
+			return;
+        }
+
+		expect_expr = true;
+		expect_body = false;
+	} else if (expect("{")) {
+		next(); // consume '{'
+		expect_expr = false;
+		expect_body = true;
+	} else {
+		// error section
+		if (expect("abstract")) {
+            next(); // consume 'abstract'
+            function_symbol->is_abstract = true;
+			add_error(index, "missing '='", Error::ERROR);
+			return;
+        }
+
+		expect_expr = false;
+		expect_body = false;
+
+		// recover to statement or file element
+		size_t error_start_index = index;
+
+		while (has_more_tokens()
+				&& !expect("}")
+				&& !peek().has_flag(
+					TokenFlagBits::STMT_BEGIN
+					| TokenFlagBits::FILE_ELEMENT_BEGIN
+				)) {
+			next();
+		}
+
+		add_error(error_start_index, "function " + function_symbol->name + " has no code", Error::ERROR);
 	}
 
-    return true;
+	if (expect_expr || !expect_body) {
+		size_t error_start_index = index;
+		
+		auto expression = parse_expression(parser_info);
+
+		if (expression) {
+			std::shared_ptr<ReturnStatement> return_statement = std::make_shared<ReturnStatement>(expression);
+			function_symbol->scope->body.push_back(return_statement);
+		} else {
+			while (has_more_tokens()
+					&& !peek().has_flag(TokenFlagBits::FILE_ELEMENT_BEGIN)) {
+				next();
+			}
+
+			add_error(error_start_index, "invalid expression", Error::ERROR);
+		}
+
+		if (expect_expr) return;
+    }
+	
+	// try parsing a whole body as final option
+	while (!expect("}")) {
+		StmtVec statements = parse_statement(parser_info);
+
+		if (statements.empty()) {
+			size_t error_start_index = index;
+
+			while (has_more_tokens()
+					&& !expect("}")
+					&& !peek().has_flag(TokenFlagBits::STMT_BEGIN)) {
+				next();
+			}
+
+			add_error(error_start_index, "invalid statement in function " + function_symbol->head_to_string(), Error::ERROR);
+		} else {
+			for (auto st : statements) {
+				COMPILER_ASSERT(st, "");
+				st->is_volatile = false;
+				COMPILER_ASSERT(function_symbol->scope, "");
+				function_symbol->scope->body.push_back(st);
+				//std::cout << st->to_string() << std::endl;
+			}
+		}
+	}
+	next(); // consume '}'
 }
 
 }

@@ -3,7 +3,6 @@
 #include <type_traits>
 #include <string>
 #include "forward_declarations.hpp"
-#include "assert.h"
 #include "text_color.hpp"
 #include "instructions.hpp"
 
@@ -35,6 +34,7 @@
 #include "class_db.hpp"
 #include <iomanip>
 #include <functional>
+#include "compiler_error.hpp"
 
 #define BCG_DEBUG_PRINT(m_text) \
 	if (BytecodeGenerator::bcg_debug_print) { \
@@ -595,13 +595,13 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(
 		const BinaryExpression &binary_expr,
 		VarExprPtr dest_var) {
 	// check expressions
-	assert(binary_expr.left->get_kind() == Expression::VARIABLE);
-	assert(binary_expr.right->get_kind() == Expression::VARIABLE);
+	COMPILER_ASSERT(binary_expr.left->get_kind() == Expression::VARIABLE, "");
+	COMPILER_ASSERT(binary_expr.right->get_kind() == Expression::VARIABLE, "");
 	
 	// check types
-	assert(dest_var->get_type()->get_kind() == Type::PRIMITIVE);
-	assert(binary_expr.left->get_type()->get_kind() == Type::PRIMITIVE);
-	assert(binary_expr.right->get_type()->get_kind() == Type::PRIMITIVE);
+	COMPILER_ASSERT(dest_var->get_type()->get_kind() == Type::PRIMITIVE, "");
+	COMPILER_ASSERT(binary_expr.left->get_type()->get_kind() == Type::PRIMITIVE, "");
+	COMPILER_ASSERT(binary_expr.right->get_type()->get_kind() == Type::PRIMITIVE, "");
 
 	auto left_op = std::dynamic_pointer_cast<VariableExpression>(binary_expr.left);
 	auto right_op = std::dynamic_pointer_cast<VariableExpression>(binary_expr.right);
@@ -636,7 +636,7 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(
 		const LoadConstExpression &expr,
 		VarExprPtr dest_var) {
 	size_t size = dest_var->get_type()->get_size();
-	assert(expr.get_type()->get_size() >= size);
+	COMPILER_ASSERT(expr.get_type()->get_size() >= size, "");
 	if (size == 0) return;
 	
 	vm::Instruction op_code;

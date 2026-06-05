@@ -5,6 +5,7 @@
 #include <string>
 #include "class_db.hpp"
 #include "forward_declarations.hpp"
+#include "source_file.hpp"
 
 namespace vm {
 	class ClassDB;
@@ -14,9 +15,11 @@ namespace cmp {
 
 struct SymbolTable {
     std::unordered_map<std::string, ClassPtr> classes;
+    std::vector<Error> errors;
 	std::unordered_map<std::string, TypePtr> native_types;
 	std::vector<FuncPtr> global_native_functions;
 	std::vector<vm::Value> const_memory;
+	std::map<std::string, SourceFile> source_files;
 	ScopePtr global_scope;
 
 	SymbolTable(vm::ClassDB& db);
@@ -25,6 +28,13 @@ struct SymbolTable {
 	SymbolTable& operator= (const SymbolTable& other) = delete;
 
 	void generate_scope_structures() const;
+
+	Error& add_error(
+		const SourceFile& source_file,
+		const size_t start_token_idx,
+		const size_t end_token_idx,
+		const std::string message,
+		Error::Level level);
 };
 
 }

@@ -12,7 +12,7 @@
 #include "label_statement.hpp"
 #include "label.hpp"
 #include <text_color.hpp>
-#include <assert.h>
+#include "compiler_error.hpp"
 
 //#define RF_DEBUG_VERBOSE
 
@@ -45,7 +45,7 @@ void RegisterFormatConverter::convert_scope(cmp::ScopePtr current_scope) {
 
 		statements.clear();
 
-		assert(stmt);
+		COMPILER_ASSERT(stmt, "");
 		stmt->accept(*this);
 
 		statements.push_back(stmt);
@@ -92,7 +92,7 @@ void RegisterFormatConverter::convert_to_register_format(ExprPtr expr, bool is_v
 
     for (auto p : expr->get_expressions()) {
         auto& sub_expr = *p;
-        assert(sub_expr);
+        COMPILER_ASSERT(sub_expr, "");
 		
 		if (sub_expr->get_level() == 0) continue;
 

@@ -34,7 +34,10 @@ const std::string PAREN_COLORS[4] = {
 #define C_IDENTIFIER(s)     std::string(CYAN + s + CLEAR)
 #define C_TEMP(s)           std::string(GREY + s + CLEAR)
 #define C_HIDE(s)           std::string(FAINT + s + CLEAR)
-#define C_ERROR(s)          std::string(RED + STRIKETHROUGH+ s + CLEAR)
+#define C_HINT(s)           std::string(GREEN + s + CLEAR)
+#define C_WARNING(s)        std::string(YELLOW + s + CLEAR)
+#define C_ERROR(s)          std::string(RED + s + CLEAR)
+#define C_CRITICAL(s)       std::string(RED + ITALIC + s + CLEAR)
 #define C_UNRES(s)          std::string(RED_BG + s + CLEAR)
 
 #define C_PAREN_L           std::string(PAREN_COLORS[paren_count-- % 4] + "(" + CLEAR)

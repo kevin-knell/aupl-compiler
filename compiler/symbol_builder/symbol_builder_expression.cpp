@@ -12,7 +12,7 @@
 #include "shared_type.hpp"
 #include "index_expression.hpp"
 #include <iostream>
-#include <cassert>
+#include "compiler_error.hpp"
 
 namespace cmp {
 
@@ -295,7 +295,7 @@ ExprPtr SymbolBuilder::parse_primary(ParserInfo& parser_info) {
     if (match(TokenType::STRING_LITERAL)) {
 		std::string value = next().value;
 		auto it = parser_info.symbol_table.native_types.find("String");
-		assert(it != parser_info.symbol_table.native_types.end());
+		COMPILER_ASSERT(it != parser_info.symbol_table.native_types.end(), "");
 		auto string_type = it->second;
 		auto result = std::make_shared<StringLiteralExpression>(string_type, value.substr(1, value.size() - 2));
 		return result;

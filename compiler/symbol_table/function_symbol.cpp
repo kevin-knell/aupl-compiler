@@ -34,7 +34,13 @@ FuncPtr FunctionSymbol::create(
 }
 
 FunctionSymbol::FunctionSymbol(Private, vm::MethodPair &method_pair)
-		: return_type(get_type_from_cpp(method_pair.return_type)), name(method_pair.name), method_pair(&method_pair), is_constructor(method_pair.is_constructor) {}
+		: return_type(get_type_from_cpp(method_pair.return_type)), name(method_pair.name), method_pair(&method_pair), is_constructor(method_pair.is_constructor)
+		{
+			for (size_t i = 0; i < method_pair.arg_count; ++i) {
+				auto var = VariableSymbol::create(get_type_from_cpp(method_pair.arg_types[i]), method_pair.arg_names[i]);
+				parameters.push_back(var);
+			}
+		}
 
 FunctionSymbol::FunctionSymbol(
 		Private,
@@ -46,8 +52,8 @@ FunctionSymbol::FunctionSymbol(
 			name(name),
 			parameters(parameters),
 			scope(std::move(scope)),
-			is_override(false),
-			is_constructor(is_constructor)
+			is_constructor(is_constructor),
+			is_override(false)
 {
 	scope->name = head_to_string();
 }
@@ -61,9 +67,9 @@ FunctionSymbol::FunctionSymbol(
 		:	return_type(std::move(return_type)),
 			name(name),
 			parameters(parameters),
-			is_override(true),
 			scope(std::move(scope)),
-			is_constructor(is_constructor)
+			is_constructor(is_constructor),
+			is_override(true)
 {
 	scope->name = head_to_string();
 }
@@ -84,8 +90,8 @@ std::string FunctionSymbol::head_to_string() {
     std::string args = "(";
 
     for (VarPtr& v : parameters) {
-        assert(v);
-		assert(v->type);
+        COMPILER_ASSERT(v, "");
+		COMPILER_ASSERT(v->type, "");
 		
 		if (args.length() > 1) {
             args += ", ";
@@ -108,10 +114,10 @@ std::string FunctionSymbol::to_string() {
 		return head;
 	}
 
-	assert(scope);
+	COMPILER_ASSERT(scope, "");
 
     std::string code;
-	assert(scope->body.empty() || scope->body.front());
+	COMPILER_ASSERT(scope->body.empty() || scope->body.front(), "");
 
     if (is_abstract) {
         code = " = abstract";
@@ -122,7 +128,7 @@ std::string FunctionSymbol::to_string() {
 		std::function<void(ScopePtr sc)> add_code_str = [&](ScopePtr sc) {
         	code += C_BRACE_L + "\n";
 			for (StmtPtr& s : sc->body) {
-				assert(s);
+				COMPILER_ASSERT(s, "");
         	    code += s->to_string();
         	    code += "\n";
         	}
@@ -146,7 +152,7 @@ std::string FunctionSymbol::to_string() {
 std::string FunctionSymbol::to_cpp_string_prototype() {
 	std::stringstream ss;
 
-	assert(return_type);
+	COMPILER_ASSERT(return_type, "");
 
 	if (!is_constructor) {
 		if (is_static) {
@@ -193,7 +199,7 @@ std::string FunctionSymbol::to_cpp_string(std::string context) {
 
 	std::stringstream ss;
 
-	assert(return_type);
+	COMPILER_ASSERT(return_type, "");
 
 	if (!is_constructor) {
 		ss << return_type->to_cpp_type_str();

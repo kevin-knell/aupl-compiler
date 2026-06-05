@@ -79,12 +79,8 @@ int main(int argc, char** argv) {
 	{
 		auto it = contains_arg(args, {"-o"});
 		
-		std::cout << "it" << std::endl;
-		
 		if (it != args.end()) {
 			it++;
-
-			std::cout << "it" << std::endl;
 			
 			if (it == args.end()) {
 				std::cerr << "no arg for -o!" << std::endl;
@@ -118,29 +114,10 @@ int main(int argc, char** argv) {
     for (const auto& file : files) {
         std::string content = cmp::get_text_from_file(file);
 		
-		cmp::parse_file(content, symbol_table);
+		cmp::parse_file(file, content, symbol_table);
     }
 
-    cmp::NameAnalyzer name_analyzer(symbol_table);
-    name_analyzer.resolve_variables();
-
-    // TODO: short circuit if
-
-    cmp::RegisterFormatConverter register_format_converter(symbol_table);
-	register_format_converter.convert_to_register_format();
-
-    std::vector<cmp::Optimizer*> optimizers;
-    optimizers.push_back(static_cast<cmp::Optimizer*>(new cmp::ConstFoldingOptimizer()));
-    optimizers.push_back(static_cast<cmp::Optimizer*>(new cmp::EraseUnusedVariableOptimizer()));
-
-    for (int i = 0; i < 1; ++i) {
-        for (auto p : optimizers) {
-            p->optimize(symbol_table);
-        }
-    }
-	
-	symbol_table.generate_scope_structures();
-
+	// print parsed classes & functions
 	for (auto [cn, cls] : symbol_table.classes) {
 		if (cls->native_class_bind) {
 			continue;
@@ -152,10 +129,48 @@ int main(int argc, char** argv) {
 			std::cout << f->to_string() << std::endl;
 		}
 	}
+
+    cmp::NameAnalyzer name_analyzer(symbol_table);
+    name_analyzer.resolve_variables();
+
+    // TODO: short circuit if
+
+    cmp::RegisterFormatConverter register_format_converter(symbol_table);
+	register_format_converter.convert_to_register_format();
+
+	if (!symbol_table.errors.empty()) {
+		return 1;
+	}
+
+	// optimize
+    std::vector<cmp::Optimizer*> optimizers;
+    optimizers.push_back(static_cast<cmp::Optimizer*>(new cmp::ConstFoldingOptimizer()));
+    optimizers.push_back(static_cast<cmp::Optimizer*>(new cmp::EraseUnusedVariableOptimizer()));
+
+    for (int i = 0; i < 1; ++i) {
+        for (auto p : optimizers) {
+            p->optimize(symbol_table);
+        }
+    }
 	
-	// generate bytecode
+	// scope structure / memory layout
+	symbol_table.generate_scope_structures();
+
+	// print final classes & functions
+	for (auto [cn, cls] : symbol_table.classes) {
+		if (cls->native_class_bind) {
+			continue;
+		}
+
+		std::cout << cn << std::endl;
+		
+		for (auto [fn, f] : cls->functions) {
+			std::cout << f->to_string() << std::endl;
+		}
+	}
 
 #ifdef GEN_BC
+	// generate bytecode
 	auto size_gen = cmp::BytecodeGenerator<true>(symbol_table);
     size_t bytecode_size = size_gen.generate_bytecode();
 	
@@ -196,8 +211,8 @@ int main(int argc, char** argv) {
 #endif
 
 #define GEN_CPP
-
 #ifdef GEN_CPP
+	// generate C++
 	std::ofstream hpp_file(output_path + ".hpp", std::ios::trunc);
 	std::ofstream cpp_file(output_path + ".cpp", std::ios::trunc);
 

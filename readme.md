@@ -1,5 +1,5 @@
 # AUPL - Another Unnecessary Programming Language
-(c) 2025 Kevin Knell
+(c) 2025 Chloe Knell
 
 **Status:** Experimental / Early Development
 
@@ -47,4 +47,4 @@ Contributions are welcome as the project is in early development. Please check b
 
 ## Author
 
-Kevin Knell
+Chloe Knell

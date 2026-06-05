@@ -13,6 +13,8 @@
 #include "forward_declarations.hpp"
 #include "pointer_type.hpp"
 
+#include "compiler_error.hpp"
+
 namespace cmp {
 
 std::string CallExpression::to_string() const {
@@ -57,142 +59,68 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 
 	if (!obj_expr) {
 		// native constructor
-		auto native_types = name_analysis_info.symbol_table.native_types;
+		auto& native_types = name_analysis_info.symbol_table.native_types;
 		auto it = native_types.find(name);
 		if (it != native_types.end()) {
-			//std::cout << "function is type: " << it->second->to_string() << std::endl;
 			auto nat = std::dynamic_pointer_cast<NativeClassType>(it->second);
-
-			// add candidates
-			FuncVec candidates;
-			for (auto nat_func : nat->functions) {
-				if (nat_func->name == name
-						&& nat_func->method_pair->arg_count == arguments.size()) {
-					candidates.push_back(nat_func);
-					//std::cout << "candidate: " << nat_func->to_string() << std::endl;
-				}
-			}
-
-			FuncVec secondary_candidates;
-
-			for (auto nat_func : candidates) {
-				bool has_different_type = false;
-				bool has_incompatible_type = false;
-				
-				for (size_t i = 0; i < nat_func->method_pair->arg_types.size(); i++) {
-					std::string cpp_type_name = nat_func->method_pair->arg_types[i];
-					auto arg = arguments[i];
-					TypePtr type = arg->get_type();
-
-					if (!type) {
-						std::cerr << "type == null_ptr! " << arg->to_string() << std::endl;
-						has_different_type = true;
-					}
-
-					assert(type);
-
-					if (!type->is_cpp_type(cpp_type_name)) {
-						//std::cout << type->to_string() << type->get_kind() << (type->get_inner_type().get_kind()) << " is not " << cpp_type_name << std::endl;
-						has_different_type = true;
-
-						if (!type->is_convertable_to_cpp_type(cpp_type_name)) {
-							has_incompatible_type = true;
-							std::cout << type->to_string() << " not convertable to " << cpp_type_name << std::endl;
-						}
-					}
-				}
-
-				if (!has_different_type) {
-					f = nat_func;
-					return;
-				}
-
-				if (!has_incompatible_type) {
-					secondary_candidates.push_back(nat_func);
-				}
-			}
-
-			if (secondary_candidates.size() == 1) {
-				f = secondary_candidates.front();
-				return;
-			}
-
-			if (secondary_candidates.size() > 1) {
-				std::cerr << "function call " << to_string() << " is ambigous!" << std::endl;
-				
-				for (auto nat_func : candidates) {
-					std::cerr << nat_func->to_string() << std::endl;
-				}
-			}
-
-			std::cout << "no valid constructor!" << std::endl;
+			FuncVec candidates = get_candidates(nat->functions);
+			const FuncVec secondary_candidates = get_secondary_candidates(candidates);
+			resolve_from_secondary_candidates(secondary_candidates, name_analysis_info);
 			return;
 		}
 
 		// global native func
-		auto global_native_functions = name_analysis_info.symbol_table.global_native_functions;
-		FuncVec candidates;
-		for (auto nat_func : global_native_functions) {
-			// add candidates
-			if (nat_func->name == name
-					&& nat_func->method_pair->arg_count == arguments.size()) {
-				candidates.push_back(nat_func);
-				//std::cout << "candidate: " << nat_func->to_string() << std::endl;
+		FuncVec& global_native_functions = name_analysis_info.symbol_table.global_native_functions;
+		FuncVec global_native_functions_same_name;
+		std::copy_if(
+			global_native_functions.cbegin(),
+			global_native_functions.cend(),
+			std::back_inserter(global_native_functions_same_name),
+			[&](FuncPtr f2) {
+				return f2->name == name;
 			}
-		}
+		);
 
-		for (auto nat_func : candidates) {
-			bool wrong_type = false;
-			
-			for (size_t i = 0; i < nat_func->method_pair->arg_types.size(); i++) {
-				std::string cpp_type_name = nat_func->method_pair->arg_types[i];
-				TypePtr type = arguments[i]->get_type();
-
-				if (!type->is_cpp_type(cpp_type_name)) {
-					//std::cout << type->to_string() << " is not " << cpp_type_name << std::endl;
-					wrong_type = true;
-					break;
-				}
-			}
-
-			if (!wrong_type) {
-				f = nat_func;
-				return;
-			}
+		if (!global_native_functions_same_name.empty()) {
+			FuncVec candidates = get_candidates(global_native_functions_same_name);
+			FuncVec secondary_candidates = get_secondary_candidates(candidates);
+			resolve_from_secondary_candidates(secondary_candidates, name_analysis_info);
+			return;
 		}
 
 		// constructor
 		auto classes = name_analysis_info.symbol_table.classes;
 		auto class_it = classes.find(name);
 		if (class_it != classes.end()) {
+			FuncVec constructors;
+
 			auto constructed_class = class_it->second;
 			auto functions = constructed_class->functions;
-			for (auto func_it = functions.begin(); func_it != functions.end(); func_it++) {
-				if (func_it->first != "(constructor)") continue;
-				
-				auto func = func_it->second;
-				if (func->parameters.size() == arguments.size()) {
-					f = func;
-					return;
-				}
+
+			for (auto func_it = functions.begin(); func_it != functions.end(); ++func_it) {
+				if (func_it->second->is_constructor) continue;
+				constructors.push_back(func_it->second);
 			}
 			
-			std::cerr << "no valid constructor found!" << std::endl;
+			FuncVec candidates = get_candidates(constructors);
+			FuncVec secondary_candidates = get_secondary_candidates(candidates);
+			resolve_from_secondary_candidates(secondary_candidates, name_analysis_info);
 			return;
 		}
 
 		// call function in same class
-		if (!name_analysis_info.cls) {
-			std::cout << "no class" << std::endl;
-			return;
+		COMPILER_ASSERT(name_analysis_info.cls, "");
+
+		FuncVec functions;
+		
+		for (auto [fn, f] : name_analysis_info.cls->functions) {
+			functions.push_back(f);
 		}
 
-		for (auto [n2, f2] : name_analysis_info.cls->functions) {
-			if (n2 == name) {
-				f = f2;
-				return;
-			}
-		}
+		FuncVec candidates = get_candidates(functions);
+		FuncVec secondary_candidates = get_secondary_candidates(candidates);
+		resolve_from_secondary_candidates(secondary_candidates, name_analysis_info);
+		return;
 	} else {
 		obj_expr->resolve(name_analysis_info);
 
@@ -238,7 +166,7 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 						for (auto f2 : native_class_type->functions) {
 							//std::cout << f2->name << f2->method_pair->arg_count << arguments.size() << std::endl;
 							if (f2->name == name
-									&& f2->method_pair->arg_count == arguments.size()) {
+									&& f2->parameters.size() == arguments.size()) {
 								f = f2;
 								return;
 							}
@@ -272,6 +200,91 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 			}
 			default: {}
 		}
+	}
+}
+
+FuncVec CallExpression::get_candidates(FuncVec functions) {
+	FuncVec candidates;
+	for (auto f2 : functions) {
+		// add candidates
+		if (f2->name != name) continue;
+		if (f2->parameters.size() != arguments.size()) continue;
+		
+		candidates.push_back(f2);
+	}
+	return candidates;
+}
+
+FuncVec CallExpression::get_secondary_candidates(FuncVec candidates) {
+	FuncVec secondary_candidates;
+
+	for (auto f2 : candidates) {
+		bool has_different_type = false;
+		bool has_incompatible_type = false;
+
+		if (f2->method_pair) {
+			FuncPtr nat_func = f2;
+
+			for (size_t i = 0; i < nat_func->method_pair->arg_types.size(); i++) {
+				std::string cpp_type_name = nat_func->method_pair->arg_types[i];
+				auto arg = arguments[i];
+				TypePtr type = arg->get_type();
+
+				if (!type) {
+					std::cerr << "type == null_ptr! " << arg->to_string() << std::endl;
+					has_different_type = true;
+					continue;
+				}
+
+				COMPILER_ASSERT(type, "");
+
+				if (!type->is_cpp_type(cpp_type_name)) {
+					//std::cout << type->to_string() << type->get_kind() << (type->get_inner_type().get_kind()) << " is not " << cpp_type_name << std::endl;
+					has_different_type = true;
+
+					if (!type->is_convertable_to_cpp_type(cpp_type_name)) {
+						has_incompatible_type = true;
+						//std::cout << type->to_string() << " not convertable to " << cpp_type_name << std::endl;
+					}
+				}
+			}
+		} else {
+			// TODO
+		}
+
+		if (!has_different_type) {
+			return { f2 };
+		}
+
+		if (!has_incompatible_type) {
+			secondary_candidates.push_back(f2);
+		}
+	}
+
+	return secondary_candidates;
+}
+
+void CallExpression::resolve_from_secondary_candidates(FuncVec secondary_candidates, NameAnalysisInfo& name_analysis_info) {
+	if (secondary_candidates.size() == 1) {
+		f = secondary_candidates.front();
+	} else if (secondary_candidates.size() > 1) {
+		name_analysis_info.symbol_table.errors.emplace_back(
+			"", 0, 0, 0, 0,
+			"function call " + to_string() + " is ambigous!",
+			Error::ERROR
+		);
+		
+		for (auto nat_func : secondary_candidates) {
+			std::cerr << nat_func->to_string() << std::endl;
+		}
+	} else {
+		COMPILER_ASSERT(secondary_candidates.empty(), "");
+		name_analysis_info.symbol_table.add_error(
+			name_analysis_info.symbol_table.source_files.at("examples/test/main.aupl"),
+			0, 0,
+			"no function matches: " + to_string(),
+			Error::ERROR
+		);
 	}
 }
 

@@ -18,7 +18,9 @@ struct ParserInfo {
 
 class SymbolBuilder {
 public:
-    SymbolBuilder(const std::vector<Token>& tokens, SymbolTable& symbol_table);
+    SymbolBuilder(
+		const SourceFile& source_file,
+		SymbolTable& symbol_table);
 
     void parse_class();
 
@@ -26,6 +28,8 @@ public:
     bool parse_function(ParserInfo parser_info);
     bool parse_operator(ParserInfo parser_info);
     bool parse_variable(ParserInfo parser_info);
+
+	void parse_body(ParserInfo parser_info, FuncPtr function_symbol);
     
     TypePtr parse_type(ParserInfo& parser_info);
     TypePtr parse_base_type(ParserInfo& parser_info);
@@ -73,8 +77,10 @@ public:
     ExprPtr parse_initializer_list(ParserInfo& parser_info);
 
 private:
+	const SourceFile& source_file;
     const std::vector<Token>& tokens;
     SymbolTable& symbol_table;
+	std::string class_name;
     size_t index;
 
     bool has_more_tokens() const;
@@ -84,6 +90,8 @@ private:
 
     bool match(TokenType type);
     bool expect(const std::string& value);
+
+	Error& add_error(size_t start_idx, const std::string message, Error::Level level);
 };
 
 }

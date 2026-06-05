@@ -6,7 +6,7 @@
 #include "expression.hpp"
 #include "text_color.hpp"
 #include "assign_statement.hpp"
-#include <assert.h>
+#include "compiler_error.hpp"
 
 #define NA_DEBUG_PRINT(m_text) \
 	if (NameAnalyzer::na_debug_print) { \
@@ -29,8 +29,8 @@ bool NameAnalyzer::na_debug_print = false;
 bool NameAnalyzer::na_debug_print_verbose = false;
 
 static void resolve_expressions(NameAnalysisInfo& name_analysis_info, std::vector<ExprPtr*> expressions) {
-    for (auto p : expressions) {
-        auto expr = *p;
+    for (ExprPtr* p : expressions) {
+        ExprPtr expr = *p;
 		
 		if (!expr) {
 			std::cout << "no expression!" << std::endl;
@@ -43,8 +43,14 @@ static void resolve_expressions(NameAnalysisInfo& name_analysis_info, std::vecto
 			
 			expr->resolve(name_analysis_info_base);
 			if (expr->is_unresolved_symbol()) {
-				std::cout << "cannot resolve: " << expr->to_string() << std::endl;
-				exit(1);
+				name_analysis_info.symbol_table.add_error(
+					name_analysis_info.symbol_table.source_files.at("examples/test/main.aupl"),
+					0,
+					0,
+					"cannot resolve: " + expr->to_string(),
+					Error::ERROR
+				);
+				continue;
 			}
         }
         
@@ -83,7 +89,7 @@ void NameAnalyzer::resolve_variables() const {
 
 				NA_DEBUG_PRINT(C_BRACE_R);
 
-				assert(scope);
+				COMPILER_ASSERT(scope, "");
                 
 				for (auto& lower : scope->lower_scopes) {
 					if (auto lower_scope = lower.lock())
