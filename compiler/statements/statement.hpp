@@ -6,6 +6,7 @@
 #include "function_symbol.hpp"
 #include "forward_declarations.hpp"
 #include "statement_visitor.hpp"
+#include "source_location.hpp"
 
 #define OVERRIDE_ACCEPT_STATMENT_VISITOR void accept(StatementVisitor& visitor) override { visitor.visit(*this); }
 #define DEFINE_SELF_STMT(m_type) \
@@ -25,6 +26,7 @@ struct Statement : public std::enable_shared_from_this<Statement> {
         LABEL
     };
 
+	SourceLocation source_location;
 	bool is_volatile = false;
 
     virtual ~Statement() = default;

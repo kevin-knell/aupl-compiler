@@ -30,9 +30,7 @@ struct SymbolTable {
 	void generate_scope_structures() const;
 
 	Error& add_error(
-		const SourceFile& source_file,
-		const size_t start_token_idx,
-		const size_t end_token_idx,
+		const SourceLocation& source_location,
 		const std::string message,
 		Error::Level level);
 };

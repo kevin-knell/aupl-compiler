@@ -71,11 +71,12 @@ void SymbolTable::generate_scope_structures() const {
 }
 
 Error &SymbolTable::add_error(
-		const SourceFile& source_file,
-		const size_t start_token_idx,
-		const size_t end_token_idx,
+		const SourceLocation& source_location,
 		const std::string message,
 		Error::Level level) {
+	const SourceFile& source_file = *source_location.source_file;
+	const size_t start_token_idx = source_location.start_token_index;
+	const size_t end_token_idx = source_location.end_token_index;
 	Token start_token = source_file.tokens[start_token_idx];
 	Token end_token = source_file.tokens[end_token_idx];
 
@@ -94,40 +95,7 @@ Error &SymbolTable::add_error(
 			error.get_error_text() <<
 			message << std::endl;
 
-	size_t context_start = start_token.pos;
-	size_t context_size = end_token.pos + end_token.value.size() - context_start;
-	
-	const std::string context = source_file.text.substr(context_start, context_size);
-
-	SourceLocation source_location(source_file, start_token_idx, end_token_idx);
-
-	std::cerr << source_location.get_text_as_rect();
-
-	/*size_t current_line_in_context = start_token.line;
-	std::stringstream context_with_lines;
-
-
-	context_with_lines
-		<< "\t"
-		<< std::format("{:>4}| ", current_line_in_context);
-	
-	current_line_in_context += 1;
-
-	for (auto it = context.begin(); it != context.end(); ++it) {
-		char c = *it;
-
-		context_with_lines << c;
-		
-		if (c == '\n') {
-			context_with_lines
-				<< "\t"
-				<< std::format("{:>4}| ", current_line_in_context);
-			
-			current_line_in_context += 1;
-		}
-	}*/
-
-	//std::cerr << context_with_lines.str() << std::endl;
+	std::cerr << source_location.get_text_as_rect() << std::endl;
 	
 	return error;
 }

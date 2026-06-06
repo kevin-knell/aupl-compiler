@@ -280,8 +280,7 @@ void CallExpression::resolve_from_secondary_candidates(FuncVec secondary_candida
 	} else {
 		COMPILER_ASSERT(secondary_candidates.empty(), "");
 		name_analysis_info.symbol_table.add_error(
-			name_analysis_info.symbol_table.source_files.at("examples/test/main.aupl"),
-			0, 0,
+			source_location,
 			"no function matches: " + to_string(),
 			Error::ERROR
 		);

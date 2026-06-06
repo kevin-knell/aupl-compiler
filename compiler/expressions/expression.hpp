@@ -8,6 +8,7 @@
 #include "name_analysis_info.hpp"
 #include "forward_declarations.hpp"
 #include "expression_visitor.hpp"
+#include "source_location.hpp"
 #include <value.hpp>
 
 #define OVERRIDE_ACCEPT_EXPRESSION_VISITOR \
@@ -41,6 +42,8 @@ struct Expression : public std::enable_shared_from_this<Expression> {
 
 		TUPLE
     };
+
+	SourceLocation source_location;
 
     virtual ~Expression() = default;
 

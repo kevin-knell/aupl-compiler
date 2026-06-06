@@ -294,8 +294,8 @@ ExprPtr SymbolBuilder::parse_primary(ParserInfo& parser_info) {
 
     if (match(TokenType::STRING_LITERAL)) {
 		std::string value = next().value;
-		auto it = parser_info.symbol_table.native_types.find("String");
-		COMPILER_ASSERT(it != parser_info.symbol_table.native_types.end(), "");
+		auto it = symbol_table.native_types.find("String");
+		COMPILER_ASSERT(it != symbol_table.native_types.end(), "");
 		auto string_type = it->second;
 		auto result = std::make_shared<StringLiteralExpression>(string_type, value.substr(1, value.size() - 2));
 		return result;
@@ -342,7 +342,11 @@ ExprPtr SymbolBuilder::parse_call(ParserInfo& parser_info) {
     }
     next(); // consume )
 
-    return std::make_shared<CallExpression>(name, args, nullptr);
+	std::shared_ptr<CallExpression> call_expr = std::make_shared<CallExpression>(name, args, nullptr);
+
+	call_expr->source_location = SourceLocation(&source_file, start_idx, index);
+
+    return call_expr;
 }
 
 ExprPtr SymbolBuilder::parse_tuple(ParserInfo &parser_info) {

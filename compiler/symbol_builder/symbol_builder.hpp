@@ -9,14 +9,24 @@
 
 namespace cmp {
 
-struct ParserInfo {
-	SymbolTable& symbol_table;
-    const ClassPtr cls;
-    const FuncPtr func;
-    const ScopePtr scope;
-};
-
 class SymbolBuilder {
+private:
+	struct ParserInfo {
+		const ClassPtr cls;
+		const FuncPtr func;
+		const ScopePtr scope;
+
+		ParserInfo() = delete;
+
+		ParserInfo(
+			const ClassPtr cls,
+			const FuncPtr func,
+			const ScopePtr scope)
+				: 	cls(cls),
+					func(func),
+					scope(scope) {}
+	};
+
 public:
     SymbolBuilder(
 		const SourceFile& source_file,

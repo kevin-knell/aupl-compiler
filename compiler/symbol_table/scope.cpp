@@ -8,6 +8,7 @@
 #include "text_color.hpp"
 #include <iomanip>
 #include <algorithm>
+#include "expression.hpp"
 
 #ifdef SCOPE_DEBUG_VERBOSE
 #define SCOPE_DEBUG
@@ -114,7 +115,7 @@ std::string Scope::structure_to_string() const {
 
 VarPtr Scope::get_temp(TypePtr type, ExprPtr init_val, std::string temp_name) {
     std::string name = "%" + temp_name + std::to_string(temp_count++);
-    VarPtr var = VariableSymbol::create(type, name, init_val);
+    VarPtr var = VariableSymbol::create(init_val->source_location, type, name, init_val);
     var->is_const = true;
     variables[name] = var;
     return var;

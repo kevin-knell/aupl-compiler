@@ -12,6 +12,7 @@
 #include "class_type.hpp"
 #include "native_class_type.hpp"
 #include "invalid_type.hpp"
+#include "source_location.hpp"
 
 
 namespace cmp {
@@ -25,6 +26,7 @@ public:
     std::shared_ptr<ClassSymbol> parent;
 	
 	const vm::ClassBind* native_class_bind;
+	SourceLocation source_location;
     
 	ScopePtr static_scope;
     ScopePtr scope;
@@ -48,13 +50,13 @@ public:
 			: name(name),
 			native_class_bind(nullptr),
 			static_scope(Scope::create(Scope::STATIC_CLASS, "(static)" + name)),
-			static_var(VariableSymbol::create(std::make_shared<StaticClassType>(name), "(static)" + name)),
+			static_var(VariableSymbol::create(source_location, std::make_shared<StaticClassType>(name), "(static)" + name)),
 			type(std::make_shared<ClassType>(name)) {}
 
     ClassSymbol(Private, const vm::ClassBind& native_class_bind)
 			: name(native_class_bind.name),
 			native_class_bind(&native_class_bind),
-			static_var(VariableSymbol::create(std::make_shared<StaticClassType>(name), "(static)" + name)),
+			static_var(VariableSymbol::create(source_location, std::make_shared<StaticClassType>(name), "(static)" + name)),
 			type(std::make_shared<NativeClassType>(native_class_bind)),
 			is_declared(true) {}
 };

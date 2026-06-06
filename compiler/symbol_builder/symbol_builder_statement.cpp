@@ -160,9 +160,12 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
 		next(); // consume ')'
 		
 		expr = std::make_shared<CallExpression>(constructor_type->to_string(), args, nullptr);
+
+		expr->source_location = SourceLocation(&source_file, start_idx, index);
 	}
 
-    VarPtr var = VariableSymbol::create(variable_type, var_name, expr);
+	SourceLocation source_location(&source_file, start_idx, index - 1);
+    VarPtr var = VariableSymbol::create(source_location, variable_type, var_name, expr);
     parser_info.scope->variables[var_name] = var;
     var->scope = parser_info.scope;
     return { std::make_shared<DeclareStatement>(var) };
@@ -181,7 +184,7 @@ ScopePtr SymbolBuilder::parse_block(ParserInfo& parser_info, const std::string& 
     scope->upper_scope = parser_info.scope;
     parser_info.scope->lower_scopes.push_back(std::weak_ptr<Scope>(scope));
 
-    auto parser_info_sub = ParserInfo{.symbol_table = symbol_table, .cls = parser_info.cls, .func = parser_info.func, .scope = scope};
+    auto parser_info_sub = ParserInfo(parser_info.cls, parser_info.func, scope);
 
     while (!expect("}")) {
         bool is_volatile = false;
@@ -275,7 +278,8 @@ std::vector<StmtPtr> SymbolBuilder::parse_for(ParserInfo& parser_info) {
 
 	ERROR_IF_NOT(expr, "no expression after 'for ... in'");
 
-	VarPtr it_var = VariableSymbol::create(PrimitiveType::TYPE_INT, it_name, nullptr);
+	SourceLocation source_location(&source_file, start_idx, index - 1);
+	VarPtr it_var = VariableSymbol::create(source_location, PrimitiveType::TYPE_INT, it_name, nullptr);
 	VarExprPtr it_var_expr = std::make_shared<VariableExpression>(it_var);
 	
 	ExprPtr condition_expr = std::make_shared<BinaryExpression>(it_var_expr, expr, BinaryExpression::OPERATOR::LT);

@@ -25,13 +25,13 @@ TypePtr SymbolBuilder::parse_base_type(ParserInfo& parser_info) {
     return nullptr;
 }
 
-TypePtr SymbolBuilder::parse_native_type(ParserInfo& parser_info) {
+TypePtr SymbolBuilder::parse_native_type(ParserInfo&) {
 	if (!match(TokenType::IDENTIFIER)) {
 		return nullptr;
 	}
 	std::string id = peek().value;
 
-	auto native_types = parser_info.symbol_table.native_types;
+	auto native_types = symbol_table.native_types;
 	auto it = native_types.find(id);
 
 	if (it != native_types.end()) {

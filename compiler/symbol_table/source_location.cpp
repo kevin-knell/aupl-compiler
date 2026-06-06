@@ -7,77 +7,90 @@
 #include <numeric>
 #include "compiler_error.hpp"
 
-std::string cmp::SourceLocation::get_text() {
-	const Token start_token = source_file.tokens[start_token_index];
-	const Token end_token = source_file.tokens[end_token_index];
+constexpr size_t MAX_TABS = 256;
 
-	return source_file.text.substr(start_token.pos, end_token.pos + end_token.value.size() - start_token.pos);
-}
-
-std::string cmp::SourceLocation::get_text_as_rect() {
-	std::string text = get_text();
-
-	std::vector<std::string> lines;
-	std::vector<size_t> tabs_per_line;
-
-	std::stringstream current_line;
-	size_t current_tabs = 0;
-
-	//current_line << "\t" << std::format("{:>4}| ", source_file.tokens[start_token_index].line);
-
-	bool has_non_whitespace = false;
-	size_t min_tabs = std::numeric_limits<size_t>::max();
-
-	for (char c : text) {
-		if (c == '\t') {
-			current_tabs += 1;
-		} else if (c == '\n') {
-
-			if (has_non_whitespace) {
-				if (!lines.empty()) {
-					min_tabs = std::min(min_tabs, current_tabs);
-				}
-				tabs_per_line.push_back(current_tabs);
+namespace {
+	std::vector<std::string> get_lines(std::string text) {
+		std::vector<std::string> result;
+		std::stringstream ss;
+		
+		for (char c : text) {
+			if (c == '\n') {
+				result.push_back(ss.str());
+				ss = std::stringstream();
 			} else {
-				tabs_per_line.push_back(min_tabs);
+				ss << c;
 			}
-
-			lines.push_back(current_line.str());
-
-			current_line = std::stringstream();
-			current_tabs = 0;
-			has_non_whitespace = false;
-		} else {
-			current_line << c;
-			has_non_whitespace = true;
 		}
+
+		result.push_back(ss.str());
+
+		return result;
 	}
 
-	COMPILER_ASSERT(min_tabs < std::numeric_limits<size_t>::max(), "");
+	size_t line_get_tabs(std::string line) {
+		size_t result = 0;
 
-	tabs_per_line[0] = min_tabs;
+		for (char c : line) {
+			if (c != '\t') {
+				break;
+			}
 
-	size_t start_line = source_file.tokens[start_token_index].line;
+			++result;
+		}
+
+		return result;
+	}
+
+	std::string make_line_with_number(size_t number, std::string line) {
+		return "\t" + std::format("{:>4}| ", number) + line;
+	}
+} // namespace
+
+
+std::string cmp::SourceLocation::get_text() const {
+	if (!source_file) return "";
+
+	const Token start_token = source_file->tokens[start_token_index];
+	const Token end_token = source_file->tokens[end_token_index - 1];
+
+	return source_file->text.substr(start_token.pos, end_token.pos + end_token.value.size() - start_token.pos);
+}
+
+std::string cmp::SourceLocation::get_text_as_rect() const {
+	if (!source_file) return "";
+	
+	const std::string text = get_text();
+
+	const std::vector<std::string> lines = get_lines(text);
+
+	const size_t line_number_start = source_file->tokens[start_token_index].line;
+
+	if (lines.size() == 1) return make_line_with_number(line_number_start, lines.front());
+
+	size_t min_tabs = MAX_TABS;
+
+	for (auto it = lines.begin() + 1; it != lines.end(); ++it) {
+		if (it->empty()) continue;
+		size_t current_line_tabs_amount = line_get_tabs(*it);
+		min_tabs = std::min(min_tabs, current_line_tabs_amount);
+	}
 
 	std::stringstream result;
+	size_t current_line_number = line_number_start;
 
-	for (size_t line_idx = 0; line_idx < lines.size(); ++line_idx) {
-		result
-			<< '\t'
-			<< std::format("{:>4}| ", start_line + line_idx)
-			<< '\t';
-		
-		const std::string& line = lines[line_idx];
-		for (size_t tab_idx = min_tabs; tab_idx < tabs_per_line[line_idx]; ++tab_idx) {
-			result << '\t';
-		}
-		
-		if (line_idx > 0 && line.size() > min_tabs) {
-			result << line.substr(min_tabs);
+	std::cout << "size: " << lines.size() << std::endl;
+
+	for (auto it = lines.begin(); it != lines.end(); ++it) {
+		std::string line;
+
+		if (it != lines.begin() && it->size() > min_tabs) {
+			line = it->substr(min_tabs);
 		} else {
-			result << line;
+			line = *it;
 		}
-		
+
+		result << make_line_with_number(current_line_number++, line);
 		result << '\n';
 	}
 	

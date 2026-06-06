@@ -15,40 +15,45 @@ FuncPtr FunctionSymbol::create(vm::MethodPair &method_pair) {
 }
 
 FuncPtr FunctionSymbol::create(
+		SourceLocation source_location,
 		const TypePtr &return_type,
 		const std::string &name,
 		const std::vector<VarPtr> &parameters,
 		const ScopePtr &scope,
 		const bool is_constructor
 		) {
-	return std::make_shared<FunctionSymbol>(Private(), return_type, name, parameters, scope, is_constructor);
+	return std::make_shared<FunctionSymbol>(Private(), source_location, return_type, name, parameters, scope, is_constructor);
 }
 
 FuncPtr FunctionSymbol::create(
+		SourceLocation source_location,
 		const std::string &name,
 		const std::vector<VarPtr> &parameters,
 		const ScopePtr &scope,
 		const bool is_constructor
 		) {
-	return std::make_shared<FunctionSymbol>(Private(), name, parameters, scope, is_constructor);
+	return std::make_shared<FunctionSymbol>(Private(), source_location, name, parameters, scope, is_constructor);
 }
 
 FunctionSymbol::FunctionSymbol(Private, vm::MethodPair &method_pair)
 		: return_type(get_type_from_cpp(method_pair.return_type)), name(method_pair.name), method_pair(&method_pair), is_constructor(method_pair.is_constructor)
 		{
 			for (size_t i = 0; i < method_pair.arg_count; ++i) {
-				auto var = VariableSymbol::create(get_type_from_cpp(method_pair.arg_types[i]), method_pair.arg_names[i]);
+				SourceLocation source_location;
+				auto var = VariableSymbol::create(source_location, get_type_from_cpp(method_pair.arg_types[i]), method_pair.arg_names[i]);
 				parameters.push_back(var);
 			}
 		}
 
 FunctionSymbol::FunctionSymbol(
 		Private,
+		SourceLocation source_location,
 		const TypePtr& return_type,
 		const std::string& name,
 		const std::vector<VarPtr>& parameters,
 		const ScopePtr& scope, const bool is_constructor)
-		:	return_type(std::move(return_type)),
+		:	source_location(source_location),
+			return_type(std::move(return_type)),
 			name(name),
 			parameters(parameters),
 			scope(std::move(scope)),
@@ -60,11 +65,13 @@ FunctionSymbol::FunctionSymbol(
 
 FunctionSymbol::FunctionSymbol(
 		Private,
+		SourceLocation source_location,
 		const std::string &name,
 		const std::vector<VarPtr> &parameters,
 		const ScopePtr &scope,
 		const bool is_constructor)
-		:	return_type(std::move(return_type)),
+		:	source_location(source_location),
+			return_type(std::move(return_type)),
 			name(name),
 			parameters(parameters),
 			scope(std::move(scope)),

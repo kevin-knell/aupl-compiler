@@ -43,7 +43,8 @@ bool SymbolBuilder::expect(const std::string& value) {
 }
 
 Error& SymbolBuilder::add_error(size_t start_idx, const std::string message, Error::Level level) {
-	return symbol_table.add_error(source_file, start_idx, index, message, level);
+	SourceLocation source_location(&source_file, start_idx, index);
+	return symbol_table.add_error(source_location, message, level);
 }
 
 void SymbolBuilder::parse_class() {
@@ -137,10 +138,10 @@ void SymbolBuilder::parse_class() {
 			continue;
 		}
 
-        if (parse_constructor(ParserInfo{symbol_table, this_class, nullptr, this_class->static_scope})) continue;
-        if (parse_function(ParserInfo{symbol_table, this_class, nullptr, this_class->static_scope})) continue;
-        if (parse_operator(ParserInfo{symbol_table, this_class, nullptr, this_class->static_scope})) continue;
-        if (parse_variable(ParserInfo{symbol_table, this_class, nullptr, this_class->static_scope})) continue;
+        if (parse_constructor(ParserInfo(this_class, nullptr, this_class->static_scope))) continue;
+        if (parse_function(ParserInfo(this_class, nullptr, this_class->static_scope))) continue;
+        if (parse_operator(ParserInfo(this_class, nullptr, this_class->static_scope))) continue;
+        if (parse_variable(ParserInfo(this_class, nullptr, this_class->static_scope))) continue;
 
         // no match
         std::cout << "no match: " << peek().value << std::endl;
@@ -172,11 +173,11 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
     }
     next(); // consume constructor name
 
-    ScopePtr scope = Scope::create(Scope::FUNCTION, "(constructor)");
+    ScopePtr scope = Scope::create(Scope::FUNCTION, parser_info.cls->name);
     scope->upper_scope = parser_info.cls->scope;
-    ParserInfo parser_info_header{.symbol_table = symbol_table, .cls = parser_info.cls, .func = nullptr, .scope = scope};
+    ParserInfo parser_info_header(parser_info.cls, nullptr, scope);
 
-    // args
+	// args
     if (!expect("(")) {
         index = start_idx;
         return false;
@@ -186,7 +187,8 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
 	// add pointer to self as arg
 	auto class_type = parser_info.cls->type;
 	auto pointer_type = std::make_shared<PointerType>(class_type);
-	auto this_var = VariableSymbol::create(pointer_type, "this", nullptr);
+	SourceLocation source_location_this(&source_file, 0, 1);
+	auto this_var = VariableSymbol::create(source_location_this, pointer_type, "this", nullptr);
 	scope->args.push_back(this_var->name);
 	scope->variables[this_var->name] = this_var;
 	this_var->scope = scope;
@@ -202,6 +204,7 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
             next(); // consume ,
         }
 
+		size_t param_start_idx;
         // type
         TypePtr parsed_param_type = parse_type(parser_info_header);
         if (!parsed_param_type) {
@@ -233,7 +236,8 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
             initial_value = parse_expression(parser_info_header);
         }
 
-		auto param = VariableSymbol::create(param_type, arg_name, initial_value);
+		SourceLocation source_location(&source_file, param_start_idx, index - 1);
+		auto param = VariableSymbol::create(source_location, param_type, arg_name, initial_value);
 		scope->args.push_back(arg_name);
 		scope->variables[arg_name] = param;
 		param->scope = scope;
@@ -246,10 +250,12 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
 
     TypePtr return_type = PrimitiveType::TYPE_VOID;
     COMPILER_ASSERT(return_type, "");
-    FuncPtr constructor_symbol = FunctionSymbol::create(return_type, parser_info.cls->name, parameters, scope, true);
+
+	SourceLocation source_location(&source_file, start_idx, index - 1);
+    FuncPtr constructor_symbol = FunctionSymbol::create(source_location, return_type, parser_info.cls->name, parameters, scope, true);
     constructor_symbol->is_static = true; // treat constructor as static
 
-    ParserInfo parser_info_body{symbol_table, parser_info.cls, constructor_symbol, scope};
+    ParserInfo parser_info_body(parser_info.cls, constructor_symbol, scope);
 
     parse_body(parser_info_body, constructor_symbol);
 
@@ -298,7 +304,7 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
 	ScopePtr scope = Scope::create(Scope::FUNCTION, "(currently parsed)");
     ScopePtr upper_scope = is_static ? parser_info.cls->static_scope : parser_info.cls->scope;
     scope->upper_scope = upper_scope;
-    ParserInfo parser_info_header{.symbol_table = symbol_table, .cls = parser_info.cls, .func = nullptr, .scope = scope};
+    ParserInfo parser_info_header(parser_info.cls, nullptr, scope);
 
     // return type
 	TypePtr return_type;
@@ -332,7 +338,8 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
 		// add pointer to self as arg
 		auto class_type = parser_info.cls->type;
 		auto pointer_type = std::make_shared<PointerType>(class_type);
-		auto this_var = VariableSymbol::create(pointer_type, "this", nullptr);
+		SourceLocation source_location(&source_file, 0, 1);
+		auto this_var = VariableSymbol::create(source_location, pointer_type, "this", nullptr);
 		scope->args.push_back(this_var->name);
 		scope->variables[this_var->name] = this_var;
 		this_var->scope = scope;
@@ -349,6 +356,7 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
             next(); // consume ,
         }
 
+		size_t param_start_idx = index;
         // type
         TypePtr parsed_param_type = parse_type(parser_info_header);
         if (!parsed_param_type) {
@@ -381,7 +389,8 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
             initial_value = parse_expression(parser_info_header);
         }
 
-        VarPtr param = VariableSymbol::create(param_type, arg_name, initial_value);
+		SourceLocation source_location(&source_file, param_start_idx, index - 1);
+        VarPtr param = VariableSymbol::create(source_location, param_type, arg_name, initial_value);
         scope->args.push_back(arg_name);
 		scope->variables[arg_name] = param;
         parameters.push_back(param);
@@ -391,13 +400,15 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
     // body
 
     FuncPtr function_symbol;
+
+	SourceLocation source_location(&source_file, start_idx, index - 1);
 	
 	if (is_override) {
-		function_symbol = FunctionSymbol::create(name, parameters, scope, false);
+		function_symbol = FunctionSymbol::create(source_location, name, parameters, scope, false);
 	} else {
-		function_symbol = FunctionSymbol::create(return_type, name, parameters, scope, false);
+		function_symbol = FunctionSymbol::create(source_location, return_type, name, parameters, scope, false);
 	}
-	ParserInfo parser_info_body{symbol_table, parser_info.cls, function_symbol, scope};
+	ParserInfo parser_info_body{parser_info.cls, function_symbol, scope};
 
     parse_body(parser_info_body, function_symbol);
 
@@ -418,7 +429,7 @@ bool SymbolBuilder::parse_operator(ParserInfo parser_info) {
 	ScopePtr scope = Scope::create(Scope::FUNCTION, "(currently parsed)");
     ScopePtr upper_scope = parser_info.cls->scope;
     scope->upper_scope = upper_scope;
-    ParserInfo parser_info_header{.symbol_table = symbol_table, .cls = parser_info.cls, .func = nullptr, .scope = scope};
+    ParserInfo parser_info_header(parser_info.cls, nullptr, scope);
 
     TypePtr return_type = parse_type(parser_info);
     if (!return_type) {
@@ -449,7 +460,8 @@ bool SymbolBuilder::parse_operator(ParserInfo parser_info) {
 	// add pointer to self as arg
 	auto class_type = parser_info.cls->type;
 	auto pointer_type = std::make_shared<PointerType>(class_type);
-	auto this_var = VariableSymbol::create(pointer_type, "this", nullptr);
+	SourceLocation source_location_this(&source_file, 0, 1);
+	auto this_var = VariableSymbol::create(source_location_this, pointer_type, "this", nullptr);
 	scope->args.push_back(this_var->name);
 	scope->variables[this_var->name] = this_var;
 	this_var->scope = scope;
@@ -469,6 +481,7 @@ bool SymbolBuilder::parse_operator(ParserInfo parser_info) {
             next(); // consume ,
         }
 
+		size_t param_start_idx = index;
         // type
         TypePtr arg_type = parse_type(parser_info_header);
         if (!arg_type) {
@@ -486,18 +499,19 @@ bool SymbolBuilder::parse_operator(ParserInfo parser_info) {
         }
         std::string arg_name = next().value;
 
-        VarPtr param = VariableSymbol::create(arg_type, arg_name, nullptr);
+		SourceLocation source_location(&source_file, param_start_idx, index - 1);
+        VarPtr param = VariableSymbol::create(source_location, arg_type, arg_name, nullptr);
         scope->args.push_back(arg_name);
 		scope->variables[arg_name] = param;
         parameters.push_back(param);
     }
     next(); // consume )
 
-
+	SourceLocation source_location(&source_file, start_idx, index - 1);
 
     // body
-    FuncPtr function_symbol = FunctionSymbol::create(return_type, name, parameters, scope, false);
-    ParserInfo parser_info_body{symbol_table, parser_info.cls, function_symbol, scope};
+    FuncPtr function_symbol = FunctionSymbol::create(source_location, return_type, name, parameters, scope, false);
+    ParserInfo parser_info_body(parser_info.cls, function_symbol, scope);
 
 	parse_body(parser_info_body, function_symbol);
 
@@ -569,7 +583,8 @@ bool SymbolBuilder::parse_variable(ParserInfo parser_info) {
 
     ScopePtr scope = is_static ? parser_info.cls->static_scope : parser_info.cls->scope;
     
-    VarPtr variable_symbol = VariableSymbol::create(member_type, name, initial_value);
+	SourceLocation source_location(&source_file, start_idx, index - 1);
+    VarPtr variable_symbol = VariableSymbol::create(source_location, member_type, name, initial_value);
     variable_symbol->scope = scope;
     variable_symbol->is_public = is_public;
     variable_symbol->is_static = is_static;

@@ -25,6 +25,7 @@ public:
 	static FuncPtr create(vm::MethodPair& method_pair);
 
 	static FuncPtr create(
+		SourceLocation source_location,
 		const TypePtr& return_type,
 		const std::string& name,
 		const std::vector<VarPtr>& parameters,
@@ -32,6 +33,7 @@ public:
 		const bool is_constructor);
 	
 	static FuncPtr create(
+			SourceLocation source_location,
 			const std::string &name,
 			const std::vector<VarPtr> &parameters,
 			const ScopePtr &scope,
@@ -40,6 +42,7 @@ public:
 public:
 	FunctionSymbol(
 		Private,
+		SourceLocation source_location,
 		const TypePtr& return_type,
 		const std::string& name,
 		const std::vector<VarPtr>& parameters,
@@ -48,6 +51,7 @@ public:
 
 	FunctionSymbol(
 		Private,
+		SourceLocation source_location,
 		const std::string& name,
 		const std::vector<VarPtr>& parameters,
 		const ScopePtr& scope,
@@ -55,6 +59,8 @@ public:
 	
 	FunctionSymbol(Private, vm::MethodPair& method_pair);
 public:
+	SourceLocation source_location;
+	
 	TypePtr return_type;
 	std::string name;
 	std::vector<VarPtr> parameters;

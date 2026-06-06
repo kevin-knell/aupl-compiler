@@ -44,9 +44,7 @@ static void resolve_expressions(NameAnalysisInfo& name_analysis_info, std::vecto
 			expr->resolve(name_analysis_info_base);
 			if (expr->is_unresolved_symbol()) {
 				name_analysis_info.symbol_table.add_error(
-					name_analysis_info.symbol_table.source_files.at("examples/test/main.aupl"),
-					0,
-					0,
+					expr->source_location,
 					"cannot resolve: " + expr->to_string(),
 					Error::ERROR
 				);
