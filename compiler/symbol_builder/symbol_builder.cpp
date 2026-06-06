@@ -184,66 +184,7 @@ bool SymbolBuilder::parse_constructor(ParserInfo parser_info) {
     }
     next(); // consume (
 
-	// add pointer to self as arg
-	auto class_type = parser_info.cls->type;
-	auto pointer_type = std::make_shared<PointerType>(class_type);
-	SourceLocation source_location_this(&source_file, 0, 1);
-	auto this_var = VariableSymbol::create(source_location_this, pointer_type, "this", nullptr);
-	scope->args.push_back(this_var->name);
-	scope->variables[this_var->name] = this_var;
-	this_var->scope = scope;
-
-    std::vector<VarPtr> parameters;
-
-    while (!expect(")")) {
-        if (!parameters.empty()) {
-            if (!expect(",")) {
-                next();
-                continue;
-            }
-            next(); // consume ,
-        }
-
-		size_t param_start_idx;
-        // type
-        TypePtr parsed_param_type = parse_type(parser_info_header);
-        if (!parsed_param_type) {
-            std::cout << "arg type error: " << peek().value << std::endl;
-            next();
-            continue;
-        }
-
-		TypePtr param_type;
-
-		if (parsed_param_type->default_store_shared()) {
-			param_type = std::make_shared<SharedType>(parsed_param_type);
-		} else {
-			param_type = parsed_param_type;
-		}
-
-        // name
-        if (!match(TokenType::IDENTIFIER)) {
-            std::cout << "arg name error: " << peek().value << std::endl;
-            next();
-            continue;
-        }
-        std::string arg_name = next().value;
-
-        // initial value
-        ExprPtr initial_value = nullptr;
-        if (expect("=")) {
-            next(); // consume =
-            initial_value = parse_expression(parser_info_header);
-        }
-
-		SourceLocation source_location(&source_file, param_start_idx, index - 1);
-		auto param = VariableSymbol::create(source_location, param_type, arg_name, initial_value);
-		scope->args.push_back(arg_name);
-		scope->variables[arg_name] = param;
-		param->scope = scope;
-        parameters.push_back(param);
-    }
-    next(); // consume )
+    VarVec parameters = parse_parameters(parser_info, parser_info_header, false, scope);
 
     // body
     //std::cout << "parse body" << std::endl;
@@ -334,68 +275,7 @@ bool SymbolBuilder::parse_function(ParserInfo parser_info) {
     }
     next(); // consume (
 
-	if (!is_static) {
-		// add pointer to self as arg
-		auto class_type = parser_info.cls->type;
-		auto pointer_type = std::make_shared<PointerType>(class_type);
-		SourceLocation source_location(&source_file, 0, 1);
-		auto this_var = VariableSymbol::create(source_location, pointer_type, "this", nullptr);
-		scope->args.push_back(this_var->name);
-		scope->variables[this_var->name] = this_var;
-		this_var->scope = scope;
-	}
-
-    std::vector<VarPtr> parameters;
-
-    while (!expect(")")) {
-        if (!parameters.empty()) {
-            if (!expect(",")) {
-                next();
-                continue;
-            }
-            next(); // consume ,
-        }
-
-		size_t param_start_idx = index;
-        // type
-        TypePtr parsed_param_type = parse_type(parser_info_header);
-        if (!parsed_param_type) {
-            // TODO: add error
-            std::cout << "arg type error: " << peek().value << std::endl;
-            next();
-            continue;
-        }
-
-		TypePtr param_type;
-
-		if (parsed_param_type->default_store_shared()) {
-			param_type = std::make_shared<SharedType>(parsed_param_type);
-		} else {
-			param_type = parsed_param_type;
-		}
-
-        // name
-        if (!match(TokenType::IDENTIFIER)) {
-            std::cout << "arg name error: " << peek().value << std::endl;
-            next();
-            continue;
-        }
-        std::string arg_name = next().value;
-
-        // initial value
-        ExprPtr initial_value = nullptr;
-        if (expect("=")) {
-            next(); // consume =
-            initial_value = parse_expression(parser_info_header);
-        }
-
-		SourceLocation source_location(&source_file, param_start_idx, index - 1);
-        VarPtr param = VariableSymbol::create(source_location, param_type, arg_name, initial_value);
-        scope->args.push_back(arg_name);
-		scope->variables[arg_name] = param;
-        parameters.push_back(param);
-    }
-    next(); // consume )
+    std::vector<VarPtr> parameters = parse_parameters(parser_info, parser_info_header, is_static, scope);
 
     // body
 
@@ -455,57 +335,7 @@ bool SymbolBuilder::parse_operator(ParserInfo parser_info) {
 
 
 	// parameters
-	std::vector<VarPtr> parameters;
-	
-	// add pointer to self as arg
-	auto class_type = parser_info.cls->type;
-	auto pointer_type = std::make_shared<PointerType>(class_type);
-	SourceLocation source_location_this(&source_file, 0, 1);
-	auto this_var = VariableSymbol::create(source_location_this, pointer_type, "this", nullptr);
-	scope->args.push_back(this_var->name);
-	scope->variables[this_var->name] = this_var;
-	this_var->scope = scope;
-
-    if (!expect("(")) {
-        index = start_idx;
-        return false;
-    }
-    next(); // consume (
-
-    while (!expect(")")) {
-        if (!parameters.empty()) {
-            if (!expect(",")) {
-                next();
-                continue;
-            }
-            next(); // consume ,
-        }
-
-		size_t param_start_idx = index;
-        // type
-        TypePtr arg_type = parse_type(parser_info_header);
-        if (!arg_type) {
-            // TODO: add error
-            std::cerr << "arg type error: " << peek().value << std::endl;
-            next();
-            continue;
-        }
-
-        // name
-        if (!match(TokenType::IDENTIFIER)) {
-            std::cerr << "arg name error: " << peek().value << std::endl;
-            next();
-            continue;
-        }
-        std::string arg_name = next().value;
-
-		SourceLocation source_location(&source_file, param_start_idx, index - 1);
-        VarPtr param = VariableSymbol::create(source_location, arg_type, arg_name, nullptr);
-        scope->args.push_back(arg_name);
-		scope->variables[arg_name] = param;
-        parameters.push_back(param);
-    }
-    next(); // consume )
+	VarVec parameters = parse_parameters(parser_info, parser_info_header, false, scope);
 
 	SourceLocation source_location(&source_file, start_idx, index - 1);
 
@@ -595,7 +425,78 @@ bool SymbolBuilder::parse_variable(ParserInfo parser_info) {
     return true;
 }
 
-void SymbolBuilder::parse_body(ParserInfo parser_info, FuncPtr function_symbol) {
+VarVec SymbolBuilder::parse_parameters(ParserInfo parser_info, ParserInfo parser_info_header, bool is_static, ScopePtr scope) {
+	if (!is_static) {
+		// add pointer to self as arg
+		auto class_type = parser_info.cls->type;
+		auto pointer_type = std::make_shared<PointerType>(class_type);
+		SourceLocation source_location(&source_file, 0, 1);
+		auto this_var = VariableSymbol::create(source_location, pointer_type, "this", nullptr);
+		scope->args.push_back(this_var->name);
+		scope->variables[this_var->name] = this_var;
+		this_var->scope = scope;
+	}
+
+    VarVec parameters;
+
+    while (!expect(")")) {
+        if (!parameters.empty()) {
+            if (!expect(",")) {
+                next(); // TODO: recover properly
+                continue;
+            }
+            next(); // consume ,
+        }
+
+		size_t param_start_idx = index;
+        // type
+        TypePtr parsed_param_type = parse_type(parser_info_header);
+        if (!parsed_param_type) {
+            // TODO: add error, recover
+            std::cout << "arg type error: " << peek().value << std::endl;
+            next();
+            continue;
+        }
+
+		TypePtr param_type;
+
+		// TODO: external function
+		if (parsed_param_type->default_store_shared()) {
+			param_type = std::make_shared<SharedType>(parsed_param_type);
+		} else {
+			param_type = parsed_param_type;
+		}
+
+        // name
+        if (!match(TokenType::IDENTIFIER)) {
+            // TODO: error, recover
+			std::cout << "arg name error: " << peek().value << std::endl;
+            next();
+            continue;
+        }
+        std::string arg_name = next().value;
+
+        // initial value
+        ExprPtr initial_value = nullptr;
+        if (expect("=")) {
+            next(); // consume =
+            initial_value = parse_expression(parser_info_header);
+			// TODO: error, recover
+        }
+
+		SourceLocation source_location(&source_file, param_start_idx, index - 1);
+        VarPtr param = VariableSymbol::create(source_location, param_type, arg_name, initial_value);
+        scope->args.push_back(arg_name);
+		scope->variables[arg_name] = param;
+        parameters.push_back(param);
+    }
+    next(); // consume )
+
+	return parameters;
+}
+
+void SymbolBuilder::parse_body(ParserInfo parser_info, FuncPtr function_symbol)
+{
 	COMPILER_ASSERT(function_symbol, "");
 
 	bool expect_expr;		// =

@@ -39,6 +39,7 @@ public:
     bool parse_operator(ParserInfo parser_info);
     bool parse_variable(ParserInfo parser_info);
 
+	VarVec parse_parameters(ParserInfo parser_info, ParserInfo parser_info_header, bool is_static, ScopePtr scope);
 	void parse_body(ParserInfo parser_info, FuncPtr function_symbol);
     
     TypePtr parse_type(ParserInfo& parser_info);
