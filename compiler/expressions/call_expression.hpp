@@ -28,7 +28,7 @@ struct CallExpression final : public Expression {
 	
 	FuncVec get_candidates(FuncVec functions);
 	FuncVec get_secondary_candidates(FuncVec candidates);
-	void resolve_from_secondary_candidates(FuncVec secondary_candidates, NameAnalysisInfo& name_analysis_info);
+	bool resolve_from_secondary_candidates(FuncVec secondary_candidates, NameAnalysisInfo& name_analysis_info);
 
     std::vector<ExprPtr*> get_expressions() override;
     bool is_pure() const override;

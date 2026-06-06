@@ -4,7 +4,6 @@
 #include "symbol_table.hpp"
 #include "variable_symbol.hpp"
 #include "invalid_type.hpp"
-#include "native_class_type.hpp"
 #include "text_color.hpp"
 #include "shared_type.hpp"
 #include "variable_expression.hpp"
@@ -61,18 +60,20 @@ void VariableExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 
 			if (inner_type.get_kind() == Type::CLASS) {
 				ClassType& class_type = dynamic_cast<ClassType&>(inner_type);
-				auto classes = name_analysis_info.symbol_table.classes;
-				auto it = classes.find(class_type.name);
 
-				if (it != classes.end()) {
-					cls = it->second;
+				if (class_type.class_ptr) {
+					cls = class_type.class_ptr;
 				} else {
-					std::cerr << "Class not found: " << class_type.to_string() << std::endl;
-					return;
+					auto classes = name_analysis_info.symbol_table.classes;
+					auto it = classes.find(class_type.name);
+
+					if (it != classes.end()) {
+						cls = it->second;
+					} else {
+						std::cerr << "Class not found: " << class_type.to_string() << std::endl;
+						return;
+					}
 				}
-			} else if (inner_type.get_kind() == Type::NATIVE_CLASS) {
-				NativeClassType& class_type = dynamic_cast<NativeClassType&>(inner_type);
-				cls = class_type.class_ptr;
 			}
 			
 			scope = Scope::find_scope(cls->scope, name);
@@ -80,13 +81,14 @@ void VariableExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 		} else {
 			ClassPtr cls;
 
-			if (obj_type->get_kind() == Type::NATIVE_CLASS) {
-				NativeClassType& class_type = dynamic_cast<NativeClassType&>(*obj_type);
-				cls = class_type.class_ptr;
-			} else if (obj_type->get_kind() == Type::CLASS) {
+			if (obj_type->get_kind() == Type::CLASS) {
 				ClassType& class_type = dynamic_cast<ClassType&>(*obj_type);
-				auto it = name_analysis_info.symbol_table.classes.find(class_type.name);
-				cls = it->second;
+				if (class_type.class_ptr) {
+					cls = class_type.class_ptr;
+				} else {
+					auto it = name_analysis_info.symbol_table.classes.find(class_type.name);
+					cls = it->second;
+				}
 			} else {
 				std::cerr << "invalid obj_type: " << obj_type->to_string() << std::endl;
 				return;

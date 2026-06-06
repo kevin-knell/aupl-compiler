@@ -295,7 +295,7 @@ ExprPtr SymbolBuilder::parse_primary(ParserInfo& parser_info) {
     if (match(TokenType::STRING_LITERAL)) {
 		std::string value = next().value;
 		auto it = symbol_table.native_types.find("String");
-		COMPILER_ASSERT(it != symbol_table.native_types.end(), "");
+		COMPILER_ASSERT(it != symbol_table.native_types.end(), "String Type not found");
 		auto string_type = it->second;
 		auto result = std::make_shared<StringLiteralExpression>(string_type, value.substr(1, value.size() - 2));
 		return result;

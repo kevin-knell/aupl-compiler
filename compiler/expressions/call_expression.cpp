@@ -5,7 +5,6 @@
 #include "class_symbol.hpp"
 #include "text_color.hpp"
 #include "symbol_table.hpp"
-#include "native_class_type.hpp"
 #include "variable_expression.hpp"
 #include "static_class_type.hpp"
 #include "bytecode_generator.hpp"
@@ -60,12 +59,28 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 	if (!obj_expr) {
 		// native constructor
 		auto& native_types = name_analysis_info.symbol_table.native_types;
-		auto it = native_types.find(name);
-		if (it != native_types.end()) {
-			auto nat = std::dynamic_pointer_cast<NativeClassType>(it->second);
-			FuncVec candidates = get_candidates(nat->functions);
-			const FuncVec secondary_candidates = get_secondary_candidates(candidates);
-			resolve_from_secondary_candidates(secondary_candidates, name_analysis_info);
+		auto native_class_it = native_types.find(name);
+		if (native_class_it != native_types.end()) {
+			FuncVec constructors;
+			ClassPtr constructed_class = native_class_it->second->class_ptr;
+			FuncVec functions = constructed_class->get_functions();
+
+			std::copy_if(
+				functions.cbegin(),
+				functions.cend(),
+				std::back_inserter(constructors),
+				[&](FuncPtr f2) {
+					return f2->is_constructor;
+				}
+			);
+			
+			FuncVec candidates = get_candidates(constructors);
+			FuncVec secondary_candidates = get_secondary_candidates(candidates);
+			bool success = resolve_from_secondary_candidates(secondary_candidates, name_analysis_info);
+
+			if (!success) {
+				name_analysis_info.symbol_table.add_error(source_location, "invalid native constructor", Error::ERROR);
+			}
 			return;
 		}
 
@@ -84,7 +99,11 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 		if (!global_native_functions_same_name.empty()) {
 			FuncVec candidates = get_candidates(global_native_functions_same_name);
 			FuncVec secondary_candidates = get_secondary_candidates(candidates);
-			resolve_from_secondary_candidates(secondary_candidates, name_analysis_info);
+			bool success = resolve_from_secondary_candidates(secondary_candidates, name_analysis_info);
+
+			if (!success) {
+				name_analysis_info.symbol_table.add_error(source_location, "invalid global native function", Error::ERROR);
+			}
 			return;
 		}
 
@@ -93,36 +112,44 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 		auto class_it = classes.find(name);
 		if (class_it != classes.end()) {
 			FuncVec constructors;
+			ClassPtr constructed_class = class_it->second;
+			FuncVec functions = constructed_class->get_functions();
 
-			auto constructed_class = class_it->second;
-			auto functions = constructed_class->functions;
-
-			for (auto func_it = functions.begin(); func_it != functions.end(); ++func_it) {
-				if (func_it->second->is_constructor) continue;
-				constructors.push_back(func_it->second);
-			}
+			std::copy_if(
+				functions.cbegin(),
+				functions.cend(),
+				std::back_inserter(constructors),
+				[&](FuncPtr f2) {
+					return f2->is_constructor;
+				}
+			);
 			
 			FuncVec candidates = get_candidates(constructors);
 			FuncVec secondary_candidates = get_secondary_candidates(candidates);
-			resolve_from_secondary_candidates(secondary_candidates, name_analysis_info);
+			bool success = resolve_from_secondary_candidates(secondary_candidates, name_analysis_info);
+
+			if (!success) {
+				name_analysis_info.symbol_table.add_error(source_location, "invalid constructor", Error::ERROR);
+			}
 			return;
 		}
 
 		// call function in same class
 		COMPILER_ASSERT(name_analysis_info.cls, "");
 
-		FuncVec functions;
-		
-		for (auto [fn, f] : name_analysis_info.cls->functions) {
-			functions.push_back(f);
-		}
-
+		FuncVec functions = name_analysis_info.cls->get_functions();
 		FuncVec candidates = get_candidates(functions);
 		FuncVec secondary_candidates = get_secondary_candidates(candidates);
-		resolve_from_secondary_candidates(secondary_candidates, name_analysis_info);
+		bool success = resolve_from_secondary_candidates(secondary_candidates, name_analysis_info);
+
+		if (!success) {
+			name_analysis_info.symbol_table.add_error(source_location, "invalid function", Error::ERROR);
+		}
 		return;
 	} else {
 		obj_expr->resolve(name_analysis_info);
+
+		// TODO: get functions from type
 
 		switch (obj_expr->get_kind()) {
 			case Expression::VARIABLE: {
@@ -160,36 +187,35 @@ void CallExpression::resolve(NameAnalysisInfo& name_analysis_info) {
 						std::cout << C_ERROR("Class not found") << std::endl;
 						return;
 					}
-					case Type::NATIVE_CLASS: {
-						//std::cout << "is native class" << std::endl;
-						auto native_class_type = reinterpret_cast<const NativeClassType*>(obj_type);
-						for (auto f2 : native_class_type->functions) {
-							//std::cout << f2->name << f2->method_pair->arg_count << arguments.size() << std::endl;
-							if (f2->name == name
-									&& f2->parameters.size() == arguments.size()) {
-								f = f2;
-								return;
-							}
-						}
-						std::cerr << "Method in native class not found: " << name << std::endl;
-						break;
-					}
 					case Type::CLASS: {
-						auto class_type = reinterpret_cast<const ClassType*>(obj_type);
-						auto classes = name_analysis_info.symbol_table.classes;
-						auto class_it = classes.find(class_type->name);
+						const ClassType* class_type = static_cast<const ClassType*>(obj_type);
+						std::map<std::string, FuncPtr> functions;
+						ClassPtr class_ptr;
 
-						if (class_it == classes.end()) {
-							return;
+						if (class_type->class_ptr) {
+							class_ptr = class_type->class_ptr;
+							functions = class_ptr->functions;
+						} else {
+							auto classes = name_analysis_info.symbol_table.classes;
+							auto class_it = classes.find(class_type->name);
+
+							if (class_it == classes.end()) {
+								std::cerr << "did not find class: " << class_type->name << std::endl;
+								return;
+							}
+
+							functions = class_it->second->functions;
 						}
-
-						for (auto [name, f2] : class_it->second->functions) {
+						
+						for (auto [fn, f2] : functions) {
 							if (f2->name == name
 									&& f2->parameters.size() == arguments.size()) {
 								f = f2;
 								return;
 							}
 						}
+						
+						std::cerr << "Method in class not found: " << name << std::endl;
 						break;
 					}
 					default: {}
@@ -264,12 +290,15 @@ FuncVec CallExpression::get_secondary_candidates(FuncVec candidates) {
 	return secondary_candidates;
 }
 
-void CallExpression::resolve_from_secondary_candidates(FuncVec secondary_candidates, NameAnalysisInfo& name_analysis_info) {
+bool CallExpression::resolve_from_secondary_candidates(FuncVec secondary_candidates, NameAnalysisInfo& name_analysis_info) {
 	if (secondary_candidates.size() == 1) {
 		f = secondary_candidates.front();
-	} else if (secondary_candidates.size() > 1) {
-		name_analysis_info.symbol_table.errors.emplace_back(
-			"", 0, 0, 0, 0,
+		return true;
+	}
+	
+	if (secondary_candidates.size() > 1) {
+		name_analysis_info.symbol_table.add_error(
+			source_location,
 			"function call " + to_string() + " is ambigous!",
 			Error::ERROR
 		);
@@ -277,14 +306,17 @@ void CallExpression::resolve_from_secondary_candidates(FuncVec secondary_candida
 		for (auto nat_func : secondary_candidates) {
 			std::cerr << nat_func->to_string() << std::endl;
 		}
-	} else {
-		COMPILER_ASSERT(secondary_candidates.empty(), "");
-		name_analysis_info.symbol_table.add_error(
-			source_location,
-			"no function matches: " + to_string(),
-			Error::ERROR
-		);
+
+		return false;
 	}
+
+	COMPILER_ASSERT(secondary_candidates.empty(), "");
+	name_analysis_info.symbol_table.add_error(
+		source_location,
+		"no function matches: " + to_string(),
+		Error::ERROR
+	);
+	return false;
 }
 
 std::vector<ExprPtr *> CallExpression::get_expressions() {

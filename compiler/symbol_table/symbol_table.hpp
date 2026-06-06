@@ -16,8 +16,8 @@ namespace cmp {
 struct SymbolTable {
     std::unordered_map<std::string, ClassPtr> classes;
     std::vector<Error> errors;
-	std::unordered_map<std::string, TypePtr> native_types;
-	std::vector<FuncPtr> global_native_functions;
+	std::unordered_map<std::string, std::shared_ptr<ClassType>> native_types;
+	FuncVec global_native_functions;
 	std::vector<vm::Value> const_memory;
 	std::map<std::string, SourceFile> source_files;
 	ScopePtr global_scope;

@@ -145,7 +145,7 @@ void RegisterFormatConverter::convert(AssignmentStatement& stmt) {
 	auto left_type = stmt.expr_left->get_type();
 
 	switch(left_type->get_kind()) {
-		case Type::NATIVE_CLASS: {
+		case Type::CLASS: {
 			if (expr->get_kind() == Expression::VARIABLE) {
 				convert_to_register_format(expr, stmt.is_volatile);
 			} else {

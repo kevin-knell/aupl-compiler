@@ -1,5 +1,4 @@
 #include "symbol_table.hpp"
-#include "native_class_type.hpp"
 #include "static_class_type.hpp"
 #include "class_db.hpp"
 #include "type_from_cpp.hpp"
@@ -18,7 +17,7 @@ SymbolTable::SymbolTable(vm::ClassDB &db) {
 		auto class_symbol = ClassSymbol::create(cls);
 		class_symbol->scope = Scope::create(Scope::CLASS, cls.name);
 		
-		std::shared_ptr<NativeClassType> nat = std::dynamic_pointer_cast<NativeClassType>(class_symbol->type);
+		std::shared_ptr<ClassType> nat = class_symbol->type;
 		native_types[cls.name] = nat;
 		nat->class_ptr = class_symbol;
 
@@ -26,7 +25,7 @@ SymbolTable::SymbolTable(vm::ClassDB &db) {
 	}
 
 	for (auto& cls : db.classes) {
-		std::shared_ptr<NativeClassType> nat = std::dynamic_pointer_cast<NativeClassType>(native_types[cls.name]);
+		std::shared_ptr<ClassType> nat = native_types[cls.name];
 		auto class_symbol = nat->class_ptr;
 
 		//std::cout << "native class: " << nat->to_string() << std::endl;
@@ -40,8 +39,7 @@ SymbolTable::SymbolTable(vm::ClassDB &db) {
 		for (auto& f : cls.methods) {
 			auto nat_func = FunctionSymbol::create(f);
 			class_symbol->functions[f.name] = nat_func;
-			nat->functions.push_back(nat_func);
-			//std::cout << "\tnative func: " << nat_func->to_string() << std::endl;
+			
 			if (f.is_global) {
 				global_native_functions.push_back(nat_func);
 			}
@@ -95,7 +93,7 @@ Error &SymbolTable::add_error(
 			error.get_error_text() <<
 			message << std::endl;
 
-	std::cerr << source_location.get_text_as_rect() << std::endl;
+	std::cerr << source_location.get_text_as_rect() << "\n" << std::endl;
 	
 	return error;
 }

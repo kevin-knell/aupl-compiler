@@ -13,7 +13,6 @@ struct Type : public std::enable_shared_from_this<Type> {
 
 		CLASS,
 		STATIC_CLASS,
-		NATIVE_CLASS,
 
 		TUPLE,
 		ARRAY,

@@ -1,10 +1,10 @@
 #include "index_expression.hpp"
 #include "forward_declarations.hpp"
 #include "invalid_type.hpp"
-#include "native_class_type.hpp"
 #include "class_type.hpp"
 #include "function_symbol.hpp"
 #include "array_type.hpp"
+#include "class_symbol.hpp"
 
 namespace cmp {
 std::vector<ExprPtr *> IndexExpression::get_expressions() {
@@ -25,24 +25,22 @@ void IndexExpression::resolve(NameAnalysisInfo &name_analysis_info) {
 }
 
 TypePtr IndexExpression::get_type() const {
-	// TODO: get type from operator[]
-
 	TypePtr left_type = left_expr->get_type();
 
 	std::cout << left_type->to_string() << std::endl;
 
-	if (left_type->get_kind() == Type::NATIVE_CLASS) {
-		std::cout << "native class type!" << std::endl;
-		auto native_class_type = std::static_pointer_cast<NativeClassType>(left_type);
+	// TODO: get index operator from type
 
-		for (auto f : native_class_type->functions) {
-			std::cout << f->to_string() << std::endl;
+	if (left_type->get_kind() == Type::CLASS) {
+		std::cout << "class type" << std::endl;
+		auto class_type = std::static_pointer_cast<ClassType>(left_type);
+
+		for (auto [fn, f] : class_type->class_ptr->functions) {
+			std::cout << "operator[] of " << class_type->name << ": " << f->to_string() << std::endl;
 			if (f->name == "operator[]") {
 				return f->return_type;
 			}
 		}
-	} else if (left_type->get_kind() == Type::CLASS) {
-		std::cout << "class type" << std::endl;
 	} else if (left_type->get_kind() == Type::ARRAY) {
 		std::cout << "array type" << std::endl;
 		auto array_type = std::static_pointer_cast<ArrayType>(left_type);

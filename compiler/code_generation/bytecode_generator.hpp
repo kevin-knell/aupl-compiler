@@ -346,13 +346,14 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const DeclareStateme
 	}
 
 	if (false) {
-		auto native_type = std::dynamic_pointer_cast<NativeClassType>(stmt.variable_symbol->type);
-		auto methods = native_type->cls.methods;
+		auto native_type = std::dynamic_pointer_cast<ClassType>(stmt.variable_symbol->type);
+		COMPILER_ASSERT(native_type->class_bind, "no class bind");
+		auto methods = native_type->class_bind->methods;
 
 		bool found_copy_constructor = false;
 		
 		for (auto [name, f] : native_type->class_ptr->functions) {
-			if (name != native_type->cls.name) continue;
+			if (name != native_type->class_bind->name) continue;
 			
 			if (f->method_pair->arg_count != 1) continue;
 
@@ -385,9 +386,10 @@ template <bool size_only>
 inline void BytecodeGenerator<size_only>::generate_bytecode(const AssignmentStatement &stmt) {
 	auto left_var_expr = std::dynamic_pointer_cast<VariableExpression>(stmt.expr_left);
 
-	if (left_var_expr->get_type()->get_kind() == Type::NATIVE_CLASS) {
-		auto native_type = std::dynamic_pointer_cast<NativeClassType>(left_var_expr->get_type());
-		auto methods = native_type->cls.methods;
+	if (left_var_expr->get_type()->get_kind() == Type::CLASS) {
+		auto native_type = std::dynamic_pointer_cast<ClassType>(left_var_expr->get_type());
+		COMPILER_ASSERT(native_type->class_bind, "no class bind");
+		auto methods = native_type->class_bind->methods;
 		
 		for (auto [name, f] : native_type->class_ptr->functions) {
 			if (name != "operator=") continue;

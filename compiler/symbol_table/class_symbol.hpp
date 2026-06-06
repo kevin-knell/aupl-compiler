@@ -10,7 +10,6 @@
 #include "class_db.hpp"
 #include "static_class_type.hpp"
 #include "class_type.hpp"
-#include "native_class_type.hpp"
 #include "invalid_type.hpp"
 #include "source_location.hpp"
 
@@ -35,7 +34,7 @@ public:
     std::vector<Error> errors;
     
 	const VarPtr static_var;
-    const TypePtr type;
+    const std::shared_ptr<ClassType> type;
     bool is_declared;
 
 	static ClassPtr create(const std::string& name) {
@@ -57,8 +56,14 @@ public:
 			: name(native_class_bind.name),
 			native_class_bind(&native_class_bind),
 			static_var(VariableSymbol::create(source_location, std::make_shared<StaticClassType>(name), "(static)" + name)),
-			type(std::make_shared<NativeClassType>(native_class_bind)),
+			type(std::make_shared<ClassType>(native_class_bind)),
 			is_declared(true) {}
+	
+	FuncVec get_functions() {
+		FuncVec result;
+		for (auto [fn, f] : functions) result.push_back(f);
+		return result;
+	}
 };
 
 using ClassPtr = std::shared_ptr<ClassSymbol>;
