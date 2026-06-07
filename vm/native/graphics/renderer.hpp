@@ -10,18 +10,22 @@
 namespace auplib
 {
 
+struct Vertex;
+
 class Renderer : public Object {
 public:
 	Shared<Viewport> viewport;
 
 	VkBuffer vertex_buffer;
 	VkDeviceMemory vertex_memory;
+	Vertex* mapped_vertices;
 
 	VkCommandPool command_pool;
 	std::vector<FrameContext> frames;
 	uint32_t current_frame;
 
 	GraphicsPipeline test_pipeline;
+	GraphicsPipeline bezier_pipeline;
 	VkPipelineLayout pipeline_layout;
 
 	Swapchain swapchain;

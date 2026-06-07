@@ -7,6 +7,15 @@
 
 namespace auplib {
 
+VkPipelineTessellationStateCreateInfo get_tessellation_state() {
+	return VkPipelineTessellationStateCreateInfo{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.patchControlPoints = 4,
+	};
+}
+
 GraphicsPipeline::GraphicsPipeline(
 		VkPipelineLayout _layout,
 		std::vector<VkPipelineShaderStageCreateInfo> shader_stages)
@@ -46,11 +55,34 @@ GraphicsPipeline::GraphicsPipeline(
 		.pVertexAttributeDescriptions = vertex_attribute_desc.data()
 	};
 
+	bool has_tesc = false;
+	bool has_tese = false;
+
+	for (auto& s : shader_stages) {
+		if (s.stage == VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT) {
+			has_tesc = true;
+		}
+
+		if (s.stage == VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT) {
+			has_tese = true;
+		}
+	}
+
+	assert(has_tesc == has_tese);
+
+	VkPipelineTessellationStateCreateInfo tess_create_info{};
+	VkPipelineTessellationStateCreateInfo* tess_create_info_ptr = nullptr;
+
+	if (has_tesc && has_tese) {
+		tess_create_info = get_tessellation_state();
+		tess_create_info_ptr = &tess_create_info;
+	}
+
 	VkPipelineInputAssemblyStateCreateInfo input_assembly{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
-		.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
+		.topology = tess_create_info_ptr ? VK_PRIMITIVE_TOPOLOGY_PATCH_LIST : VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
 		.primitiveRestartEnable = VK_FALSE
 	};
 
@@ -171,7 +203,7 @@ GraphicsPipeline::GraphicsPipeline(
 		.pVertexInputState = &vertex_input,
 		.pInputAssemblyState = &input_assembly,
 		
-		.pTessellationState = nullptr,
+		.pTessellationState = tess_create_info_ptr,
 
 		.pViewportState = &viewport_state,
 		.pRasterizationState = &rasterizer,

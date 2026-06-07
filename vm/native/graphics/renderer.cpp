@@ -9,6 +9,7 @@
 #include "vertex.hpp"
 #include "vec2.hpp"
 #include "mat4.hpp"
+#include "curve_2d.hpp"
 
 namespace auplib {
 
@@ -44,14 +45,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 	result = vkGetPhysicalDeviceSurfaceFormatsKHR(vulkan_instance.phys_device, viewport->surface, &surface_count, surface_formats.data());
 	assert(result == VK_SUCCESS);
 
-	std::cout << "print formats" << std::endl;
-	for (auto format : surface_formats) {
-		std::cout << format.format << std::endl;
-	}
-
 	swapchain = Swapchain(viewport->surface, surface_formats[0].format, viewport->scissor.extent);
-
-	std::cout << "desc pool" << std::endl;
 
 	// descriptor pool
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
@@ -84,7 +78,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 		.binding = 0,
 		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 		.descriptorCount = 1,
-		.stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+		.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
 		.pImmutableSamplers = nullptr
 	};
 
@@ -104,7 +98,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 		.binding = 0,
 		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 		.descriptorCount = 1,
-		.stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+		.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
 		.pImmutableSamplers = nullptr
 	};
 
@@ -186,19 +180,21 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 
 	test_pipeline = GraphicsPipeline(pipeline_layout, shader_stages);
 
-	// vertex buffer
-	std::vector<Vertex> vertices = {
-		Vertex{{0.0, 0.0}, {1.0, 0.0, 0.0}},
-		Vertex{{0.0, 1.0}, {1.0, 1.0, 0.0}},
-		Vertex{{1.0, 0.0}, {0.0, 1.0, 1.0}},
-		Vertex{{1.0, 1.0}, {1.0, 0.0, 1.0}}
+	std::vector<VkPipelineShaderStageCreateInfo> shader_stages_bezier = {
+		ShaderLoader::load_shader("shaders/bezier.vert.spv", VK_SHADER_STAGE_VERTEX_BIT),
+		ShaderLoader::load_shader("shaders/bezier.tesc.spv", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT),
+		ShaderLoader::load_shader("shaders/bezier.tese.spv", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT),
+		ShaderLoader::load_shader("shaders/bezier.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
 	};
 
+	bezier_pipeline = GraphicsPipeline(pipeline_layout, shader_stages_bezier);
+
+	// vertex buffer
 	VkBufferCreateInfo vertex_buffer_create_info = {
 		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
-		.size = sizeof(Vertex) * vertices.size(),
+		.size = sizeof(Vertex) * 100,
 		.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
 		.queueFamilyIndexCount = 0,
@@ -230,10 +226,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 
 	void* raw_data;
 	vkMapMemory(vulkan_instance.device, vertex_memory, 0, vertex_buffer_create_info.size, 0, &raw_data);
-
-	std::memcpy(raw_data, vertices.data(), vertex_buffer_create_info.size);
-	
-	vkUnmapMemory(vulkan_instance.device, vertex_memory);
+	mapped_vertices = reinterpret_cast<Vertex*>(raw_data);
 
 	// command pool
 	VkCommandPoolCreateInfo pool_info{
@@ -282,6 +275,16 @@ Renderer::~Renderer() {
 
 void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
 	if (ColorRect* r = dynamic_cast<ColorRect*>(node.get())) {
+		vkCmdBindPipeline(
+			frame.command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			test_pipeline.pipeline);
+		
+		mapped_vertices[4] = Vertex{ vec2(0.0, 0.0), vec3(1.0, 1.0, 1.0) };
+		mapped_vertices[5] = Vertex{ vec2(0.0, 1.0), vec3(1.0, 1.0, 1.0) };
+		mapped_vertices[6] = Vertex{ vec2(1.0, 0.0), vec3(1.0, 1.0, 1.0) };
+		mapped_vertices[7] = Vertex{ vec2(1.0, 1.0), vec3(1.0, 1.0, 1.0) };
+
 		mat4 model = {
 			.rows = {
 				{ r->size.x, 0.0, 0.0, 0.0 },
@@ -290,7 +293,6 @@ void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
 				{ r->position.x, r->position.y, 0.0, 1.0 },
 			}
 		};
-
 
 		r->object_data.model = model;
 
@@ -319,6 +321,70 @@ void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
 			1,
 			1,
 			&r->object_descriptor_set,
+			0,
+			nullptr
+		);
+
+
+		VkDeviceSize offset{ sizeof(Vertex) * 4 };
+		vkCmdBindVertexBuffers(frame.command_buffer, 0, 1, &vertex_buffer, &offset);
+
+		vkCmdDraw(
+			frame.command_buffer,
+			4,
+			1,
+			0,
+			0);
+	} else if (Curve2D* curve_2d = dynamic_cast<Curve2D*>(node.get())) {
+		vkCmdBindPipeline(
+        	frame.command_buffer,
+        	VK_PIPELINE_BIND_POINT_GRAPHICS,
+        	bezier_pipeline.pipeline);
+
+		mat4 model = {
+			.rows = {
+				{ 1.0, 0.0, 0.0, 0.0 },
+				{ 0.0, 1.0, 0.0, 0.0 },
+				{ 0.0, 0.0, 1.0, 0.0 },
+				{ 0.0, 0.0, 0.0, 1.0 },
+			}
+		};
+
+		assert(curve_2d->points.size() == 4);
+
+		mapped_vertices[0] = Vertex{ curve_2d->points[0], vec3(1.0, 1.0, 1.0) };
+		mapped_vertices[1] = Vertex{ curve_2d->points[1], vec3(1.0, 1.0, 1.0) };
+		mapped_vertices[2] = Vertex{ curve_2d->points[2], vec3(1.0, 1.0, 1.0) };
+		mapped_vertices[3] = Vertex{ curve_2d->points[3], vec3(1.0, 1.0, 1.0) };
+
+
+		curve_2d->object_data.model = model;
+
+		memcpy(
+			curve_2d->object_uniform_mapped,
+			&curve_2d->object_data,
+			sizeof(CanvasItem::ObjectUniformData)
+		);
+		
+		// descriptor sets
+		vkCmdBindDescriptorSets(
+			frame.command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			pipeline_layout,
+			0,
+			1,
+			&frame.frame_descriptor_set,
+			0,
+			nullptr
+		);
+
+		vkCmdBindDescriptorSets(
+			frame.command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			pipeline_layout,
+			1,
+			1,
+			&curve_2d->object_descriptor_set,
 			0,
 			nullptr
 		);
@@ -381,11 +447,6 @@ void Renderer::render() {
 	Scene& scene = *viewport->scene;
 
 	// TEMPORARY CODE START
-	// bind pipeline
-	vkCmdBindPipeline(
-        frame.command_buffer,
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        test_pipeline.pipeline);
 	
 	// dynamic states
 	VkViewport viewport{

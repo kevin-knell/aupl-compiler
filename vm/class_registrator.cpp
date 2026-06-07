@@ -26,6 +26,7 @@
 // nodes
 #include "node.hpp"
 #include "color_rect.hpp"
+#include "curve_2d.hpp"
 #endif
 
 void register_shared_to_db(vm::ClassDB& db) {
@@ -82,5 +83,6 @@ void vm::register_classes(vm::ClassDB& db) {
 	// nodes
 	Node::register_to_db(db);
 	ColorRect::register_to_db(db);
+	Curve2D::register_to_db(db);
 #endif
 }

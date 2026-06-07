@@ -79,6 +79,11 @@ void VulkanInstance::create_device() {
 
 	phys_device = phys_devices[0];
 
+	VkPhysicalDeviceFeatures phys_device_features;
+	vkGetPhysicalDeviceFeatures(phys_device, &phys_device_features);
+
+	assert(phys_device_features.tessellationShader == VK_TRUE);
+
 	delete[] phys_devices;
 
 	// queues
@@ -121,6 +126,7 @@ void VulkanInstance::create_device() {
 
 	VkPhysicalDeviceFeatures enabled_vk10_features{};
 	enabled_vk10_features.samplerAnisotropy = VK_TRUE;
+	enabled_vk10_features.tessellationShader = VK_TRUE;
 
 	const std::vector<const char*> device_extensions{ VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
