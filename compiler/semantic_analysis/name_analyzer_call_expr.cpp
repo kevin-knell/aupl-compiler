@@ -199,18 +199,13 @@ void NameAnalyzer::visit(CallExpression& expr) {
 				//std::cout << "is variable: " << expr.obj_expr->to_string() << std::endl;
 
 				VarExprPtr var_expr = std::dynamic_pointer_cast<VariableExpression>(expr.obj_expr);
-				auto var = var_expr->var;
-				auto access_type = var_expr->get_type();
+				VarPtr var = var_expr->var;
+				TypePtr access_type = var_expr->get_type();
 
-				const Type* obj_type;
+				const Type* obj_type = &access_type->get_inner_type();
 
 				if (access_type->is_pointer_type()) {
-					obj_type = &access_type->get_inner_type();
 					var_expr->must_be_dereferenced = true;
-				} else {
-					obj_type = access_type.get();
-					//std::cerr << "invalid type for call: " << access_type->to_string() << std::endl;
-					//return;
 				}
 
 				switch (obj_type->get_kind()) {
