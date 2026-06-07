@@ -1,0 +1,38 @@
+class ReturnErrors
+
+static void void_no_return() {
+	print("Hello!")
+}
+
+static int non_void_do_return(int a, int b) = a + b
+
+static void void_return() {
+	return 5
+}
+
+static int missing_return() {
+	int x = 2 + 3
+	int y = 4 + 5
+	int z = x + y
+}
+
+static int missing_return_value() {
+	return
+}
+
+static int code_after_return() {
+	int x = 2 + 3
+	
+	return
+
+	int y = 4 + 5
+}
+
+static int invalid_return_value() {
+	int x = 3
+	return (8 8 x)
+}
+
+static String return_type_mismatch() {
+	return 5
+}

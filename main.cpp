@@ -138,7 +138,15 @@ int main(int argc, char** argv) {
     cmp::RegisterFormatConverter register_format_converter(symbol_table);
 	register_format_converter.convert_to_register_format();
 
-	if (!symbol_table.errors.empty()) {
+	if (std::any_of(
+			symbol_table.errors.begin(),
+			symbol_table.errors.end(),
+			[](cmp::Error err) {
+				return err.level == cmp::Error::CRITICAL
+					|| err.level == cmp::Error::ERROR;
+			}
+		)
+	) {
 		return 1;
 	}
 

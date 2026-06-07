@@ -360,14 +360,38 @@ std::vector<StmtPtr> SymbolBuilder::parse_return(ParserInfo& parser_info) {
 	TRY_CONSUME("return");
 
 	ExprPtr expr = nullptr;
-	if (!peek().is_new_line) {
- 		std::cout << "return" << peek().value;
-		// Parse the returned expression, or nullptr for empty return
- 		expr = parse_expression(parser_info);
-		//std::cout << expr << std::endl;
+
+	bool is_void = parser_info.func->return_type == PrimitiveType::TYPE_VOID;
+
+	if (expect("}")) {
+		if (!is_void) {
+			SourceLocation source_location(&source_file, start_idx, index);
+			symbol_table.add_error(source_location, "non-void function must return a value", Error::ERROR);
+		}
+		return { std::make_shared<ReturnStatement>(nullptr) };
 	}
 
-    return { std::make_shared<ReturnStatement>(expr) };
+	if (peek().is_new_line) {
+		SourceLocation source_location(&source_file, start_idx, index);
+		symbol_table.add_error(source_location, "Code after return; Code in next line is not read as value for return statement", Error::WARNING);
+		return { std::make_shared<ReturnStatement>(nullptr) };
+	}
+
+	if (is_void) {
+		SourceLocation source_location(&source_file, start_idx, index);
+		symbol_table.add_error(source_location, "void function must not return a value", Error::ERROR);
+	}
+
+	expr = parse_expression(parser_info);
+
+	if (!expr) {
+		SourceLocation source_location(&source_file, start_idx, index);
+		symbol_table.add_error(source_location, "invalid return value", Error::ERROR);
+	}
+
+	// TODO: return type mismatch
+
+	return { std::make_shared<ReturnStatement>(expr) };
 }
 
 std::vector<StmtPtr> SymbolBuilder::parse_expression_statement(ParserInfo& parser_info) {

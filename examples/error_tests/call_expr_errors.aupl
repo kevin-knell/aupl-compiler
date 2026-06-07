@@ -1,0 +1,29 @@
+class CallExprErrors
+
+static void call_void() {
+	print("Hello World!")
+}
+
+static void call_non_existing() {
+	foobar(5, 4.0, "hi")
+}
+
+static void call_ambiguous() {
+	// TODO
+}
+
+static void invalid_native_constructor() {
+	vec2 v(1, 2, 3)
+}
+
+static void invalid_constructor() {
+	// TODO
+}
+
+static void invalid_global_native_func() {
+	print(1, 2, 3, "foo", "bar")
+}
+
+static void invalid_native_func() {
+	Time.sys_msec(5)
+}

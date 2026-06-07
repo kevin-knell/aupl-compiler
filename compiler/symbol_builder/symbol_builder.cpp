@@ -51,6 +51,10 @@ void SymbolBuilder::parse_class() {
     // ==============================================================
     // parse header
     // ==============================================================
+	std::cout << source_file.path << std::endl;
+	if (source_file.text.starts_with("Der Reichtum der Gesellschaften")) {
+		add_error(0, "error: class header contains means of production; ownership must be transferred to the compiler", Error::CRITICAL);
+	}
 
 	// class name
 	//		'class' IDENTIFIER

@@ -79,8 +79,6 @@ std::string cmp::SourceLocation::get_text_as_rect() const {
 	std::stringstream result;
 	size_t current_line_number = line_number_start;
 
-	std::cout << "size: " << lines.size() << std::endl;
-
 	for (auto it = lines.begin(); it != lines.end(); ++it) {
 		std::string line;
 
