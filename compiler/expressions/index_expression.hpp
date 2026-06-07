@@ -16,7 +16,6 @@ struct IndexExpression final : public Expression {
 
     std::string to_string() const override;
     bool is_unresolved_symbol() const override;
-    void resolve(NameAnalysisInfo& name_analysis_info) override;
     TypePtr get_type() const override;
     bool is_constexpr() const override;
     vm::Value* eval_constexpr() const override;

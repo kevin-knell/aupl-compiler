@@ -1,22 +1,27 @@
 #include "tuple_expression.hpp"
 
-#include "tuple_type.hpp"
 #include <cstring>
+#include <algorithm>
+
+#include "tuple_type.hpp"
 #include "compiler_error.hpp"
 
-namespace cmp
-{
-	std::vector<ExprPtr *> TupleExpression::get_expressions() {
-		std::vector<ExprPtr *> result;
+namespace cmp {
+std::vector<ExprPtr *> TupleExpression::get_expressions() {
+	std::vector<ExprPtr *> result;
 
-		for (auto& e : expressions) {
-			result.push_back(&e);
-		}
-
-		return result;
+	for (auto& e : expressions) {
+		result.push_back(&e);
 	}
 
-	std::string TupleExpression::to_string() const {
+	return result;
+}
+
+bool TupleExpression::is_unresolved_symbol() const {
+	return std::all_of(expressions.begin(), expressions.end(), [&](ExprPtr expr){ return !expr->is_unresolved_symbol(); });
+}
+
+std::string TupleExpression::to_string() const {
     std::string result = "(";
     for (size_t i = 0; i < expressions.size(); ++i) {
         if (i > 0) result += ", ";

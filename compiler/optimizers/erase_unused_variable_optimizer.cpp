@@ -13,11 +13,14 @@
 #include "expression.hpp"
 #include "variable_expression.hpp"
 
+#include "compiler_error.hpp"
+
 namespace cmp {
 
 void find_variable_references(std::vector<ExprPtr*> expressions, std::set<VarPtr>& result) {
     for (auto p : expressions) {
-        auto expr = *p;
+        ExprPtr expr = *p;
+		COMPILER_ASSERT(!expr->is_unresolved_symbol(), "Expression is unresolved: " + expr->to_string());
 
         if (expr->get_kind() == Expression::VARIABLE) {
             VarExprPtr var_expr = std::dynamic_pointer_cast<VariableExpression>(expr);

@@ -15,8 +15,8 @@
 #include "string_literal_expression.hpp"
 #include "unary_op_expression.hpp"
 #include "call_expression.hpp"
-#include "index_expression.hpp"
 #include "tuple_expression.hpp"
+#include "index_expression.hpp"
 
 #include "label.hpp"
 #include "compiler_error.hpp"

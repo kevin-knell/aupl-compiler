@@ -19,11 +19,6 @@ bool IndexExpression::is_unresolved_symbol() const {
 	return left_expr->is_unresolved_symbol() || index_expr->is_unresolved_symbol();
 }
 
-void IndexExpression::resolve(NameAnalysisInfo &name_analysis_info) {
-	left_expr->resolve(name_analysis_info);
-	index_expr->resolve(name_analysis_info);
-}
-
 TypePtr IndexExpression::get_type() const {
 	TypePtr left_type = left_expr->get_type();
 

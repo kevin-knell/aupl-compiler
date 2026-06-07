@@ -55,8 +55,4 @@ bool BinaryExpression::is_unresolved_symbol() const {
 	return left->is_unresolved_symbol() || right->is_unresolved_symbol();
 }
 
-void BinaryExpression::resolve(NameAnalysisInfo &name_analysis_info) {
-	left->resolve(name_analysis_info);
-	right->resolve(name_analysis_info);
-}
 }

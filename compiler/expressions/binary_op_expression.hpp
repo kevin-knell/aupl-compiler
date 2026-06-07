@@ -26,7 +26,6 @@ struct BinaryExpression final : public Expression {
     virtual vm::Value* eval_constexpr() const override;
 	
     bool is_unresolved_symbol() const override;
-    void resolve(NameAnalysisInfo& name_analysis_info) override;
 
     const std::string operator_to_string() const {
         switch (op) {

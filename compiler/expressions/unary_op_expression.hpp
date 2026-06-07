@@ -23,6 +23,7 @@ struct UnaryExpression final : public Expression {
 
     std::string to_string() const override;
     std::vector<ExprPtr*> get_expressions() override;
+	virtual bool is_unresolved_symbol() const override { return expr->is_unresolved_symbol(); }
     TypePtr get_type() const override;
     KIND get_kind() const override { return UNARY; }
 

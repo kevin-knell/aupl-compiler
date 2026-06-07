@@ -13,6 +13,7 @@ struct TupleExpression final : public Expression {
 	DEFINE_SELF_EXPR(TupleExpression)
 	
     std::vector<ExprPtr*> get_expressions() override;
+	virtual bool is_unresolved_symbol() const override;
 
     std::string to_string() const override;
     TypePtr get_type() const override;

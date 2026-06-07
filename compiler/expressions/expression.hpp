@@ -5,7 +5,6 @@
 #include <vector>
 #include <cstdint>
 #include "instructions.hpp"
-#include "name_analysis_info.hpp"
 #include "forward_declarations.hpp"
 #include "expression_visitor.hpp"
 #include "source_location.hpp"
@@ -54,11 +53,8 @@ struct Expression : public std::enable_shared_from_this<Expression> {
     
     virtual std::vector<ExprPtr*> get_expressions();
     virtual int get_level();
-    
-    virtual bool is_unresolved_symbol() const { return false; }
-    virtual void resolve(NameAnalysisInfo& name_analysis_info) {
-        (void)name_analysis_info;
-    };
+
+	virtual bool is_unresolved_symbol() const = 0;
     
     virtual TypePtr get_type() const = 0;
 

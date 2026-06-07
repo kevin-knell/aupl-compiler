@@ -24,11 +24,6 @@ struct CallExpression final : public Expression {
 	int get_level() override;
     TypePtr get_type() const override;
     bool is_unresolved_symbol() const override;
-    void resolve(NameAnalysisInfo& name_analysis_info) override;
-	
-	FuncVec get_candidates(FuncVec functions);
-	FuncVec get_secondary_candidates(FuncVec candidates);
-	bool resolve_from_secondary_candidates(FuncVec secondary_candidates, NameAnalysisInfo& name_analysis_info);
 
     std::vector<ExprPtr*> get_expressions() override;
     bool is_pure() const override;

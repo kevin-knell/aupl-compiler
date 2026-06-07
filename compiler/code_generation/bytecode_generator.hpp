@@ -425,7 +425,7 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const ConditionalJum
 		return;
 	}
 
-	struct ConditionVisitor final : ExpressionVisitor {
+	struct ConditionVisitor final : public ExpressionVisitor {
 		BytecodeGenerator& self;
 		const ConditionalJumpStatement& stmt;
 

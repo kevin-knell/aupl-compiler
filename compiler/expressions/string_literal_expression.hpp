@@ -3,7 +3,7 @@
 
 namespace cmp {
 
-struct StringLiteralExpression final : Expression {
+struct StringLiteralExpression final : public Expression {
 	TypePtr type;
 	std::string value;
 
@@ -15,7 +15,6 @@ struct StringLiteralExpression final : Expression {
 	std::string to_string() const override;
 	std::vector<ExprPtr*> get_expressions() override;
 	bool is_unresolved_symbol() const override { return false; }
-	void resolve(NameAnalysisInfo&) override {};
 	int get_level() override { return 1; };
 	TypePtr get_type() const override;
 	KIND get_kind() const override { return STRING_LIT; }
