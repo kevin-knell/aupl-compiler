@@ -17,6 +17,7 @@
 #include "call_expression.hpp"
 #include "tuple_expression.hpp"
 #include "index_expression.hpp"
+#include "node_composition_expression.hpp"
 
 #include "label.hpp"
 #include "compiler_error.hpp"
@@ -454,4 +455,16 @@ void cmp::CppCodeGenerator::visit(IndexExpression &expr) {
 	cpp_classes << "[";
 	expr.index_expr->accept(*this);
 	cpp_classes << "]";
+}
+
+void cmp::CppCodeGenerator::visit(NodeCompositionExpression& expr) {
+	cpp_classes << "Node::compose(";
+	
+	expr.constructor_call_expr->accept(*this);
+	
+	cpp_classes << ", ";
+	
+	expr.content_tuple_expr->accept(*this);
+	
+	cpp_classes << ")";
 }

@@ -11,6 +11,7 @@
 #include "string_literal_expression.hpp"
 #include "shared_type.hpp"
 #include "index_expression.hpp"
+#include "node_composition_expression.hpp"
 #include <iostream>
 #include "compiler_error.hpp"
 
@@ -301,11 +302,22 @@ ExprPtr SymbolBuilder::parse_primary(ParserInfo& parser_info) {
 		return result;
     }
 
-    if (match(TokenType::IDENTIFIER) || expect("this")) {
+	if (expect("this")) {
+		next(); // consume 'this'
+        ExprPtr result = std::make_shared<VariableExpression>(parser_info.cls->scope->variables["this"]);
+        return result;
+	}
+
+    if (match(TokenType::IDENTIFIER)) {
         std::string name = next().value;
         ExprPtr result = std::make_shared<VariableExpression>(name);
         return result;
     }
+
+	if (expect("\\")) {
+		ExprPtr result = parse_node_composition(parser_info);
+		return result;
+	}
 
     return nullptr;
 }
@@ -413,6 +425,91 @@ ExprPtr SymbolBuilder::parse_initializer_list(ParserInfo &parser_info) {
     next(); // consume }
 
     return std::make_shared<TupleExpression>(expressions);
+}
+
+ExprPtr SymbolBuilder::parse_node_composition(ParserInfo &parser_info) {
+	size_t start_idx = index;
+	
+	if (!expect("\\")) {
+		return nullptr;
+	}
+	next(); // consume '\'
+
+	if (!match(TokenType::IDENTIFIER)) {
+		SourceLocation source_location(&source_file, start_idx, index);
+		symbol_table.add_error(source_location, "identifier expected after '\\'", Error::ERROR);
+
+		// TODO: recover
+
+		return nullptr;
+	}
+	std::string node_name = next().value;
+
+	// parse args / values
+	if (!expect("(")) {
+		SourceLocation source_location(&source_file, start_idx, index);
+		symbol_table.add_error(source_location, "'(' expected after \\Node", Error::ERROR);
+	}
+	next(); // consume '('
+
+	ExprVec args;
+
+	while(!expect(")")) {
+		if (!args.empty()) {
+			if (!expect(",")) {
+				SourceLocation source_location(&source_file, start_idx, index);
+				symbol_table.add_error(source_location, "',' expected in \\Node(...)", Error::ERROR);
+			}
+			next(); // consume ','
+		}
+
+		// TODO: add '=' option
+
+		ExprPtr expr = parse_expression(parser_info);
+
+		if (!expr) {
+			SourceLocation source_location(&source_file, start_idx, index);
+			symbol_table.add_error(source_location, "invalid expression in \\Node(...)", Error::ERROR);
+			abort(); // TODO: recover properly
+			continue;
+		}
+
+		args.push_back(expr);
+	}
+	next(); // consume ')'
+
+	// parse content
+	if (!expect("{")) {
+		SourceLocation source_location(&source_file, start_idx, index);
+		symbol_table.add_error(source_location, "'{' expected after \\Node()", Error::ERROR);
+	}
+	next(); // consume '{'
+
+	ExprVec content;
+
+	while(!expect("}")) {
+		if (!content.empty()) {
+			if (!expect(",")) {
+				SourceLocation source_location(&source_file, start_idx, index);
+				symbol_table.add_error(source_location, "',' expected in \\Node() {...}", Error::ERROR);
+			}
+			next(); // consume ','
+		}
+
+		ExprPtr expr = parse_expression(parser_info);
+
+		if (!expr) {
+			SourceLocation source_location(&source_file, start_idx, index);
+			symbol_table.add_error(source_location, "invalid expression in \\Node() {...}", Error::ERROR);
+			abort(); // TODO: recover properly
+			continue;
+		}
+
+		content.push_back(expr);
+	}
+	next(); // consume '}'
+
+	return std::make_shared<NodeCompositionExpression>(node_name, args, content);
 }
 
 }

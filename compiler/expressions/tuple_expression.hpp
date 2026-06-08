@@ -1,3 +1,4 @@
+#pragma once
 #include "expression.hpp"
 
 #include "forward_declarations.hpp"

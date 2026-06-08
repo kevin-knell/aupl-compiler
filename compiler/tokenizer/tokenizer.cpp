@@ -6,6 +6,8 @@
 #include <vector>
 #include <iostream>
 
+#include "compiler_error.hpp"
+
 #define COMMA ,
 
 #define KEYWORDS(x, D) \
@@ -77,19 +79,21 @@ namespace {
 	}
 
     // Determines the type of token
-    cmp::TokenType get_token_type(const std::string& token) {
+    cmp::TokenType get_token_type(const std::string& token_value) {
         static std::regex identifier(R"(^[a-zA-Z_][a-zA-Z0-9_]*$)");
         static std::regex int_number(R"(^[+-]?\d+$)");
         static std::regex double_number(R"(^[+-]?\d+\.\d+$)");
         static std::regex string(R"(^\"(.*)\"$)");
-        static std::regex special(R"(^[{}()\[\]:;.,=+\-*/<>!&|@%]+$)");
+        static std::regex special(R"(^[{}()\[\]:;.,=+\-*/<>!&|@%\\]+$)");
 
-        if (keywords.count(token)) return cmp::TokenType::KEYWORD;
-        if (std::regex_match(token, double_number)) return cmp::TokenType::DOUBLE_LITERAL;
-        if (std::regex_match(token, int_number)) return cmp::TokenType::INT_LITERAL;
-        if (std::regex_match(token, string)) return cmp::TokenType::STRING_LITERAL;
-        if (std::regex_match(token, identifier)) return cmp::TokenType::IDENTIFIER;
-        if (std::regex_match(token, special)) return cmp::TokenType::SPECIAL;
+        if (keywords.count(token_value)) return cmp::TokenType::KEYWORD;
+        if (std::regex_match(token_value, double_number)) return cmp::TokenType::DOUBLE_LITERAL;
+        if (std::regex_match(token_value, int_number)) return cmp::TokenType::INT_LITERAL;
+        if (std::regex_match(token_value, string)) return cmp::TokenType::STRING_LITERAL;
+        if (std::regex_match(token_value, identifier)) return cmp::TokenType::IDENTIFIER;
+        if (std::regex_match(token_value, special)) return cmp::TokenType::SPECIAL;
+
+		COMPILER_ERR("invalid token type:" + token_value);
 
         return cmp::TokenType::SPECIAL;
     }
@@ -113,7 +117,7 @@ std::vector<Token> tokenize(const std::string& source) {
     const std::string double_number = R"([+-]?\d+\.\d+)";
     const std::string int_number = R"([+-]?\d+)";
     // Multi-char operators first, then single-char
-    const std::string special = R"(>=|<=|==|!=|\+=|-=|\*=|/=|[{}()\[\]:,=+\-*/%<>.])";
+    const std::string special = R"(>=|<=|==|!=|\+=|-=|\*=|/=|[{}()\[\]:,=+\-*/%<>.\\])";
     const std::string string_literal = R"(\"(.*)\")";
     const std::string char_literal = R"('(\\.|[^'\\])')";
 

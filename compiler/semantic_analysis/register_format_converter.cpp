@@ -13,6 +13,7 @@
 #include "label.hpp"
 #include <text_color.hpp>
 #include "compiler_error.hpp"
+#include "shared_type.hpp"
 
 //#define RF_DEBUG_VERBOSE
 
@@ -83,35 +84,44 @@ void RegisterFormatConverter::convert_scope(cmp::ScopePtr current_scope) {
 		if (auto lower_scope = lower.lock())
 			convert_scope(lower_scope);
 		else
-			std::cout << "Warning: lower scope is expired" << std::endl;
+			COMPILER_WARN("lower scope is expired");
 	}
 }
 
 void RegisterFormatConverter::convert_to_register_format(ExprPtr expr, bool is_volatile) {
-	//RF_DEBUG_PRINT("expression: " << expr->to_string());
+	RF_DEBUG_PRINT("expression: " << expr->to_string());
 
     for (auto p : expr->get_expressions()) {
-        auto& sub_expr = *p;
-        COMPILER_ASSERT(sub_expr, "");
+        ExprPtr& sub_expr = *p;
+        COMPILER_ASSERT(sub_expr, "no sub expression of " + expr->to_string());
 		
 		if (sub_expr->get_level() == 0) continue;
 
-		//RF_DEBUG_PRINT("\treplacing level " << sub_expr->get_level() << ": " << sub_expr->to_string());
+		RF_DEBUG_PRINT("\treplacing level " << sub_expr->get_level() << ": " << sub_expr->to_string());
         replace_with_temp(sub_expr, is_volatile);
     }
 
-	//RF_DEBUG_PRINT("set to expression: " << expr->to_string() << std::endl);
+	RF_DEBUG_PRINT("set to expression: " << std::flush << expr->to_string() << std::endl);
 }
 
 void RegisterFormatConverter::replace_with_temp(ExprPtr& expr, bool is_volatile) {
 	// create temp
-	TypePtr type = expr->get_type();
-	VarPtr tmp = scope->get_temp(type, expr);
+	TypePtr expr_type = expr->get_type();
+
+	TypePtr temp_type;
+
+	if (expr_type->default_store_shared()) {
+		temp_type = std::make_shared<SharedType>(expr_type);
+	} else {
+		temp_type = expr_type;
+	}
+
+	VarPtr tmp = scope->get_temp(temp_type, expr);
 	VarExprPtr tmp_expr = std::make_shared<VariableExpression>(tmp);
 	StmtPtr tmp_decl = std::make_shared<DeclareStatement>(tmp);
 	tmp_decl->is_volatile = is_volatile;
 	tmp->scope = scope;
-	//RF_DEBUG_PRINT_V("\tcreated temp: " << tmp->name_to_string());
+	RF_DEBUG_PRINT_V("\tcreated temp: " << tmp->name_to_string());
 
 	if (expr->get_kind() == Expression::VARIABLE && expr->get_type()->is_pointer_type()) {
 		VarExprPtr var_expr = std::static_pointer_cast<VariableExpression>(expr);
@@ -125,6 +135,7 @@ void RegisterFormatConverter::replace_with_temp(ExprPtr& expr, bool is_volatile)
 	// replace
 	RF_DEBUG_PRINT("\treplacing " << expr->to_string() << " with " << tmp_expr->to_string());
 	expr = tmp_expr;
+	RF_DEBUG_PRINT("\tsuccess");
 
 	statements.push_back(tmp_decl);
 
@@ -136,6 +147,9 @@ void RegisterFormatConverter::convert(DeclareStatement& stmt) {
 	if (!stmt.variable_symbol->initial_value) return;
 
 	auto& expr = stmt.variable_symbol->initial_value;
+
+	RF_DEBUG_PRINT("converting: " << expr->to_string());
+
 	convert_to_register_format(expr, stmt.is_volatile);
 }
 
@@ -149,6 +163,7 @@ void RegisterFormatConverter::convert(AssignmentStatement& stmt) {
 			if (expr->get_kind() == Expression::VARIABLE) {
 				convert_to_register_format(expr, stmt.is_volatile);
 			} else {
+				RF_DEBUG_PRINT_V("requires lvalue replace");
 				replace_with_temp(expr, stmt.is_volatile);
 			}
 			break;

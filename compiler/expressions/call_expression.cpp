@@ -67,11 +67,7 @@ bool CallExpression::is_pure() const {
 
 TypePtr CallExpression::get_type() const {
     if (f && f->return_type) {
-		if (f->is_constructor) {
-			return std::make_shared<ClassType>(f->name);
-		} else {
-			return f->return_type;
-		}
+		return f->return_type;
 	}
 	
 	return InvalidType::make("unknown call: " + name);

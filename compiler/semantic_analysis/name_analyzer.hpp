@@ -44,6 +44,7 @@ public:
 	void visit(TupleExpression& expr) override;
 	void visit(StringLiteralExpression&) override {};
 	void visit(IndexExpression& expr) override;
+	void visit(NodeCompositionExpression& expr) override;
 };
 
 } // namespace cmp

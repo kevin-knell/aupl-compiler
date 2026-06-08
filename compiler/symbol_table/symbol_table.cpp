@@ -72,24 +72,34 @@ Error &SymbolTable::add_error(
 		const SourceLocation& source_location,
 		const std::string message,
 		Error::Level level) {
-	const SourceFile& source_file = *source_location.source_file;
-	const size_t start_token_idx = source_location.start_token_index;
-	const size_t end_token_idx = source_location.end_token_index;
-	Token start_token = source_file.tokens[start_token_idx];
-	Token end_token = source_file.tokens[end_token_idx];
+	const SourceFile* source_file = source_location.source_file;
+	
+	std::string path = "(unknown file)";
+	size_t start_token_idx = 0; 
+	size_t end_token_idx = 0; 
+	size_t line = 0;
+	size_t col = 0;
+
+	if (source_file) {
+		path = source_file->path;
+		start_token_idx = source_location.start_token_index;
+		end_token_idx = source_location.end_token_index;
+		line = source_file->tokens[start_token_idx].line;
+		col = source_file->tokens[start_token_idx].col;
+	}
 
 	Error& error = errors.emplace_back(
-		source_file.path,
+		path,
 		start_token_idx,
 		end_token_idx,
-		start_token.line,
-		start_token.col,
+		line,
+		col,
 		message,
 		level
 	);
 
 	std::cerr <<
-			source_file.path << ":" << start_token.line << ":" << start_token.col << ": " <<
+			path << ":" << line << ":" << col << ": " <<
 			error.get_error_text() <<
 			message << std::endl;
 

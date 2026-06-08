@@ -87,6 +87,8 @@ public:
     ExprPtr parse_tuple(ParserInfo& parser_info);
     ExprPtr parse_initializer_list(ParserInfo& parser_info);
 
+    ExprPtr parse_node_composition(ParserInfo& parser_info);
+
 private:
 	const SourceFile& source_file;
     const std::vector<Token>& tokens;

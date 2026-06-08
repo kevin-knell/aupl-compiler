@@ -50,6 +50,7 @@ private:
 	void visit(TupleExpression& expr) override;
 	void visit(StringLiteralExpression& expr) override;
 	void visit(IndexExpression& expr) override;
+	void visit(NodeCompositionExpression& expr) override;
 };
 
 }

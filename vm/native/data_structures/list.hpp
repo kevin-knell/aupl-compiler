@@ -27,6 +27,23 @@ public:
 		data = init_list;
 	}
 
+	template<typename U>
+	List(std::initializer_list<U> init_list)
+		requires std::is_convertible_v<U, T>
+	{
+		for (const auto& x : init_list)
+			push(x);
+	}
+
+	template<typename U>
+    List(const List<U>& other)
+        	requires std::is_convertible_v<U, T>
+	{
+		for (size_t i = 0; i < other.size(); ++i) {
+			push(other[i]);
+		}
+    }
+
 	void push(T value) {
 		data.push_back(value);
 	}

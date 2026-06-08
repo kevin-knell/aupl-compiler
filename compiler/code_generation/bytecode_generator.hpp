@@ -512,6 +512,7 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(const ConditionalJum
 		void visit(TupleExpression&) override { self.add_error(); }
 		void visit(StringLiteralExpression&) override { self.add_error(); }
 		void visit(IndexExpression&) override { self.add_error(); }
+		void visit(NodeCompositionExpression&) override { self.add_error(); }
 
 
 	};

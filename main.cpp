@@ -147,6 +147,7 @@ int main(int argc, char** argv) {
 			}
 		)
 	) {
+		std::cerr << "found error" << std::endl;
 		return 1;
 	}
 

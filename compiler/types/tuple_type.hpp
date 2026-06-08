@@ -19,6 +19,8 @@ struct TupleType final : public Type {
 
 	KIND get_kind() const override;
 
+	std::string to_cpp_type_str() override { return "auto"; }
+
 	bool is_cpp_type(const std::string&) const override { return false; }
 	bool is_convertable_to_cpp_type(const std::string&) const override { return false; }
 };

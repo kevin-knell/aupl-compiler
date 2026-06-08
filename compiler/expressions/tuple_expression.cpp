@@ -18,7 +18,7 @@ std::vector<ExprPtr *> TupleExpression::get_expressions() {
 }
 
 bool TupleExpression::is_unresolved_symbol() const {
-	return std::all_of(expressions.begin(), expressions.end(), [&](ExprPtr expr){ return !expr->is_unresolved_symbol(); });
+	return std::any_of(expressions.begin(), expressions.end(), [&](ExprPtr expr){ return expr->is_unresolved_symbol(); });
 }
 
 std::string TupleExpression::to_string() const {

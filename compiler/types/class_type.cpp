@@ -15,8 +15,8 @@ bool ClassType::is_cpp_type(const std::string &cpp_type) const {
 }
 
 bool ClassType::default_store_shared() const {
-	return !class_bind
-			|| class_bind->is_object;
+	if (!class_bind) return true;
+	return class_bind->is_object;
 }
 
 }

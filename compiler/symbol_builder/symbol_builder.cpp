@@ -437,7 +437,7 @@ VarVec SymbolBuilder::parse_parameters(ParserInfo parser_info, ParserInfo parser
 		SourceLocation source_location(&source_file, 0, 1);
 		auto this_var = VariableSymbol::create(source_location, pointer_type, "this", nullptr);
 		scope->args.push_back(this_var->name);
-		scope->variables[this_var->name] = this_var;
+		scope->variables["this"] = this_var;
 		this_var->scope = scope;
 	}
 

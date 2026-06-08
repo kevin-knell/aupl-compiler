@@ -11,6 +11,7 @@
 #include "call_expression.hpp"
 #include "tuple_expression.hpp"
 #include "index_expression.hpp"
+#include "node_composition_expression.hpp"
 
 #include "statement.hpp"
 #include "text_color.hpp"
@@ -194,7 +195,9 @@ void NameAnalyzer::visit(VariableExpression& expr) {
 	if (scope) {
         expr.var = scope->variables[expr.name];
 		if (!expr.obj_expr && scope->type == Scope::CLASS) {
-			auto obj_var_expr = std::make_shared<VariableExpression>("this");
+			ScopePtr func_scope = na_context->func->scope;
+			COMPILER_ASSERT(func_scope->has("this"), "scope " + func_scope->get_full_name() + " has no 'this'");
+			auto obj_var_expr = std::make_shared<VariableExpression>(func_scope->variables["this"]);
 			obj_var_expr->must_be_dereferenced = true;
 			expr.obj_expr = obj_var_expr;
 		}
@@ -226,5 +229,9 @@ void NameAnalyzer::visit(IndexExpression& expr) {
 	expr.index_expr->accept(*this);
 }
 
+void NameAnalyzer::visit(NodeCompositionExpression &expr) {
+	expr.constructor_call_expr->accept(*this);
+	expr.content_tuple_expr->accept(*this);
+}
 
 }

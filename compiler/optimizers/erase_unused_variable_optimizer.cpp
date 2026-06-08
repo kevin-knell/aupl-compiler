@@ -86,6 +86,7 @@ void cmp::EraseUnusedVariableOptimizer::optimize(SymbolTable &st) const {
                 auto decl = std::dynamic_pointer_cast<DeclareStatement>(stmt);
                 if (decl && decl->variable_symbol) {
                     const std::string& var_name = decl->variable_symbol->name;
+					COMPILER_ASSERT(var_name != "this", "erasing 'this'");
                     f->scope->variables.erase(var_name);
                 }
             }

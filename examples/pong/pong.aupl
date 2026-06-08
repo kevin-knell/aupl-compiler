@@ -34,7 +34,12 @@ static void main() {
 	Scene scene()
 	viewport.scene = scene
 
-	Node root()
+	Node root = \Node() {
+		p1,
+		p2,
+		ball
+	}
+
 	scene.root = root
 
 	root.add_child(p1)
