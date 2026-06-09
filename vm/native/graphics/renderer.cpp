@@ -286,12 +286,10 @@ void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
 		mapped_vertices[7] = Vertex{ vec2(1.0, 1.0), vec3(1.0, 1.0, 1.0) };
 
 		mat4 model = {
-			.rows = {
-				{ r->size.x, 0.0, 0.0, 0.0 },
-				{ 0.0, r->size.y, 0.0, 0.0 },
-				{ 0.0, 0.0, 1.0, 0.0 },
-				{ r->position.x, r->position.y, 0.0, 1.0 },
-			}
+			{ r->size.x, 0.0, 0.0, 0.0 },
+			{ 0.0, r->size.y, 0.0, 0.0 },
+			{ 0.0, 0.0, 1.0, 0.0 },
+			{ r->position.x, r->position.y, 0.0, 1.0 },
 		};
 
 		r->object_data.model = model;
@@ -342,12 +340,10 @@ void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
         	bezier_pipeline.pipeline);
 
 		mat4 model = {
-			.rows = {
-				{ 1.0, 0.0, 0.0, 0.0 },
-				{ 0.0, 1.0, 0.0, 0.0 },
-				{ 0.0, 0.0, 1.0, 0.0 },
-				{ 0.0, 0.0, 0.0, 1.0 },
-			}
+			{ 1.0, 0.0, 0.0, 0.0 },
+			{ 0.0, 1.0, 0.0, 0.0 },
+			{ 0.0, 0.0, 1.0, 0.0 },
+			{ 0.0, 0.0, 0.0, 1.0 },
 		};
 
 		assert(curve_2d->points.size() == 4);

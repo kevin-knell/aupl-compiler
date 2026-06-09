@@ -13,8 +13,9 @@ struct Color {
 
 	static void register_to_db(vm::ClassDB& db);
 
-	Color() = default;
-	Color(float r, float g, float b, float a = 1.0f) : r(r), g(g), b(b), a(a) {}
+	constexpr Color() = default;
+	constexpr Color(float v) : r(v), g(v), b(v), a(1.0f) {}
+	constexpr Color(float r, float g, float b, float a = 1.0f) : r(r), g(g), b(b), a(a) {}
 };
 
 MARK_TRIVIAL(Color)

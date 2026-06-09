@@ -7,21 +7,24 @@ namespace vm {
 
 namespace auplib {
 
-class complex {
-public:
+struct complex {
     static void register_to_db(vm::ClassDB& db);
 
-    static const double ONE;
-    static const double I;
-    
-    std::complex<double> value;
+    static const float ONE;
+    static const float I;
+	
+	float real;
+	float imag;
 
-    complex() = default;
+	constexpr complex() = default;
+	constexpr complex(float r) : real(r), imag(0.0f) {}
+	constexpr complex(float r, float i) : real(r), imag(i) {}
 
-    double re() const;
-    double im() const;
+    float re() const { return real; }
+    float im() const { return imag; }
 };
 
 MARK_TRIVIAL(complex)
+static_assert(sizeof(complex) == sizeof(float) * 2);
 
 }

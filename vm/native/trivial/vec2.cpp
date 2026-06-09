@@ -5,6 +5,7 @@
 #include "native.hpp"
 #include "class_db.hpp"
 #include "complex.hpp"
+#include "math.hpp"
 
 namespace auplib {
 
@@ -19,14 +20,6 @@ float vec2::get_x() const { return x; }
 void vec2::set_y(float _y) { y = _y; }
 float vec2::get_y() const { return y; }
 
-void vec2::set_xx(vec2 v) { x = v.x; x = v.y; }
-void vec2::set_yx(vec2 v) { y = v.x; x = v.y; }
-void vec2::set_yy(vec2 v) { y = v.x; y = v.y; }
-
-vec2 vec2::get_xx() const { return vec2(x, x); }
-vec2 vec2::get_yx() const { return vec2(y, x); }
-vec2 vec2::get_yy() const { return vec2(y, y); }
-
 float vec2::dot(vec2 v) const
 {
     return x * v.x + y * v.y;
@@ -34,7 +27,7 @@ float vec2::dot(vec2 v) const
 
 float vec2::length() const
 {
-    return std::sqrt(length_squared());
+    return Math::sqrt(length_squared());
 }
 
 void vec2::register_to_db(vm::ClassDB& db) {

@@ -4,6 +4,16 @@
 
 #include "native.hpp"
 
+// Generate all 2-component swizzles for x,y,z
+// Declaration helpers
+
+#define SWIZZLE2(M) \
+    M(x, x) M(x, y) \
+    M(y, x) M(y, y)
+
+#define DECL_SET2(a, b) void set_##a##b(vec2 v) { a = v.x; b = v.y; }
+#define DECL_GET2(a, b) vec2 get_##a##b() const { return vec2(a, b); }
+
 namespace vm {
     class ClassDB;
 } // namespace vm
@@ -20,10 +30,9 @@ struct vec2 {
 
     float x, y;
 
-
-    vec2() = default;
-
-    vec2(float x, float y) : x(x), y(y) {}
+    constexpr vec2() = default;
+    constexpr vec2(float v) : x(v), y(v) {}
+    constexpr vec2(float x, float y) : x(x), y(y) {}
 
     void set_x(float _x);
     float get_x() const;
@@ -32,13 +41,8 @@ struct vec2 {
     float get_y() const;
 
     // swizzle
-    void set_yx(vec2 v);
-    void set_xx(vec2 v);
-    void set_yy(vec2 v);
-
-    vec2 get_yx() const;
-    vec2 get_xx() const;
-    vec2 get_yy() const;
+	SWIZZLE2(DECL_SET2)
+	SWIZZLE2(DECL_GET2)
 
     // vector functions
 

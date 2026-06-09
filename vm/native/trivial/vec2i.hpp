@@ -8,8 +8,7 @@ namespace vm {
 
 namespace auplib {
 
-class vec2i {
-public:
+struct vec2i {
     static void register_to_db(vm::ClassDB& db);
 
     static const vec2i ZERO;
@@ -17,10 +16,10 @@ public:
     static const vec2i EX;
     static const vec2i EY;
 
-    int64_t x, y;
+    int32_t x, y;
 
     vec2i() = default;
-    vec2i(int64_t x, int64_t y) : x(x), y(y) {}
+    vec2i(int32_t x, int32_t y) : x(x), y(y) {}
 };
 
 MARK_TRIVIAL(vec2i)

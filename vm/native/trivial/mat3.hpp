@@ -4,19 +4,13 @@
 
 namespace auplib {
 
-class mat3 {
-	union {
-		float cells[9];
-		vec3 rows[3];
-
-		struct {
-			vec3 x;
-			vec3 y;
-			vec3 z;
-		};
-	};
+struct mat3 {
+	vec3 x;
+	vec3 y;
+	vec3 z;
 };
 
 MARK_TRIVIAL(mat3)
+static_assert(sizeof(mat3) == sizeof(float) * 9);
 
 }

@@ -7,6 +7,7 @@ namespace auplib {
 void Math::register_to_db(vm::ClassDB &db) {
 	const int16_t id = REGISTER_CLASS(Math);
 
+	REGISTER_GLOBAL_METHOD(id, Math, sqrt, float (*)(float x));
 	REGISTER_GLOBAL_METHOD(id, Math, sqrt, double (*)(double x));
 	REGISTER_GLOBAL_METHOD(id, Math, pow, double (*)(double b, double e));
 	REGISTER_GLOBAL_METHOD(id, Math, exp, double (*)(double x));
@@ -30,6 +31,10 @@ void Math::register_to_db(vm::ClassDB &db) {
 	REGISTER_GLOBAL_METHOD(id, Math, wrap, int (*)(int x, int from, int to));
 	REGISTER_GLOBAL_METHOD(id, Math, clamp, double (*)(double x, double from, double to));
 	REGISTER_GLOBAL_METHOD(id, Math, clamp, int (*)(int x, int from, int to));
+}
+
+float Math::sqrt(float x) {
+	return std::sqrt(x);
 }
 
 double Math::sqrt(double x) {

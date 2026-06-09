@@ -13,7 +13,7 @@ void vec2i::register_to_db(vm::ClassDB &db) {
     const int16_t id = REGISTER_CLASS(vec2i);
 	
 	REGISTER_CONSTRUCTOR(id, vec2i());
-	REGISTER_CONSTRUCTOR(id, vec2i(int64_t x, int64_t y));
+	REGISTER_CONSTRUCTOR(id, vec2i(int32_t x, int32_t y));
 
 	REGISTER_VARIABLE(id, int64_t, x);
 	REGISTER_VARIABLE(id, int64_t, y);

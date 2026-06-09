@@ -5,20 +5,16 @@
 namespace auplib {
 
 struct mat4 {
-	union {
-		float cells[16];
-		vec4 rows[4];
+	vec4 x;
+	vec4 y;
+	vec4 z;
+	vec4 w;
 
-		struct {
-			vec4 x;
-			vec4 y;
-			vec4 z;
-			vec4 w;
-		};
-	};
+	constexpr mat4() = default;
+	constexpr mat4(vec4 x, vec4 y, vec4 z, vec4 w) : x(x), y(y), z(z), w(w) {}
 };
 
 MARK_TRIVIAL(mat4)
-static_assert(sizeof(mat4) == 64);
+static_assert(sizeof(mat4) == sizeof(float) * 16);
 
 }
