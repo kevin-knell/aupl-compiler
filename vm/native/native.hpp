@@ -9,6 +9,8 @@ struct is_trivial {
     static constexpr bool value = false;
 };
 
+class String;
+
 }
 
 namespace vm

@@ -8,6 +8,7 @@ namespace auplib
 struct Vertex {
 	vec2 position;
 	vec3 color;
+	vec2 uv;
 };
 
 } // namespace auplib

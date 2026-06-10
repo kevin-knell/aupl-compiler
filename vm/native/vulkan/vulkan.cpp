@@ -127,6 +127,7 @@ void VulkanInstance::create_device() {
 	VkPhysicalDeviceFeatures enabled_vk10_features{};
 	enabled_vk10_features.samplerAnisotropy = VK_TRUE;
 	enabled_vk10_features.tessellationShader = VK_TRUE;
+	enabled_vk10_features.samplerAnisotropy = VK_TRUE;
 
 	const std::vector<const char*> device_extensions{ VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 

@@ -30,9 +30,15 @@ public:
 	
 	// operators
 	String& operator=(const String& s) = default;
+
+	String operator+(const String& s);
+	String operator+(const char* s);
 	
 	operator std::string() const { return value; }
 	operator const char*() const { return value.c_str(); }
 };
+
+String operator+(const char* s1, const String& s2);
+std::ostream& operator<<(std::ostream& os, const String& s);
 
 }

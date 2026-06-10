@@ -20,6 +20,10 @@ struct vec2i {
 
     vec2i() = default;
     vec2i(int32_t x, int32_t y) : x(x), y(y) {}
+	
+	int32_t area() const;
+
+	operator String() const;
 };
 
 MARK_TRIVIAL(vec2i)

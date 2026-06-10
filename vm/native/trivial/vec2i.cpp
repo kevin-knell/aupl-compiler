@@ -1,6 +1,7 @@
 #include "vec2i.hpp"
 #include "class_db.hpp"
 #include "native.hpp"
+#include "string.hpp"
 
 namespace auplib {
 
@@ -17,6 +18,14 @@ void vec2i::register_to_db(vm::ClassDB &db) {
 
 	REGISTER_VARIABLE(id, int64_t, x);
 	REGISTER_VARIABLE(id, int64_t, y);
+}
+
+int32_t vec2i::area() const {
+	return x * y;
+}
+
+vec2i::operator String() const {
+	return "vec2i(" + String(x) + ", " + String(y) + ")";
 }
 
 }

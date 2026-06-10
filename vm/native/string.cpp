@@ -19,6 +19,14 @@ size_t String::size() const { return value.size(); }
 bool String::empty() const { return value.empty(); }
 char String::operator[](size_t i) const { return value[i]; }
 
+String String::operator+(const String &s) {
+	return String(value + s.value);
+}
+
+String String::operator+(const char *s) {
+	return String(value + s);
+}
+
 void String::register_to_db(vm::ClassDB& db) {
         const int16_t id = REGISTER_CLASS(String);
 
@@ -29,6 +37,14 @@ void String::register_to_db(vm::ClassDB& db) {
 
 		REGISTER_METHOD(id, String, size, size_t (String::*)() const);
 		REGISTER_METHOD(id, String, operator=, String& (String::*)(const String& s));
+}
+
+String operator+(const char *s1, const String& s2) {
+	return String(s1 + s2.str());
+}
+
+std::ostream &operator<<(std::ostream &os, const String &s) {
+	return os << s.str();
 }
 
 }

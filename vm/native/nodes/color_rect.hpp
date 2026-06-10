@@ -4,8 +4,7 @@
 #include "vec2.hpp"
 #include "color.hpp"
 
-namespace auplib
-{
+namespace auplib {
 
 struct ColorRect : public CanvasItem {
 	vec2 position;

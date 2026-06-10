@@ -2,8 +2,11 @@
 
 #include "vulkan.hpp"
 
-auplib::CanvasItem::CanvasItem()
-{
+namespace auplib {
+
+CanvasItem::CanvasItem() {}
+
+void CanvasItem::init(VkCommandPool cmd_pool) {
     VkDevice device = vulkan_instance.device;
 
     // -----------------------------
@@ -60,12 +63,17 @@ auplib::CanvasItem::CanvasItem()
     // -----------------------------
     // 5. Allocate descriptor set
     // -----------------------------
+	std::vector<VkDescriptorSetLayout> desc_set_layouts = {
+		vulkan_instance.desc_set_layout_object,
+		vulkan_instance.desc_set_layout_sampler
+	};
+
     VkDescriptorSetAllocateInfo descAlloc{
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
         .descriptorPool = vulkan_instance.desc_pool,
-        .descriptorSetCount = 1,
-        .pSetLayouts = &vulkan_instance.desc_set_layout_object
+        .descriptorSetCount = desc_set_layouts.size(),
+        .pSetLayouts = desc_set_layouts.data()
     };
 
     vkAllocateDescriptorSets(device, &descAlloc, &object_descriptor_set);
@@ -73,13 +81,13 @@ auplib::CanvasItem::CanvasItem()
     // -----------------------------
     // 6. Write descriptor
     // -----------------------------
-    VkDescriptorBufferInfo bufferInfo{
+    VkDescriptorBufferInfo object_buffer_info{
         .buffer = object_uniform_buffer,
         .offset = 0,
         .range = sizeof(ObjectUniformData),
     };
 
-    VkWriteDescriptorSet write{
+    VkWriteDescriptorSet object_write{
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
         .dstSet = object_descriptor_set,
@@ -88,9 +96,36 @@ auplib::CanvasItem::CanvasItem()
         .descriptorCount = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .pImageInfo = nullptr,
-        .pBufferInfo = &bufferInfo,
+        .pBufferInfo = &object_buffer_info,
         .pTexelBufferView = nullptr
     };
 
-    vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
+	image.upload(vulkan_instance.device, vulkan_instance.phys_device, cmd_pool, vulkan_instance.queue);
+
+    VkDescriptorImageInfo sampler_buffer_info{
+        .sampler = image.get_sampler(),
+		.imageView = image.get_image_view(),
+		.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    VkWriteDescriptorSet sampler_write{
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = sampler_descriptor_set,
+        .dstBinding = 0,
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = &sampler_buffer_info,
+        .pBufferInfo = nullptr,
+        .pTexelBufferView = nullptr
+    };
+
+	std::vector<VkWriteDescriptorSet> writes = {
+		object_write,
+		sampler_write
+	};
+
+    vkUpdateDescriptorSets(device, writes.size(), writes.data(), 0, nullptr);
+}
 }

@@ -7,7 +7,6 @@
 
 #include "object.hpp"
 #include "string.hpp"
-#include "color_rect.hpp"
 #include "list.hpp"
 #include "shared.hpp"
 #include "viewport.hpp"

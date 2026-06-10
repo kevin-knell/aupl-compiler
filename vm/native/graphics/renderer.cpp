@@ -10,6 +10,7 @@
 #include "vec2.hpp"
 #include "mat4.hpp"
 #include "curve_2d.hpp"
+#include "shared.hpp"
 
 namespace auplib {
 
@@ -113,6 +114,26 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 	result = vkCreateDescriptorSetLayout(vulkan_instance.device, &object_desc_set_layout_create_info, nullptr, &vulkan_instance.desc_set_layout_object);
 	assert(result == VK_SUCCESS);
 
+	// sampler desc set layout
+	VkDescriptorSetLayoutBinding sampler_uniform_binding{
+		.binding = 0,
+		.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+		.descriptorCount = 1,
+		.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+		.pImmutableSamplers = nullptr
+	};
+
+	VkDescriptorSetLayoutCreateInfo sampler_desc_set_layout_create_info{
+    	.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+    	.bindingCount = 1,
+    	.pBindings = &sampler_uniform_binding
+	};
+	
+	result = vkCreateDescriptorSetLayout(vulkan_instance.device, &sampler_desc_set_layout_create_info, nullptr, &vulkan_instance.desc_set_layout_sampler);
+	assert(result == VK_SUCCESS);
+
 	// frame descriptor sets
 	VkDescriptorSetAllocateInfo desc_alloc_info{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -153,7 +174,8 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 	// pipeline layout
 	std::vector<VkDescriptorSetLayout> set_layouts = {
 		vulkan_instance.desc_set_layout_frame,
-		vulkan_instance.desc_set_layout_object
+		vulkan_instance.desc_set_layout_object,
+		vulkan_instance.desc_set_layout_sampler
 	};
 
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info{
@@ -280,10 +302,10 @@ void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			test_pipeline.pipeline);
 		
-		mapped_vertices[4] = Vertex{ vec2(0.0, 0.0), vec3(1.0, 1.0, 1.0) };
-		mapped_vertices[5] = Vertex{ vec2(0.0, 1.0), vec3(1.0, 1.0, 1.0) };
-		mapped_vertices[6] = Vertex{ vec2(1.0, 0.0), vec3(1.0, 1.0, 1.0) };
-		mapped_vertices[7] = Vertex{ vec2(1.0, 1.0), vec3(1.0, 1.0, 1.0) };
+		mapped_vertices[4] = Vertex{ vec2(0.0, 0.0), vec3(1.0, 1.0, 1.0), { 0.0, 0.0 } };
+		mapped_vertices[5] = Vertex{ vec2(0.0, 1.0), vec3(1.0, 1.0, 1.0), { 0.0, 1.0 } };
+		mapped_vertices[6] = Vertex{ vec2(1.0, 0.0), vec3(1.0, 1.0, 1.0), { 1.0, 0.0 } };
+		mapped_vertices[7] = Vertex{ vec2(1.0, 1.0), vec3(1.0, 1.0, 1.0), { 1.0, 1.0 } };
 
 		mat4 model = {
 			{ r->size.x, 0.0, 0.0, 0.0 },
@@ -323,6 +345,17 @@ void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
 			nullptr
 		);
 
+		vkCmdBindDescriptorSets(
+			frame.command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			pipeline_layout,
+			2,
+			1,
+			&r->sampler_descriptor_set,
+			0,
+			nullptr
+		);
+
 
 		VkDeviceSize offset{ sizeof(Vertex) * 4 };
 		vkCmdBindVertexBuffers(frame.command_buffer, 0, 1, &vertex_buffer, &offset);
@@ -348,10 +381,10 @@ void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
 
 		assert(curve_2d->points.size() == 4);
 
-		mapped_vertices[0] = Vertex{ curve_2d->points[0], vec3(1.0, 1.0, 1.0) };
-		mapped_vertices[1] = Vertex{ curve_2d->points[1], vec3(1.0, 1.0, 1.0) };
-		mapped_vertices[2] = Vertex{ curve_2d->points[2], vec3(1.0, 1.0, 1.0) };
-		mapped_vertices[3] = Vertex{ curve_2d->points[3], vec3(1.0, 1.0, 1.0) };
+		mapped_vertices[0] = Vertex{ curve_2d->points[0], vec3(1.0, 1.0, 1.0), { 0.0, 0.0 } };
+		mapped_vertices[1] = Vertex{ curve_2d->points[1], vec3(1.0, 1.0, 1.0), { 0.0, 1.0 } };
+		mapped_vertices[2] = Vertex{ curve_2d->points[2], vec3(1.0, 1.0, 1.0), { 1.0, 0.0 } };
+		mapped_vertices[3] = Vertex{ curve_2d->points[3], vec3(1.0, 1.0, 1.0), { 1.0, 1.0 } };
 
 
 		curve_2d->object_data.model = model;
@@ -381,6 +414,17 @@ void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
 			1,
 			1,
 			&curve_2d->object_descriptor_set,
+			0,
+			nullptr
+		);
+
+		vkCmdBindDescriptorSets(
+			frame.command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			pipeline_layout,
+			2,
+			1,
+			&r->sampler_descriptor_set,
 			0,
 			nullptr
 		);
@@ -436,11 +480,22 @@ void Renderer::render() {
 	assert(result == VK_SUCCESS);
 
 	const RenderTarget& render_target = swapchain.render_targets[image_index];
-	
-	frame.record_begin(render_target);
+
 
 	// draw scene
 	Scene& scene = *viewport->scene;
+	
+	// TODO: init somewhere else
+	for (size_t i = 0; i < scene.root->children.size(); ++i) {
+		Node* n = scene.root->children[i].get();
+		CanvasItem* ci = dynamic_cast<CanvasItem*>(n);
+
+		if (!ci->image.get_vk_image()) {
+			ci->init(command_pool);
+		}
+	}
+	
+	frame.record_begin(render_target);
 
 	// TEMPORARY CODE START
 	
