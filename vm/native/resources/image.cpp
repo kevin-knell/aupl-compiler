@@ -4,18 +4,20 @@
 #include <stb/stb_image.h>
 
 namespace auplib {
-Image::Image(String path) {
+
+// constructors
+Image::Image(RcKey rc_key, String path) : Resource(rc_key, path) {
 	raw = stbi_load(path, &size.x, &size.y, &channels_in_file, STBI_rgb_alpha);
 	assert(!!raw);
 	res_data.path = path;
 }
 
-Image::Image(vec2i size, Color fill_color) {
+Image::Image(RcKey rc_key, vec2i size, Color fill_color) : Resource(rc_key) {
 	this->size = size;
 	size_t pixel_amount = size.area();
 	
 	channels_in_file = 4;
-	raw = new stbi_uc[pixel_amount * channels_in_file];
+	raw = new stbi_uc[get_data_size()];
 
 	uint32_t* raw_u32 = reinterpret_cast<uint32_t*>(raw);
 
@@ -24,11 +26,16 @@ Image::Image(vec2i size, Color fill_color) {
 	std::fill_n(raw_u32, pixel_amount, color_u32);
 }
 
-Image Image::load_from_file(String path) {
-	Image image(path);
-	return image;
+// create methods
+Shared<Image> Image::load_from_file(String path) {
+	return Shared<Image>::make(path);
 }
 
+Shared<Image> Image::create_fill(vec2i size, Color fill_color) {
+	return Shared<Image>::make(size, fill_color);
+}
+
+// 
 size_t Image::get_data_size() const {
 	return size.area() * channels_in_file;
 }

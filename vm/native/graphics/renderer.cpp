@@ -490,7 +490,7 @@ void Renderer::render() {
 		Node* n = scene.root->children[i].get();
 		CanvasItem* ci = dynamic_cast<CanvasItem*>(n);
 
-		if (!ci->image.get_vk_image()) {
+		if (!ci->image->get_vk_image()) {
 			ci->init(command_pool);
 		}
 	}

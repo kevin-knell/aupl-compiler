@@ -23,12 +23,13 @@ private:
 		VkImageLayout image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 		VkDevice device = VK_NULL_HANDLE;
 	} vulkan_data;
-public:
-	static Image load_from_file(String path);
 
-	Image() = default;
-	Image(vec2i size, Color fill_color);
-	Image(String path);
+public:
+	static Shared<Image> load_from_file(String path);
+	static Shared<Image> create_fill(vec2i size, Color fill_color);
+
+	Image(RcKey rc_key, vec2i size, Color fill_color);
+	Image(RcKey rc_key, String path);
 
 	Image(const Image& other) = default;
 	Image& operator=(const Image& other) = default;

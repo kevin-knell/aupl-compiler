@@ -1,11 +1,11 @@
 #pragma once
 
-#include "object.hpp"
+#include "ref_counted.hpp"
 #include "string.hpp"
 
 namespace auplib {
 
-class Resource : public Object {
+class Resource : public RefCounted {
 protected:
 	struct ResourceData {
 		String name;
@@ -13,6 +13,8 @@ protected:
 	} res_data;
 
 public:
+	Resource(RcKey rc_key) : RefCounted(rc_key) {}
+	Resource(RcKey rc_key, String path) : RefCounted(rc_key), res_data{.name = "", .path = path} {}
 };
 
 } // namespace auplib

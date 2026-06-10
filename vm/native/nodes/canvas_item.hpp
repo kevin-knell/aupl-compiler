@@ -26,7 +26,7 @@ public:
 	VkDeviceMemory object_uniform_memory;
 	VkDescriptorSet object_descriptor_set;
 	VkDescriptorSet sampler_descriptor_set;
-	Image image = Image(vec2i(1, 1), Color(1.0));
+	Shared<Image> image = Shared<Image>::make(vec2i(1, 1), Color(1.0));
 
 	CanvasItem() = default;
 	CanvasItem(const CanvasItem&) = delete;

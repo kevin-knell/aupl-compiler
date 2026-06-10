@@ -4,6 +4,8 @@
 #include "value.hpp"
 #include "native.hpp"
 #include "class_db.hpp"
+#include "ref_counted.hpp"
+#include <type_traits>
 
 namespace vm {
 	class ClassDB;
@@ -11,124 +13,100 @@ namespace vm {
 
 namespace auplib {
 
-struct SharedData {
-	size_t ref_count;
-};
-
 template<typename T>
 class Shared {
 public: //private:
 	T* obj;
-	SharedData* data;
+
+	static constexpr bool is_ref_counted = std::is_base_of_v<RefCounted, T>;
 
 	void retain() noexcept {
-		if (data) {
-			++data->ref_count;
+		if constexpr(is_ref_counted) {
+			++obj->ref_count;
 		}
 	}
 
 	void release() noexcept {
-		if (data) {
-			if (--data->ref_count == 0) {
+		if constexpr(is_ref_counted) {
+			if (--obj->ref_count == 0) {
 				delete obj;
-				delete data;
 			}
-			obj = nullptr;
-			data = nullptr;
 		}
 	}
 
 public:
-	Shared() noexcept
-		: obj(nullptr), data(nullptr) {}
-
-	explicit Shared(T* ptr) : obj(ptr) {
-		if (ptr) {
-			data = new SharedData{1};
-		} else {
-			data = nullptr;
-		}
-	}
-
-	Shared(const Shared& other) noexcept
-		: obj(other.obj), data(other.data) {
+	constexpr Shared() noexcept : obj(nullptr) {}
+	explicit Shared(T* ptr) noexcept : obj(ptr) {
 		retain();
 	}
 
-	Shared(Shared&& other) noexcept
-		: obj(other.obj), data(other.data) {
-		other.obj = nullptr;
-		other.data = nullptr;
+	// copy
+	constexpr Shared(const Shared& other) noexcept
+			: obj(other.obj) {
+		retain();
 	}
-
-	template<typename U>
-    Shared(const Shared<U>& other)
-        	requires std::is_convertible_v<U*, T*>
-	{
-		obj = other.obj;
-		data = other.data;
-
-		if(data)
-			++data->ref_count;
-    }
 
 	Shared& operator=(const Shared& other) noexcept {
 		if (this != &other) {
-			release();
 			obj = other.obj;
-			data = other.data;
 			retain();
 		}
 		return *this;
 	}
 
+	// move
+	Shared(Shared&& other) noexcept
+			: obj(other.obj) {
+		other.obj = nullptr;
+	}
+
 	Shared& operator=(Shared&& other) noexcept {
 		if (this != &other) {
-			release();
 			obj = other.obj;
-			data = other.data;
 			other.obj = nullptr;
-			other.data = nullptr;
 		}
 		return *this;
 	}
 
+	// dtor
 	~Shared() {
 		release();
 	}
 
+	// convert
+	template<typename U>
+    Shared(const Shared<U>& other)
+        	requires std::is_convertible_v<U*, T*> {
+		obj = other.obj;
+		retain();
+    }
+
+	// get
 	T* get() const noexcept { return obj; }
 	T& operator*() const noexcept { return *obj; }
 	T* operator->() const noexcept { return obj; }
+	explicit operator bool() const noexcept { return !!obj; }
 
-	explicit operator bool() const noexcept { return obj != nullptr; }
-
-	size_t use_count() const noexcept {
-		return data ? data->ref_count : 0;
-	}
-
-	void reset() noexcept {
-		release();
-	}
-
+	// make
 	template<typename... Args>
 	static Shared make(Args&&... args) {
-		return Shared(new T(std::forward<Args>(args)...));
-	}
-
-	static Shared<vm::Value> make_raw(size_t size) {
-		return Shared<vm::Value>(new vm::Value[size]);
+		if constexpr(is_ref_counted) {
+			return Shared(new T(RefCounted::RcKey(), std::forward<Args>(args)...));
+		} else {
+			return Shared(new T(std::forward<Args>(args)...));
+		}
 	}
 };
 
-static_assert(sizeof(Shared<int>) == 16);
+static_assert(sizeof(Shared<int>) == 8);
+static_assert(sizeof(Shared<RefCounted>) == 8);
 
 }
 
 #define REGISTER_SHARED(T) \
 	do { \
 		const int16_t id = REGISTER_CLASS(Shared<T>); \
+		(void)id; \
 		if constexpr(std::is_same_v<T, vm::Value>) { \
-			REGISTER_STATIC_METHOD(id, Shared<vm::Value>, make_raw, Shared<vm::Value> (*)(size_t size)); \
 		} \
 	} while(0);

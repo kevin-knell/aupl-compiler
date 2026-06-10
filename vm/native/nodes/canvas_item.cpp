@@ -98,11 +98,11 @@ void CanvasItem::init(VkCommandPool cmd_pool) {
         .pTexelBufferView = nullptr
     };
 
-	image.upload(vulkan_instance.device, cmd_pool, vulkan_instance.queue);
+	image->upload(vulkan_instance.device, cmd_pool, vulkan_instance.queue);
 
     VkDescriptorImageInfo sampler_buffer_info{
-        .sampler = image.get_sampler(),
-		.imageView = image.get_image_view(),
+        .sampler = image->get_sampler(),
+		.imageView = image->get_image_view(),
 		.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
