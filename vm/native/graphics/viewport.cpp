@@ -5,7 +5,7 @@ namespace auplib {
 void Viewport::register_to_db(vm::ClassDB &db) {
 	const int16_t ID = REGISTER_CLASS(Viewport);
 
-	REGISTER_VARIABLE(ID, Shared<Scene>, scene);
+	REGISTER_SETGET(ID, Viewport, Shared<Scene>, scene);
 }
 
 Viewport::Viewport(const uint32_t width, const uint32_t height) {

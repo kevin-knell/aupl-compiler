@@ -36,13 +36,8 @@ void vec2::register_to_db(vm::ClassDB& db) {
 		REGISTER_CONSTRUCTOR(id, vec2());
 		REGISTER_CONSTRUCTOR(id, vec2(float x, float y));
 
-		REGISTER_VARIABLE(id, float, x);
-		REGISTER_VARIABLE(id, float, y);
-
-        REGISTER_METHOD(id, vec2, set_x, void (vec2::*)(float x));
-        REGISTER_METHOD(id, vec2, get_x, float (vec2::*)() const);
-        REGISTER_METHOD(id, vec2, set_y, void (vec2::*)(float y));
-        REGISTER_METHOD(id, vec2, get_y, float (vec2::*)() const);
+		REGISTER_SETGET(id, vec2, float, x);
+		REGISTER_SETGET(id, vec2, float, y);
 
         REGISTER_METHOD(id, vec2, set_xx, void (vec2::*)(vec2 xx));
         REGISTER_METHOD(id, vec2, set_yx, void (vec2::*)(vec2 yx));

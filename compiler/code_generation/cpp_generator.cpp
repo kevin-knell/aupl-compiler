@@ -242,9 +242,16 @@ void cmp::CppCodeGenerator::visit(DeclareStatement &stmt) {
 
 void cmp::CppCodeGenerator::visit(AssignmentStatement &stmt) {
 	cpp_classes << make_indented_stringstream().str();
-	stmt.expr_left->accept(*this);
 
-	std::stringstream ss = make_indented_stringstream();
+	bool is_setter = false;
+	
+	if (stmt.expr_left->get_kind() == Expression::VARIABLE) {
+		VarExprPtr var_expr = std::static_pointer_cast<VariableExpression>(stmt.expr_left);
+		var_expr->is_lvalue = true;
+		is_setter = !!var_expr->var->var_bind;
+	}
+
+	stmt.expr_left->accept(*this);
 
 	bool needs_make_shared = false;
 
@@ -254,18 +261,30 @@ void cmp::CppCodeGenerator::visit(AssignmentStatement &stmt) {
 		
 		needs_make_shared = call_expr->f->is_constructor;
 	}
+	
+	if (is_setter) {
+		// set_var(
+	} else {
+		cpp_classes << " = ";
+	}
 
 	if (needs_make_shared) {
-		ss << " = ";
-		ss << stmt.expr_left->get_type()->to_cpp_type_str();
-		ss << "(new ";
-		cpp_classes << ss.str();
+		cpp_classes << stmt.expr_left->get_type()->to_cpp_type_str();
+		cpp_classes << "(new ";
 		stmt.expr_right->accept(*this);
 		cpp_classes << ")";
 	} else {
-		cpp_classes << " = ";
 		stmt.expr_right->accept(*this);
 	}
+
+	if (stmt.expr_left->get_kind() == Expression::VARIABLE) {
+		VarExprPtr var_expr = std::static_pointer_cast<VariableExpression>(stmt.expr_left);
+		
+		if (var_expr->var->var_bind) {
+			cpp_classes << ")";
+		}
+	}
+
 	cpp_classes << ";\n";
 }
 
@@ -352,23 +371,45 @@ void cmp::CppCodeGenerator::visit(ExpressionStatement &stmt) {
 // Expressions
 // ================================================================================================
 void cmp::CppCodeGenerator::visit(VariableExpression &expr) {
-	auto name = expr.name;
-	
-	if (name.starts_with("%")) {
-		name.replace(0, 1, 1, '_');
-	}
-
 	if (expr.obj_expr) {
 		expr.obj_expr->accept(*this);
 		cpp_classes << ".";
 	}
 
 	if (expr.must_be_dereferenced) {
+		COMPILER_ASSERT(!expr.is_lvalue, "lvalue must not be dereferenced");
 		cpp_classes << "(*";
-		cpp_classes << name;
-		cpp_classes << ")";
+	}
+
+	if (expr.var->var_bind) {
+		vm::ClassID_t class_id = expr.var->var_bind->class_id;
+		vm::ClassBind& class_bind = symbol_table.class_db.classes[class_id];
+		
+		if (expr.is_lvalue) {
+			vm::ClassID_t setter_id = expr.var->var_bind->setter_id;
+			vm::MethodPair method_pair = class_bind.methods[setter_id];
+
+			cpp_classes << method_pair.name << "(";
+			return;
+		} else {
+			vm::ClassID_t getter_id = expr.var->var_bind->getter_id;
+			vm::MethodPair method_pair = class_bind.methods[getter_id];
+
+			cpp_classes << method_pair.name << "()";
+		}
 	} else {
+		std::string name = expr.name;
+		
+		// TODO, ERROR: names might clash
+		if (name.starts_with("%")) {
+			name.replace(0, 1, 1, '_');
+		}
+
 		cpp_classes << name;
+	}
+
+	if (expr.must_be_dereferenced) {
+		cpp_classes << ")";
 	}
 }
 

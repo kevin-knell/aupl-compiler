@@ -9,10 +9,10 @@ void Color::register_to_db(vm::ClassDB &db) {
 		REGISTER_CONSTRUCTOR(id, Color());
 		REGISTER_CONSTRUCTOR(id, Color(float r, float g, float b, float a));
 
-		REGISTER_VARIABLE(id, float, r);
-		REGISTER_VARIABLE(id, float, g);
-		REGISTER_VARIABLE(id, float, b);
-		REGISTER_VARIABLE(id, float, a);
+		REGISTER_SETGET(id, Color, float, r);
+		REGISTER_SETGET(id, Color, float, g);
+		REGISTER_SETGET(id, Color, float, b);
+		REGISTER_SETGET(id, Color, float, a);
 
 }
 

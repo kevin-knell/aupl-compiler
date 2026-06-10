@@ -1,6 +1,7 @@
 #pragma once
 #include "expression.hpp"
 #include "variable_symbol.hpp"
+#include "class_db.hpp"
 
 namespace cmp {
 
@@ -9,6 +10,7 @@ struct VariableExpression final : public Expression {
     VarPtr var;
     std::string name;
 	bool must_be_dereferenced = false;
+	bool is_lvalue = false;
 
     VariableExpression(const std::string& name) : name(name) {}
     VariableExpression(VarPtr var) : var(var), name(var->name) {}

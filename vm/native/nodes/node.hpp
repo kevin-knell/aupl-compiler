@@ -17,6 +17,8 @@ public:
 	static Shared<Node> compose(Shared<Node> node, List<Shared<Node>> nodes);
 
 	void add_child(Shared<Node> node);
+
+	List<Shared<Node>> get_children() const { return children; }
 };
 
 } // namespace auplib

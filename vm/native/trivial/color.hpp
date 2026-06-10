@@ -26,6 +26,18 @@ struct Color {
 
 		return (r_u8 << 24) | (g_u8 << 16) | (b_u8 << 8) | (a_u8 << 0);
 	}
+
+	void set_r(float _r) { r = _r; }
+	float get_r() const { return r; }
+
+	void set_g(float _g) { g = _g; }
+	float get_g() const { return g; }
+
+	void set_b(float _b) { b = _b; }
+	float get_b() const { return b; }
+
+	void set_a(float _a) { a = _a; }
+	float get_a() const { return a; }
 };
 
 MARK_TRIVIAL(Color)

@@ -38,6 +38,8 @@ public:
 	bool should_close();
 
 	void on_resize(int width, int height);
+
+	Shared<Viewport> get_viewport() const { return viewport; }
 };
 	
 } // namespace auplib

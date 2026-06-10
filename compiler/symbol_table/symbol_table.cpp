@@ -8,7 +8,7 @@
 
 namespace cmp {
 
-SymbolTable::SymbolTable(vm::ClassDB &db) {
+SymbolTable::SymbolTable(vm::ClassDB &db) : class_db(db) {
 	global_scope = Scope::create(Scope::SCOPE_TYPE::GLOBAL, "global");
 
 	// TODO: add global scope

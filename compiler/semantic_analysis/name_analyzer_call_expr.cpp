@@ -227,12 +227,12 @@ void NameAnalyzer::visit(CallExpression& expr) {
 					}
 					case Type::CLASS: {
 						const ClassType* class_type = static_cast<const ClassType*>(obj_type);
-						std::map<std::string, FuncPtr> functions;
+						FuncVec functions;
 						ClassPtr cls;
 
 						if (class_type->class_ptr) {
 							cls = class_type->class_ptr;
-							functions = cls->functions;
+							functions = cls->get_functions();
 						} else {
 							auto classes = symbol_table.classes;
 							auto class_it = classes.find(class_type->name);
@@ -242,19 +242,17 @@ void NameAnalyzer::visit(CallExpression& expr) {
 								return;
 							}
 
-							functions = class_it->second->functions;
+							functions = class_it->second->get_functions();
 						}
-						
-						for (auto [fn, f2] : functions) {
-							if (f2->name == expr.name
-									&& f2->parameters.size() == expr.arguments.size()) {
-								expr.f = f2;
-								return;
-							}
+
+						FuncVec candidates = get_candidates(expr, functions);
+						FuncVec secondary_candidates = get_secondary_candidates(expr, candidates);
+						bool success = resolve_from_secondary_candidates(symbol_table, expr, secondary_candidates);
+
+						if (!success) {
+							symbol_table.add_error(expr.source_location, "Method in class not found", Error::ERROR);
 						}
-						
-						std::cerr << "Method in class not found: " << expr.name << std::endl;
-						break;
+						return;
 					}
 					default: {}
 				}

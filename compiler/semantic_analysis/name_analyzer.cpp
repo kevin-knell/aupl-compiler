@@ -150,7 +150,7 @@ void NameAnalyzer::visit(VariableExpression& expr) {
 			ClassPtr cls;
 
 			if (inner_type.get_kind() == Type::CLASS) {
-				ClassType& class_type = dynamic_cast<ClassType&>(inner_type);
+				ClassType& class_type = static_cast<ClassType&>(inner_type);
 
 				if (class_type.class_ptr) {
 					cls = class_type.class_ptr;
@@ -187,7 +187,7 @@ void NameAnalyzer::visit(VariableExpression& expr) {
 			
 			scope = Scope::find_scope(cls->scope, expr.name);
 		}
-		COMPILER_ASSERT(scope, "");
+		COMPILER_ASSERT(!!scope, "scope not found");
 	} else {
 		scope = Scope::find_scope(na_context->scope, expr.name);
 	}

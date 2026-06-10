@@ -21,6 +21,7 @@ public:
     std::string name;
     ExprPtr initial_value;
     ScopePtr scope;
+	vm::VariableBind* var_bind = nullptr;
 
 	static VarPtr create(SourceLocation source_location, TypePtr type, const std::string& name, ExprPtr initial_value = nullptr) {
 		return std::make_shared<VariableSymbol>(Private(), source_location, type, name, initial_value);

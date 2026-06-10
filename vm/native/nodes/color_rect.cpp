@@ -7,11 +7,9 @@ void ColorRect::register_to_db(vm::ClassDB &db) {
 	const int16_t ID = REGISTER_CLASS(ColorRect);
 	
 	REGISTER_CONSTRUCTOR(ID, ColorRect(vec2 position, vec2 size, Color color));
-	
-	REGISTER_VARIABLE(ID, vec2, position);
-	REGISTER_VARIABLE(ID, vec2, size);
-	REGISTER_VARIABLE(ID, Color, color);
 
+	REGISTER_SETGET(ID, ColorRect, vec2, position);
+	REGISTER_SETGET(ID, ColorRect, vec2, size);
 }
 
 }

@@ -16,8 +16,8 @@ void vec2i::register_to_db(vm::ClassDB &db) {
 	REGISTER_CONSTRUCTOR(id, vec2i());
 	REGISTER_CONSTRUCTOR(id, vec2i(int32_t x, int32_t y));
 
-	REGISTER_VARIABLE(id, int64_t, x);
-	REGISTER_VARIABLE(id, int64_t, y);
+	REGISTER_SETGET(id, vec2i, int32_t, x);
+	REGISTER_SETGET(id, vec2i, int32_t, y);
 }
 
 int32_t vec2i::area() const {

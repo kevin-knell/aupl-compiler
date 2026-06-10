@@ -28,6 +28,9 @@ public:
 	Viewport(const uint32_t width, const uint32_t height);
 
 	void resize(const uint32_t width, const uint32_t height);
+
+	void set_scene(Shared<Scene> s) { scene = s; }
+	Shared<Scene> get_scene() const { return scene; }
 };
 
 } // namespace auplib

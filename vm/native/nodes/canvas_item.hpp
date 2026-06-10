@@ -31,7 +31,20 @@ public:
 	CanvasItem() = default;
 	CanvasItem(const CanvasItem&) = delete;
 	CanvasItem& operator=(CanvasItem&) = delete;
-	void draw();
+	
+	vec2 get_position() const {
+		return {
+			object_data.model.w.x,
+			object_data.model.w.y
+		};
+	}
+
+	void set_position(vec2 p) {
+		object_data.model.w.x = p.x;
+		object_data.model.w.y = p.y;
+	}
+	
+	vec2 get_size() const;
 
 	void init(VkCommandPool cmd_pool);
 };

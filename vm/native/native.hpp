@@ -48,8 +48,22 @@ namespace vm
 
 #define REGISTER_CLASS(m_name) db.register_class<m_name>(#m_name)
 
-#define REGISTER_VARIABLE(m_id, m_type, m_name) \
-	db.register_variable<m_type>(m_id, #m_name, #m_type)
+#define REGISTER_VARIABLE(m_id, m_type, m_name, m_setter_id, m_getter_id) \
+	db.register_variable<m_type>(m_id, #m_name, #m_type, m_setter_id, m_getter_id)
+
+#define REGISTER_SETGET(m_id, m_class, m_type, m_name)															\
+	do {																										\
+		uint16_t m_setter_id = REGISTER_METHOD(m_id, m_class, set_##m_name, void (m_class::*)(m_type _val));	\
+		uint16_t m_getter_id = REGISTER_METHOD(m_id, m_class, get_##m_name, m_type (m_class::*)() const);		\
+		db.register_variable<m_type>(m_id, #m_name, #m_type, m_setter_id, m_getter_id);							\
+	} while(0)
+
+#define REGISTER_GET_ONLY(m_id, m_class, m_type, m_name)														\
+	do {																										\
+		uint16_t m_setter_id = 0;																				\
+		uint16_t m_getter_id = REGISTER_METHOD(m_id, m_class, get_##m_name, m_type (m_class::*)() const);		\
+		db.register_variable<m_type>(m_id, #m_name, #m_type, m_setter_id, m_getter_id);							\
+	} while(0)
 
 #define REGISTER_CONSTRUCTOR(m_id, ...) \
     db.register_constructor<__VA_ARGS__>(m_id, #__VA_ARGS__)

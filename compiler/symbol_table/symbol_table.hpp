@@ -21,6 +21,7 @@ struct SymbolTable {
 	std::vector<vm::Value> const_memory;
 	std::map<std::string, SourceFile> source_files;
 	ScopePtr global_scope;
+	vm::ClassDB& class_db;
 
 	SymbolTable(vm::ClassDB& db);
 

@@ -39,6 +39,8 @@ public:
 	void render();
 
 	void on_resize();
+
+	Shared<Viewport> get_viewport() const { return viewport; }
 };
 
 void on_resize_renderer(void* raw_obj);

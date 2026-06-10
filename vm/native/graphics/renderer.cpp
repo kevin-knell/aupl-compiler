@@ -21,7 +21,7 @@ void Renderer::register_to_db(vm::ClassDB &db) {
 
 	REGISTER_METHOD(ID, Renderer, render, void (Renderer::*)());
 
-	REGISTER_VARIABLE(ID, Shared<Viewport>, viewport);
+	REGISTER_GET_ONLY(ID, Renderer, Shared<Viewport>, viewport);
 
 }
 
@@ -311,7 +311,7 @@ void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
 			{ r->size.x, 0.0, 0.0, 0.0 },
 			{ 0.0, r->size.y, 0.0, 0.0 },
 			{ 0.0, 0.0, 1.0, 0.0 },
-			{ r->position.x, r->position.y, 0.0, 1.0 },
+			{ r->get_position().x, r->get_position().y, 0.0, 1.0 },
 		};
 
 		r->object_data.model = model;

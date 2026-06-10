@@ -9,8 +9,7 @@ void Node::register_to_db(vm::ClassDB &db) {
 
 	REGISTER_METHOD(ID, Node, add_child, void (Node::*)(Shared<Node> node));
 
-	REGISTER_VARIABLE(ID, List<Shared<Node>>, children);
-	REGISTER_VARIABLE(ID, Shared<Node>, root);
+	REGISTER_GET_ONLY(ID, Node, List<Shared<Node>>, children);
 }
 
 Shared<Node> Node::compose(Shared<Node> node, List<Shared<Node>> nodes) {

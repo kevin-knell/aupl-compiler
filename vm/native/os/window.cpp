@@ -16,7 +16,7 @@ void Window::register_to_db(vm::ClassDB &db) {
 
 	REGISTER_STATIC_METHOD(ID, Window, poll_events, void (*)());
 	REGISTER_METHOD(ID, Window, should_close, bool (Window::*)());
-	REGISTER_VARIABLE(ID, Shared<Viewport>, viewport);
+	REGISTER_GET_ONLY(ID, Window, Shared<Viewport>, viewport);
 }
 
 void Window::poll_events() {

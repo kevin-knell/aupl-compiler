@@ -11,7 +11,7 @@ namespace cmp
 {
 
 VariableSymbol::VariableSymbol(Private, vm::VariableBind &v)
-		: type(get_type_from_cpp(v.type)), name(v.name) {}
+		: type(get_type_from_cpp(v.type)), name(v.name), var_bind(&v) {}
 
 std::string VariableSymbol::to_string() const {
 	if (!type) return "UnknownType " + name;

@@ -61,18 +61,18 @@ static void main() {
 
 static void process() {
 	if Input.is_key_down(87) {
-		p1.position.y -= 1
+		p1.position -= vec2(0.0, 1.0)
 	}
 
 	if Input.is_key_down(83) {
-		p1.position.y += 1
+		p1.position += vec2(0.0, 1.0)
 	}
 	if Input.is_key_down(265) {
-		p2.position.y -= 1
+		p2.position -= vec2(0.0, 1.0)
 	}
 
 	if Input.is_key_down(264) {
-		p2.position.y += 1
+		p2.position += vec2(0.0, 1.0)
 	}
 
 	ball.position = ball.position + ball_velocity
