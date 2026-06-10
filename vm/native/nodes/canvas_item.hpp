@@ -26,9 +26,9 @@ public:
 	VkDeviceMemory object_uniform_memory;
 	VkDescriptorSet object_descriptor_set;
 	VkDescriptorSet sampler_descriptor_set;
-	Image image = Image(vec2i(1, 1), Color(1.0, 1.0, 1.0, 1.0));
+	Image image = Image(vec2i(1, 1), Color(1.0));
 
-	CanvasItem();
+	CanvasItem() = default;
 	CanvasItem(const CanvasItem&) = delete;
 	CanvasItem& operator=(CanvasItem&) = delete;
 	void draw();

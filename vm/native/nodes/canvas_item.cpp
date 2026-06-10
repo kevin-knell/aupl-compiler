@@ -4,8 +4,6 @@
 
 namespace auplib {
 
-CanvasItem::CanvasItem() {}
-
 void CanvasItem::init(VkCommandPool cmd_pool) {
     VkDevice device = vulkan_instance.device;
 
@@ -72,7 +70,7 @@ void CanvasItem::init(VkCommandPool cmd_pool) {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
         .descriptorPool = vulkan_instance.desc_pool,
-        .descriptorSetCount = desc_set_layouts.size(),
+        .descriptorSetCount = static_cast<uint32_t>(desc_set_layouts.size()),
         .pSetLayouts = desc_set_layouts.data()
     };
 
@@ -100,7 +98,7 @@ void CanvasItem::init(VkCommandPool cmd_pool) {
         .pTexelBufferView = nullptr
     };
 
-	image.upload(vulkan_instance.device, vulkan_instance.phys_device, cmd_pool, vulkan_instance.queue);
+	image.upload(vulkan_instance.device, cmd_pool, vulkan_instance.queue);
 
     VkDescriptorImageInfo sampler_buffer_info{
         .sampler = image.get_sampler(),
@@ -126,6 +124,6 @@ void CanvasItem::init(VkCommandPool cmd_pool) {
 		sampler_write
 	};
 
-    vkUpdateDescriptorSets(device, writes.size(), writes.data(), 0, nullptr);
+    vkUpdateDescriptorSets(device, static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 }
 }

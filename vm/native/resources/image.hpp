@@ -36,19 +36,21 @@ public:
 	Image(Image&& other) = default;
 	Image& operator=(Image&& other) = default;
 
+	~Image() = default;
+
 	vec2i get_size() const { return size; }
 	size_t get_data_size() const;
 
-	void upload(VkDevice device, VkPhysicalDevice phys_device, VkCommandPool cmd_pool, VkQueue queue);
+	void upload(VkDevice device, VkCommandPool cmd_pool, VkQueue queue);
 	void change_layout(VkCommandPool cmd_pool, VkQueue queue, VkImageLayout layout);
 	void write_buffer_to_image(VkCommandPool cmd_pool, VkQueue queue, VkBuffer buffer);
-
-	~Image();
 
 	VkSampler get_sampler() const { return vulkan_data.sampler; }
 	VkImage get_vk_image() const { return vulkan_data.image; }
 	VkImageView get_image_view() const { return vulkan_data.image_view; }
 	VkImageLayout get_image_layout() const { return vulkan_data.image_layout; }
+
+	void destroy();
 };
 
 } // namespace auplib

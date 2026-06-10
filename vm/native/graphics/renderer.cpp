@@ -424,7 +424,7 @@ void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
 			pipeline_layout,
 			2,
 			1,
-			&r->sampler_descriptor_set,
+			&curve_2d->sampler_descriptor_set,
 			0,
 			nullptr
 		);
@@ -494,7 +494,7 @@ void Renderer::render() {
 			ci->init(command_pool);
 		}
 	}
-	
+
 	frame.record_begin(render_target);
 
 	// TEMPORARY CODE START

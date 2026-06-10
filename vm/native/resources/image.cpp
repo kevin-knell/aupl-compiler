@@ -24,16 +24,6 @@ Image::Image(vec2i size, Color fill_color) {
 	std::fill_n(raw_u32, pixel_amount, color_u32);
 }
 
-Image::~Image() {
-	stbi_image_free(raw);
-
-	vkDestroySampler(vulkan_data.device, vulkan_data.sampler, nullptr);
-	vkDestroyImageView(vulkan_data.device, vulkan_data.image_view, nullptr);
-	vkDestroyImage(vulkan_data.device, vulkan_data.image, nullptr);
-	vkFreeMemory(vulkan_instance.device, vulkan_data.device_memory, nullptr);
-
-}
-
 Image Image::load_from_file(String path) {
 	Image image(path);
 	return image;
@@ -43,7 +33,7 @@ size_t Image::get_data_size() const {
 	return size.area() * channels_in_file;
 }
 
-void Image::upload(VkDevice device, VkPhysicalDevice phys_device, VkCommandPool cmd_pool, VkQueue queue) {
+void Image::upload(VkDevice device, VkCommandPool cmd_pool, VkQueue queue) {
 	assert(!!raw);
 
 	vulkan_data.device = device;
@@ -97,7 +87,7 @@ void Image::upload(VkDevice device, VkPhysicalDevice phys_device, VkCommandPool 
 		.flags = 0,
 		.imageType = VK_IMAGE_TYPE_2D,
 		.format = VK_FORMAT_R8G8B8A8_UNORM,
-		.extent = { size.x, size.y, 1 },
+		.extent = { static_cast<uint32_t>(size.x), static_cast<uint32_t>(size.y), 1 },
 		.mipLevels = 1,
 		.arrayLayers = 1,
 		.samples = VK_SAMPLE_COUNT_1_BIT,
@@ -325,7 +315,7 @@ void Image::write_buffer_to_image(VkCommandPool cmd_pool, VkQueue queue, VkBuffe
 			.layerCount = 1,
 		},
 		.imageOffset = { 0, 0, 0 },
-		.imageExtent = { size.x, size.y, 1 },
+		.imageExtent = { static_cast<uint32_t>(size.x), static_cast<uint32_t>(size.y), 1 },
 	};
 
 	vkCmdCopyBufferToImage(cmd_buffer, buffer, vulkan_data.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &img_buffer_copy);
@@ -351,6 +341,15 @@ void Image::write_buffer_to_image(VkCommandPool cmd_pool, VkQueue queue, VkBuffe
 	assert(result == VK_SUCCESS);
 
 	vkFreeCommandBuffers(vulkan_data.device, cmd_pool, 1, &cmd_buffer);
+}
+
+void Image::destroy() {
+	stbi_image_free(raw);
+
+	vkDestroySampler(vulkan_data.device, vulkan_data.sampler, nullptr);
+	vkDestroyImageView(vulkan_data.device, vulkan_data.image_view, nullptr);
+	vkDestroyImage(vulkan_data.device, vulkan_data.image, nullptr);
+	vkFreeMemory(vulkan_instance.device, vulkan_data.device_memory, nullptr);
 }
 
 }
