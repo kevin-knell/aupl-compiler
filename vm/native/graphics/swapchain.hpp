@@ -2,6 +2,7 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 #include "render_target.hpp"
+#include "macros.hpp"
 
 namespace auplib
 {
@@ -23,7 +24,8 @@ private:
 	void create_render_targets();
 
 public:
-	Swapchain() = default;
+	ALL_FUNC_DEFAULT(Swapchain)
+
 	Swapchain(VkSurfaceKHR surface, VkFormat image_format, VkExtent2D extent);
 
 	void recreate(VkExtent2D new_extent);

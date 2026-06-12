@@ -3,6 +3,8 @@
 #include <vector>
 #include <iostream>
 #include <regex>
+#include <numeric>
+#include <cassert>
 
 #include "function_parser.hpp"
 #include "type_traits.hpp"
@@ -43,6 +45,7 @@ struct ClassBind {
     const std::string name;
 	const std::vector<std::string> type_names;
     const ClassID_t id;
+    ClassID_t parent_id;
 	const size_t size;
 	const bool is_object;
 	const bool is_trivial;
@@ -56,7 +59,7 @@ struct ClassBind {
     std::vector<MethodPair> methods;
 
 	ClassBind(const std::string& name, std::vector<std::string> type_names, ClassID_t id, size_t size, bool is_object, bool is_trivial)
-		: name(name), type_names(type_names), id(id), size(size), is_object(is_object), is_trivial(is_trivial) {}
+		: name(name), type_names(type_names), id(id), parent_id(id), size(size), is_object(is_object), is_trivial(is_trivial) {}
 };
 
 namespace {
@@ -132,6 +135,27 @@ public:
 			IS_OBJECT(ClassType),
 			IS_TRIVIAL(ClassType)
 		);
+		return classes.back().id;
+    }
+
+	template<typename ClassType, typename ParentType>
+    ClassID_t register_class(std::string name, std::string parent_name) {
+		static_assert(std::is_base_of_v<ParentType, ClassType>);
+
+		ClassID_t id = register_class<ClassType>(name);
+		
+		ClassID_t parent_id = std::numeric_limits<ClassID_t>::max();
+
+		for (size_t i = 0; i < classes.size(); ++i) {
+			if (classes[i].name == parent_name) {
+				parent_id = static_cast<ClassID_t>(i);
+			}
+		}
+
+		assert(parent_id < std::numeric_limits<ClassID_t>::max());
+		
+		classes[id].parent_id = parent_id;
+
 		return classes.back().id;
     }
 

@@ -44,9 +44,9 @@ namespace vm
 #define STATIC_ASSERT_UTILITY_CLASS(ClassName) \
     static_assert(std::is_empty<ClassName>::value, #ClassName " must only contain static members.")
 
-#define DECLARE_OBJECT_CLASS(m_name, m_parent)
-
 #define REGISTER_CLASS(m_name) db.register_class<m_name>(#m_name)
+
+#define REGISTER_OBJECT_CLASS(m_name, m_parent) db.register_class<m_name, m_parent>(#m_name, #m_parent)
 
 #define REGISTER_VARIABLE(m_id, m_type, m_name, m_setter_id, m_getter_id) \
 	db.register_variable<m_type>(m_id, #m_name, #m_type, m_setter_id, m_getter_id)

@@ -19,6 +19,8 @@ layout (set = 0, binding = 0) uniform FrameData {
 } frame_data;
 
 layout (set = 1, binding = 0) uniform ObjectData {
+	vec4 size;
+
 	mat4 model;
 	mat4 model_view;
 	mat4 model_view_projection;
@@ -26,13 +28,13 @@ layout (set = 1, binding = 0) uniform ObjectData {
 	mat3 normal_matrix;
 } object_data;
 
-layout(location = 0) in vec2 vert_position_in;
+layout(location = 0) in vec3 vert_position_in;
 layout(location = 1) in vec3 vert_color;
 
 layout(location = 0) out vec2 vert_position_out;
 
 void main() {
-	vec4 worldPos = object_data.model * vec4(vert_position_in, 0.0, 1.0);
+	vec4 worldPos = object_data.model * vec4(vert_position_in, 1.0);
 
 	vec2 ndc;
 

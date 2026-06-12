@@ -12,7 +12,7 @@ class Shared;
 template<class T>
 class Weak;
 
-class RefCounted : Object {
+class RefCounted : public Object {
 private:
 protected:
 	template<typename T>

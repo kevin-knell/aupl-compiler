@@ -23,15 +23,11 @@ struct vec3 {
 
     constexpr vec3() = default;
     constexpr vec3(float x, float y, float z) : x(x), y(y), z(z) {}
+    constexpr vec3(vec2 v) : x(v.x), y(v.y), z(0.0f) {}
 
-    void set_x(float _x) { x = _x; }
-    float get_x() const { return x; }
-    
-    void set_y(float _y) { y = _y; }
-    float get_y() const { return y; }
-    
-    void set_z(float _z) { z = _z; }
-    float get_z() const { return z; }
+	SETGET(x)
+	SETGET(y)
+	SETGET(z)
 
     // swizzle
 	SWIZZLE3(DECL_SET3)

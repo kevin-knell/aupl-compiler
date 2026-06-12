@@ -1,5 +1,6 @@
 #include "class_type.hpp"
 #include "class_db.hpp"
+#include "class_symbol.hpp"
 
 namespace cmp {
 
@@ -11,7 +12,15 @@ bool ClassType::is_cpp_type(const std::string &cpp_type) const {
 			|| ("const " + name) == cpp_type
 			|| (name + "&") == cpp_type
 			|| ("const " + name + "&") == cpp_type
-			|| ("Shared<" + name + ">") == cpp_type;
+			|| ("Shared<" + name + ">") == cpp_type
+			|| (
+				class_ptr->parent
+				&& class_ptr->parent->type->is_cpp_type(cpp_type)
+			);
+}
+
+bool ClassType::is_convertable_to_cpp_type(const std::string &) const {
+	return false;
 }
 
 bool ClassType::default_store_shared() const {

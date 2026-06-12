@@ -17,7 +17,16 @@ namespace {
 		return candidates;
 	}
 
-	FuncVec get_secondary_candidates(CallExpression& expr, FuncVec candidates) {
+	FuncVec get_secondary_candidates(SymbolTable& symbol_table, CallExpression& expr, FuncVec candidates) {
+		if (candidates.empty()) {
+			symbol_table.add_error(
+				expr.source_location,
+				"no function with name and arg count: " + expr.to_string(),
+				Error::ERROR
+			);
+			return {};
+		}
+
 		FuncVec secondary_candidates;
 
 		for (auto f2 : candidates) {
@@ -120,7 +129,7 @@ void NameAnalyzer::visit(CallExpression& expr) {
 			);
 			
 			FuncVec candidates = get_candidates(expr, constructors);
-			FuncVec secondary_candidates = get_secondary_candidates(expr, candidates);
+			FuncVec secondary_candidates = get_secondary_candidates(symbol_table, expr, candidates);
 			bool success = resolve_from_secondary_candidates(symbol_table, expr, secondary_candidates);
 
 			if (!success) {
@@ -143,7 +152,7 @@ void NameAnalyzer::visit(CallExpression& expr) {
 
 		if (!global_native_functions_same_name.empty()) {
 			FuncVec candidates = get_candidates(expr, global_native_functions_same_name);
-			FuncVec secondary_candidates = get_secondary_candidates(expr, candidates);
+			FuncVec secondary_candidates = get_secondary_candidates(symbol_table, expr, candidates);
 			bool success = resolve_from_secondary_candidates(symbol_table, expr, secondary_candidates);
 
 			if (!success) {
@@ -170,7 +179,7 @@ void NameAnalyzer::visit(CallExpression& expr) {
 			);
 			
 			FuncVec candidates = get_candidates(expr, constructors);
-			FuncVec secondary_candidates = get_secondary_candidates(expr, candidates);
+			FuncVec secondary_candidates = get_secondary_candidates(symbol_table, expr, candidates);
 			bool success = resolve_from_secondary_candidates(symbol_table, expr, secondary_candidates);
 
 			if (!success) {
@@ -182,7 +191,7 @@ void NameAnalyzer::visit(CallExpression& expr) {
 		// call function in same class
 		FuncVec functions = na_context->class_ptr->get_functions();
 		FuncVec candidates = get_candidates(expr, functions);
-		FuncVec secondary_candidates = get_secondary_candidates(expr, candidates);
+		FuncVec secondary_candidates = get_secondary_candidates(symbol_table, expr, candidates);
 		bool success = resolve_from_secondary_candidates(symbol_table, expr, secondary_candidates);
 
 		if (!success) {
@@ -246,11 +255,27 @@ void NameAnalyzer::visit(CallExpression& expr) {
 						}
 
 						FuncVec candidates = get_candidates(expr, functions);
-						FuncVec secondary_candidates = get_secondary_candidates(expr, candidates);
+						FuncVec secondary_candidates = get_secondary_candidates(symbol_table, expr, candidates);
 						bool success = resolve_from_secondary_candidates(symbol_table, expr, secondary_candidates);
 
 						if (!success) {
-							symbol_table.add_error(expr.source_location, "Method in class not found", Error::ERROR);
+							std::stringstream ss;
+
+							ss << "Method in class not found\n";
+							ss << C_HINT("Candidates:") << "\n";
+
+							for (FuncPtr c : candidates) {
+								ss << "\t" << c->head_to_string() << "\n";
+							}
+
+							ss << "\n";
+							ss << C_HINT("Secondary Candidates:") << "\n";
+
+							for (FuncPtr c : secondary_candidates) {
+								ss << "\t" << c->head_to_string() << "\n";
+							}
+
+							symbol_table.add_error(expr.source_location, ss.str(), Error::ERROR);
 						}
 						return;
 					}

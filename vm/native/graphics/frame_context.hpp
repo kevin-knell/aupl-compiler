@@ -6,6 +6,7 @@
 #include "mat4.hpp"
 #include "vec3.hpp"
 #include "vec2.hpp"
+#include "macros.hpp"
 
 namespace auplib
 {
@@ -41,12 +42,8 @@ struct FrameContext {
 	VkFence in_flight_fence;
 
 	FrameContext();
-
-	FrameContext(const FrameContext&) = delete;
-	FrameContext& operator=(const FrameContext&) = delete;
-
-	FrameContext(FrameContext&&) = default;
-	FrameContext& operator=(FrameContext&&) = default;
+	COPY_DELETE(FrameContext)
+	MOVE_DEFAULT(FrameContext)
 
 	void record_begin(const RenderTarget& render_target);
 	void record_end(const RenderTarget& render_target);

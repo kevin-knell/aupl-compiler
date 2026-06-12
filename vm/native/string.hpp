@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include "macros.hpp"
 
 namespace vm {
     class ClassDB;
@@ -14,8 +15,12 @@ public:
 	static void register_to_db(vm::ClassDB& db);
     
 	String() = default;
+
 	String(const String& s);
+	String& operator=(const String& s);
+
 	String(String&& other) noexcept;
+	String& operator=(String&& s);
 
     String(const char* s);
     String(const std::string& s);
@@ -29,8 +34,6 @@ public:
     char operator[](size_t i) const;
 	
 	// operators
-	String& operator=(const String& s) = default;
-
 	String operator+(const String& s);
 	String operator+(const char* s);
 	

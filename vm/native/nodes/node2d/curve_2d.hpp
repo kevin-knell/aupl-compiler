@@ -1,5 +1,6 @@
 #include "canvas_item.hpp"
 #include "vec2.hpp"
+#include "macros.hpp"
 
 namespace auplib {
 

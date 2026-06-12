@@ -3,6 +3,9 @@
 #include "vulkan.hpp"
 
 namespace auplib {
+void CanvasItem::register_to_db(vm::ClassDB &db) {
+	REGISTER_OBJECT_CLASS(CanvasItem, Node);
+}
 
 void CanvasItem::init(VkCommandPool cmd_pool) {
     VkDevice device = vulkan_instance.device;

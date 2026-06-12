@@ -2,6 +2,7 @@
 #include "native.hpp"
 #include "object.hpp"
 #include "shared.hpp"
+#include "macros.hpp"
 #include <fstream>
 
 namespace vm {
@@ -29,12 +30,8 @@ public:
 	File(const String& path, int64_t open_flag);
 	~File();
 
-
-    File(const File&) = delete;
-    File& operator=(const File&) = delete;
-
-    File(File&&) noexcept = default;
-    File& operator=(File&&) noexcept = default;
+	COPY_DELETE(File)
+	MOVE_DEFAULT(File)
 
 	// read
 	String get_line();

@@ -15,7 +15,7 @@
 namespace auplib {
 
 void Renderer::register_to_db(vm::ClassDB &db) {
-	const int16_t ID = REGISTER_CLASS(Renderer);
+	const int16_t ID = REGISTER_OBJECT_CLASS(Renderer, Object);
 	
 	REGISTER_CONSTRUCTOR(ID, Renderer(Shared<Viewport> viewport));
 
@@ -296,88 +296,13 @@ Renderer::~Renderer() {
 }
 
 void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
-	if (ColorRect* r = dynamic_cast<ColorRect*>(node.get())) {
-		vkCmdBindPipeline(
-			frame.command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			test_pipeline.pipeline);
-		
-		mapped_vertices[4] = Vertex{ vec2(0.0, 0.0), vec3(1.0, 1.0, 1.0), { 0.0, 0.0 } };
-		mapped_vertices[5] = Vertex{ vec2(0.0, 1.0), vec3(1.0, 1.0, 1.0), { 0.0, 1.0 } };
-		mapped_vertices[6] = Vertex{ vec2(1.0, 0.0), vec3(1.0, 1.0, 1.0), { 1.0, 0.0 } };
-		mapped_vertices[7] = Vertex{ vec2(1.0, 1.0), vec3(1.0, 1.0, 1.0), { 1.0, 1.0 } };
+	CanvasItem* canvas_item = dynamic_cast<CanvasItem*>(node.get());
 
-		mat4 model = {
-			{ r->size.x, 0.0, 0.0, 0.0 },
-			{ 0.0, r->size.y, 0.0, 0.0 },
-			{ 0.0, 0.0, 1.0, 0.0 },
-			{ r->get_position().x, r->get_position().y, 0.0, 1.0 },
-		};
-
-		r->object_data.model = model;
-
-		memcpy(
-			r->object_uniform_mapped,
-			&r->object_data,
-			sizeof(CanvasItem::ObjectUniformData)
-		);
-		
-		// descriptor sets
-		vkCmdBindDescriptorSets(
-			frame.command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipeline_layout,
-			0,
-			1,
-			&frame.frame_descriptor_set,
-			0,
-			nullptr
-		);
-
-		vkCmdBindDescriptorSets(
-			frame.command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipeline_layout,
-			1,
-			1,
-			&r->object_descriptor_set,
-			0,
-			nullptr
-		);
-
-		vkCmdBindDescriptorSets(
-			frame.command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipeline_layout,
-			2,
-			1,
-			&r->sampler_descriptor_set,
-			0,
-			nullptr
-		);
-
-
-		VkDeviceSize offset{ sizeof(Vertex) * 4 };
-		vkCmdBindVertexBuffers(frame.command_buffer, 0, 1, &vertex_buffer, &offset);
-
-		vkCmdDraw(
-			frame.command_buffer,
-			4,
-			1,
-			0,
-			0);
-	} else if (Curve2D* curve_2d = dynamic_cast<Curve2D*>(node.get())) {
+	if (Curve2D* curve_2d = dynamic_cast<Curve2D*>(node.get())) {
 		vkCmdBindPipeline(
         	frame.command_buffer,
         	VK_PIPELINE_BIND_POINT_GRAPHICS,
         	bezier_pipeline.pipeline);
-
-		mat4 model = {
-			{ 1.0, 0.0, 0.0, 0.0 },
-			{ 0.0, 1.0, 0.0, 0.0 },
-			{ 0.0, 0.0, 1.0, 0.0 },
-			{ 0.0, 0.0, 0.0, 1.0 },
-		};
 
 		assert(curve_2d->points.size() == 4);
 
@@ -386,15 +311,12 @@ void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
 		mapped_vertices[2] = Vertex{ curve_2d->points[2], vec3(1.0, 1.0, 1.0), { 1.0, 0.0 } };
 		mapped_vertices[3] = Vertex{ curve_2d->points[3], vec3(1.0, 1.0, 1.0), { 1.0, 1.0 } };
 
-
-		curve_2d->object_data.model = model;
-
 		memcpy(
 			curve_2d->object_uniform_mapped,
 			&curve_2d->object_data,
 			sizeof(CanvasItem::ObjectUniformData)
 		);
-		
+
 		// descriptor sets
 		vkCmdBindDescriptorSets(
 			frame.command_buffer,
@@ -413,7 +335,7 @@ void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
 			pipeline_layout,
 			1,
 			1,
-			&curve_2d->object_descriptor_set,
+			&canvas_item->object_descriptor_set,
 			0,
 			nullptr
 		);
@@ -424,13 +346,73 @@ void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
 			pipeline_layout,
 			2,
 			1,
-			&curve_2d->sampler_descriptor_set,
+			&canvas_item->sampler_descriptor_set,
 			0,
 			nullptr
 		);
 
-
 		VkDeviceSize offset{ 0 };
+		vkCmdBindVertexBuffers(frame.command_buffer, 0, 1, &vertex_buffer, &offset);
+
+		vkCmdDraw(
+			frame.command_buffer,
+			4,
+			1,
+			0,
+			0);
+	} else if (canvas_item) {
+		vkCmdBindPipeline(
+			frame.command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			test_pipeline.pipeline);
+		
+		// unit quad
+		mapped_vertices[4] = Vertex{ vec2(0.0, 0.0), vec3(1.0, 1.0, 1.0), { 0.0, 0.0 } };
+		mapped_vertices[5] = Vertex{ vec2(0.0, 1.0), vec3(1.0, 1.0, 1.0), { 0.0, 1.0 } };
+		mapped_vertices[6] = Vertex{ vec2(1.0, 0.0), vec3(1.0, 1.0, 1.0), { 1.0, 0.0 } };
+		mapped_vertices[7] = Vertex{ vec2(1.0, 1.0), vec3(1.0, 1.0, 1.0), { 1.0, 1.0 } };
+
+		memcpy(
+			canvas_item->object_uniform_mapped,
+			&canvas_item->object_data,
+			sizeof(CanvasItem::ObjectUniformData)
+		);
+
+		// descriptor sets
+		vkCmdBindDescriptorSets(
+			frame.command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			pipeline_layout,
+			0,
+			1,
+			&frame.frame_descriptor_set,
+			0,
+			nullptr
+		);
+
+		vkCmdBindDescriptorSets(
+			frame.command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			pipeline_layout,
+			1,
+			1,
+			&canvas_item->object_descriptor_set,
+			0,
+			nullptr
+		);
+
+		vkCmdBindDescriptorSets(
+			frame.command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			pipeline_layout,
+			2,
+			1,
+			&canvas_item->sampler_descriptor_set,
+			0,
+			nullptr
+		);
+
+		VkDeviceSize offset{ sizeof(Vertex) * 4 };
 		vkCmdBindVertexBuffers(frame.command_buffer, 0, 1, &vertex_buffer, &offset);
 
 		vkCmdDraw(
@@ -484,11 +466,16 @@ void Renderer::render() {
 
 	// draw scene
 	Scene& scene = *viewport->scene;
+	assert(scene.root);
 	
 	// TODO: init somewhere else
 	for (size_t i = 0; i < scene.root->children.size(); ++i) {
 		Node* n = scene.root->children[i].get();
 		CanvasItem* ci = dynamic_cast<CanvasItem*>(n);
+
+		if (!ci) break;
+
+		assert(ci->image);
 
 		if (!ci->image->get_vk_image()) {
 			ci->init(command_pool);

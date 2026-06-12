@@ -24,6 +24,25 @@ SymbolTable::SymbolTable(vm::ClassDB &db) : class_db(db) {
 		named_cpp_types()[cls.name] = nat;
 	}
 
+	for (auto& cls_1 : db.classes) {
+		std::shared_ptr<ClassType> nat_1 = native_types[cls_1.name];
+		const vm::ClassBind* class_bind_1 = nat_1->class_bind;
+
+		if (class_bind_1->id == class_bind_1->parent_id) {
+			continue;
+		}
+
+		for (auto& cls_2 : db.classes) {
+			std::shared_ptr<ClassType> nat_2 = native_types[cls_2.name];
+			const vm::ClassBind* class_bind_2 = nat_2->class_bind;
+			
+			if (class_bind_1->parent_id == class_bind_2->id) {
+				nat_1->class_ptr->parent = nat_2->class_ptr;
+				break;
+			}
+		}
+	}
+
 	for (auto& cls : db.classes) {
 		std::shared_ptr<ClassType> nat = native_types[cls.name];
 		auto class_symbol = nat->class_ptr;

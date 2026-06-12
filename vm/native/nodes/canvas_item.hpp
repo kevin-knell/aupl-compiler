@@ -14,12 +14,21 @@ namespace auplib {
 class CanvasItem : public Node {
 public:
 	struct ObjectUniformData {
-		mat4 model;
+		vec4 size = vec4(1.0, 1.0, 1.0, 1.0);
+
+		mat4 model{
+			vec4::EX,
+			vec4::EY,
+			vec4::EZ,
+			vec4::EW
+		};
 		mat4 model_view;
 		mat4 model_view_projection;
 
 		mat3 normal_matrix;
 	} object_data;
+
+	static_assert(offsetof(ObjectUniformData, model) == sizeof(ObjectUniformData::size));
 
 	void* object_uniform_mapped;
 	VkBuffer object_uniform_buffer;
@@ -31,6 +40,9 @@ public:
 	CanvasItem() = default;
 	CanvasItem(const CanvasItem&) = delete;
 	CanvasItem& operator=(CanvasItem&) = delete;
+
+public:
+	static void register_to_db(vm::ClassDB &db);
 	
 	vec2 get_position() const {
 		return {
@@ -44,7 +56,14 @@ public:
 		object_data.model.w.y = p.y;
 	}
 	
-	vec2 get_size() const;
+	void set_size(vec2 s) {
+		object_data.size.x = s.x;
+		object_data.size.y = s.y;
+	};
+
+	vec2 get_size() const {
+		return vec2(object_data.size.x, object_data.size.y);
+	};
 
 	void init(VkCommandPool cmd_pool);
 };

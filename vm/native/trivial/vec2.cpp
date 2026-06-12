@@ -14,12 +14,6 @@ const vec2 vec2::ONE(0, 0);
 const vec2 vec2::EX(1, 0);
 const vec2 vec2::EY(0, 1);
 
-void vec2::set_x(float _x) { x = _x; }
-float vec2::get_x() const { return x; }
-
-void vec2::set_y(float _y) { y = _y; }
-float vec2::get_y() const { return y; }
-
 float vec2::dot(vec2 v) const
 {
     return x * v.x + y * v.y;

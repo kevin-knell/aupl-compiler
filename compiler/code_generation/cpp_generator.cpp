@@ -83,6 +83,7 @@ void cmp::CppCodeGenerator::generate_cpp_code(std::ofstream &hpp_file, std::ofst
 	append(hpp_includes, "#include \"time.hpp\"");
 	append(hpp_includes, "#include \"input.hpp\"");
 	append(hpp_includes, "#include \"curve_2d.hpp\"");
+	append(hpp_includes, "#include \"sprite_2d.hpp\"");
 
 	append(cpp_includes, "#include \"output.hpp\"");
 

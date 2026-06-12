@@ -1,9 +1,16 @@
 #include "image.hpp"
+#include "native.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
 namespace auplib {
+
+void Image::register_to_db(vm::ClassDB &db) {
+	const uint16_t ID = REGISTER_OBJECT_CLASS(Image, Object);
+	
+	REGISTER_STATIC_METHOD(ID, Image, load_from_file, Shared<Image> (*)(String path));
+}
 
 // constructors
 Image::Image(RcKey rc_key, String path) : Resource(rc_key, path) {
@@ -93,7 +100,7 @@ void Image::upload(VkDevice device, VkCommandPool cmd_pool, VkQueue queue) {
 		.pNext = nullptr,
 		.flags = 0,
 		.imageType = VK_IMAGE_TYPE_2D,
-		.format = VK_FORMAT_R8G8B8A8_UNORM,
+		.format = VK_FORMAT_R8G8B8A8_SRGB,
 		.extent = { static_cast<uint32_t>(size.x), static_cast<uint32_t>(size.y), 1 },
 		.mipLevels = 1,
 		.arrayLayers = 1,
@@ -142,7 +149,7 @@ void Image::upload(VkDevice device, VkCommandPool cmd_pool, VkQueue queue) {
 		.flags = 0,
 		.image = vulkan_data.image,
 		.viewType = VK_IMAGE_VIEW_TYPE_2D,
-		.format = VK_FORMAT_R8G8B8A8_UNORM,
+		.format = VK_FORMAT_R8G8B8A8_SRGB,
 		.components = {
 			.r = VK_COMPONENT_SWIZZLE_R,
 			.g = VK_COMPONENT_SWIZZLE_G,

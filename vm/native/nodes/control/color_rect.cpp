@@ -4,7 +4,7 @@
 namespace auplib {
 
 void ColorRect::register_to_db(vm::ClassDB &db) {
-	const int16_t ID = REGISTER_CLASS(ColorRect);
+	const int16_t ID = REGISTER_OBJECT_CLASS(ColorRect, CanvasItem);
 	
 	REGISTER_CONSTRUCTOR(ID, ColorRect(vec2 position, vec2 size, Color color));
 

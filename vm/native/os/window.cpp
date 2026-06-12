@@ -10,7 +10,7 @@ namespace auplib {
 std::map<GLFWwindow*, Window*> Window::active_windows;
 
 void Window::register_to_db(vm::ClassDB &db) {
-	const int16_t ID = REGISTER_CLASS(Window);
+	const int16_t ID = REGISTER_OBJECT_CLASS(Window, Object);
 	
 	REGISTER_CONSTRUCTOR(ID, Window(const uint32_t width, const uint32_t height, const String name));
 

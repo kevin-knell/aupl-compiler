@@ -23,10 +23,15 @@
 #include "scene.hpp"
 #include "renderer.hpp"
 
+// ref-counted
+#include "ref_counted.hpp"
+#include "image.hpp"
+
 // nodes
 #include "node.hpp"
 #include "color_rect.hpp"
 #include "curve_2d.hpp"
+#include "sprite_2d.hpp"
 #endif
 
 void register_shared_to_db(vm::ClassDB& db) {
@@ -80,9 +85,14 @@ void vm::register_classes(vm::ClassDB& db) {
 	Scene::register_to_db(db);
 	Renderer::register_to_db(db);
 
+	// ref-counted
+	Image::register_to_db(db);
+
 	// nodes
 	Node::register_to_db(db);
+	CanvasItem::register_to_db(db);
 	ColorRect::register_to_db(db);
 	Curve2D::register_to_db(db);
+	Sprite2D::register_to_db(db);
 #endif
 }

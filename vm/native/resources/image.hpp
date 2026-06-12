@@ -25,6 +25,8 @@ private:
 	} vulkan_data;
 
 public:
+	static void register_to_db(vm::ClassDB& db);
+
 	static Shared<Image> load_from_file(String path);
 	static Shared<Image> create_fill(vec2i size, Color fill_color);
 

@@ -3,6 +3,8 @@
 #include <iostream>
 
 #include "native.hpp"
+#include "vec2i.hpp"
+#include "macros.hpp"
 
 // Generate all 2-component swizzles for x,y,z
 // Declaration helpers
@@ -33,12 +35,10 @@ struct vec2 {
     constexpr vec2() = default;
     constexpr vec2(float v) : x(v), y(v) {}
     constexpr vec2(float x, float y) : x(x), y(y) {}
+	constexpr vec2(vec2i v) : x(static_cast<float>(v.x)), y(static_cast<float>(v.y)) {}
 
-    void set_x(float _x);
-    float get_x() const;
-    
-    void set_y(float _y);
-    float get_y() const;
+	SETGET(x)
+	SETGET(y)
 
     // swizzle
 	SWIZZLE2(DECL_SET2)

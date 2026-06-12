@@ -23,7 +23,7 @@ struct ClassType final : public Type {
 
 	bool is_cpp_type(const std::string& cpp_type) const override;
 	
-	bool is_convertable_to_cpp_type(const std::string&) const override { return false; }
+	bool is_convertable_to_cpp_type(const std::string&) const override;
 
 	std::string to_cpp_type_str() override { return name; };
 

@@ -7,7 +7,7 @@
 namespace auplib {
 
 void File::register_to_db(vm::ClassDB &db) {
-	const int16_t ID = REGISTER_CLASS(File);
+	const int16_t ID = REGISTER_OBJECT_CLASS(File, Object);
 	
 	//REGISTER_CONSTRUCTOR(ID, File(const String& path, int64_t open_flag));
 

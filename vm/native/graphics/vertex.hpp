@@ -6,9 +6,12 @@ namespace auplib
 {
 
 struct Vertex {
-	vec2 position;
+	vec3 position;
 	vec3 color;
 	vec2 uv;
+
+	Vertex() = default;
+	Vertex(vec3 p, vec3 c, vec2 uv) : position(p), color(c), uv(uv) {}
 };
 
 } // namespace auplib

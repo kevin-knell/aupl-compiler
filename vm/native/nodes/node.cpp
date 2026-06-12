@@ -3,7 +3,7 @@
 namespace auplib {
 
 void Node::register_to_db(vm::ClassDB &db) {
-	const int16_t ID = REGISTER_CLASS(Node);
+	const int16_t ID = REGISTER_OBJECT_CLASS(Node, Object);
 	
 	REGISTER_CONSTRUCTOR(ID, Node());
 

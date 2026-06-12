@@ -6,11 +6,21 @@
 namespace auplib {
 
 String::String(const String &s) : value(s.str()) {}
+String &String::operator=(const String &s) {
+	value = s.str();
+	return *this;
+}
+
+String::String(String&& other) noexcept : value(std::move(other.value)) {}
+String &String::operator=(String&& other) {
+	value = std::move(other.value);
+	return *this;
+}
 
 String::String(const char *s) : value(s) {}
 String::String(const std::string& s) : value(s) {}
 String::String(std::string&& s) : value(std::move(s)) {}
-String::String(String &&other) noexcept : value(std::move(other.value)) {}
+
 String::String(int64_t i) : value(std::to_string(i)) {}
 //String::String(void *p) : value(std::to_string(size_t(p))) {}
 

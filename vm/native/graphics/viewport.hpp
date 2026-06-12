@@ -7,6 +7,7 @@
 
 #include "scene.hpp"
 #include "shared.hpp"
+#include "macros.hpp"
 
 namespace auplib
 {
@@ -29,8 +30,7 @@ public:
 
 	void resize(const uint32_t width, const uint32_t height);
 
-	void set_scene(Shared<Scene> s) { scene = s; }
-	Shared<Scene> get_scene() const { return scene; }
+	SETGET(scene)
 };
 
 } // namespace auplib
