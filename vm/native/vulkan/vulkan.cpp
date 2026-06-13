@@ -4,8 +4,6 @@
 
 namespace auplib {
 
-VulkanInstance vulkan_instance;
-
 void VulkanInstance::create_instance() {
 	VkApplicationInfo app_info {
 		.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -165,9 +163,15 @@ uint32_t VulkanInstance::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFla
 	throw std::runtime_error("No suitable memory type");
 }
 
+VulkanInstance *VulkanInstance::singleton() {
+	static VulkanInstance _singleton;
+	return &_singleton;
+}
+
 VulkanInstance::VulkanInstance() {
 	create_instance();
 	create_device();
+	assert(device != VK_NULL_HANDLE);
 }
 
 }

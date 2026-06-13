@@ -36,7 +36,7 @@ VkPipelineShaderStageCreateInfo ShaderLoader::load_shader(String path, VkShaderS
 	VkShaderModule shader_module;
 
 	VkResult result = vkCreateShaderModule(
-		vulkan_instance.device,
+		VulkanInstance::singleton()->device,
 		&create_info,
 		nullptr,
 		&shader_module

@@ -11,6 +11,9 @@
 #include "mat4.hpp"
 #include "curve_2d.hpp"
 #include "shared.hpp"
+#include "canvas_item_rid.hpp"
+#include "render_command.hpp"
+#include "texture_rid.hpp"
 
 namespace auplib {
 
@@ -38,12 +41,12 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 	uint32_t surface_count;
 	std::vector<VkSurfaceFormatKHR> surface_formats;
 
-	result = vkGetPhysicalDeviceSurfaceFormatsKHR(vulkan_instance.phys_device, viewport->surface, &surface_count, nullptr);
+	result = vkGetPhysicalDeviceSurfaceFormatsKHR(VulkanInstance::singleton()->phys_device, viewport->surface, &surface_count, nullptr);
 	assert(result == VK_SUCCESS);
 
 	surface_formats.resize(surface_count);
 
-	result = vkGetPhysicalDeviceSurfaceFormatsKHR(vulkan_instance.phys_device, viewport->surface, &surface_count, surface_formats.data());
+	result = vkGetPhysicalDeviceSurfaceFormatsKHR(VulkanInstance::singleton()->phys_device, viewport->surface, &surface_count, surface_formats.data());
 	assert(result == VK_SUCCESS);
 
 	swapchain = Swapchain(viewport->surface, surface_formats[0].format, viewport->scissor.extent);
@@ -71,7 +74,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 		.pPoolSizes = pool_sizes.data()
 	};
 	
-	result = vkCreateDescriptorPool(vulkan_instance.device, &pool_create_info, nullptr, &vulkan_instance.desc_pool);
+	result = vkCreateDescriptorPool(VulkanInstance::singleton()->device, &pool_create_info, nullptr, &VulkanInstance::singleton()->desc_pool);
 	assert(result == VK_SUCCESS);
 	
 	// frame desc set layout
@@ -91,7 +94,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
     	.pBindings = &frame_uniform_binding
 	};
 	
-	result = vkCreateDescriptorSetLayout(vulkan_instance.device, &frame_desc_set_layout_create_info, nullptr, &vulkan_instance.desc_set_layout_frame);
+	result = vkCreateDescriptorSetLayout(VulkanInstance::singleton()->device, &frame_desc_set_layout_create_info, nullptr, &VulkanInstance::singleton()->desc_set_layout_frame);
 	assert(result == VK_SUCCESS);
 
 	// object desc set layout
@@ -111,7 +114,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
     	.pBindings = &object_uniform_binding
 	};
 	
-	result = vkCreateDescriptorSetLayout(vulkan_instance.device, &object_desc_set_layout_create_info, nullptr, &vulkan_instance.desc_set_layout_object);
+	result = vkCreateDescriptorSetLayout(VulkanInstance::singleton()->device, &object_desc_set_layout_create_info, nullptr, &VulkanInstance::singleton()->desc_set_layout_object);
 	assert(result == VK_SUCCESS);
 
 	// sampler desc set layout
@@ -131,21 +134,21 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
     	.pBindings = &sampler_uniform_binding
 	};
 	
-	result = vkCreateDescriptorSetLayout(vulkan_instance.device, &sampler_desc_set_layout_create_info, nullptr, &vulkan_instance.desc_set_layout_sampler);
+	result = vkCreateDescriptorSetLayout(VulkanInstance::singleton()->device, &sampler_desc_set_layout_create_info, nullptr, &VulkanInstance::singleton()->desc_set_layout_sampler);
 	assert(result == VK_SUCCESS);
 
 	// frame descriptor sets
 	VkDescriptorSetAllocateInfo desc_alloc_info{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
 		.pNext = nullptr,
-		.descriptorPool = vulkan_instance.desc_pool,
+		.descriptorPool = VulkanInstance::singleton()->desc_pool,
 		.descriptorSetCount = 1,
-		.pSetLayouts = &vulkan_instance.desc_set_layout_frame
+		.pSetLayouts = &VulkanInstance::singleton()->desc_set_layout_frame
 	};
 
 	for (FrameContext& f : frames) {
 		// allocate desc set
-		result = vkAllocateDescriptorSets(vulkan_instance.device, &desc_alloc_info, &f.frame_descriptor_set);
+		result = vkAllocateDescriptorSets(VulkanInstance::singleton()->device, &desc_alloc_info, &f.frame_descriptor_set);
 		assert(result == VK_SUCCESS);
 
 		// update desc set
@@ -168,14 +171,14 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 			.pTexelBufferView = nullptr
 		};
 
-		vkUpdateDescriptorSets(vulkan_instance.device, 1, &write, 0, nullptr);
+		vkUpdateDescriptorSets(VulkanInstance::singleton()->device, 1, &write, 0, nullptr);
 	}
 
 	// pipeline layout
 	std::vector<VkDescriptorSetLayout> set_layouts = {
-		vulkan_instance.desc_set_layout_frame,
-		vulkan_instance.desc_set_layout_object,
-		vulkan_instance.desc_set_layout_sampler
+		VulkanInstance::singleton()->desc_set_layout_frame,
+		VulkanInstance::singleton()->desc_set_layout_object,
+		VulkanInstance::singleton()->desc_set_layout_sampler
 	};
 
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info{
@@ -189,7 +192,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 	};
 	
 	result = vkCreatePipelineLayout(
-		vulkan_instance.device,
+		VulkanInstance::singleton()->device,
 		&pipeline_layout_create_info,
 		nullptr,
 		&pipeline_layout
@@ -223,31 +226,31 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 		.pQueueFamilyIndices = 0,
 	};
 
-	result = vkCreateBuffer(vulkan_instance.device, &vertex_buffer_create_info, nullptr, &vertex_buffer);
+	result = vkCreateBuffer(VulkanInstance::singleton()->device, &vertex_buffer_create_info, nullptr, &vertex_buffer);
 	assert(result == VK_SUCCESS);
 
 	VkMemoryRequirements mem_req;
-	vkGetBufferMemoryRequirements(vulkan_instance.device, vertex_buffer, &mem_req);
+	vkGetBufferMemoryRequirements(VulkanInstance::singleton()->device, vertex_buffer, &mem_req);
 
 	VkMemoryAllocateInfo mem_alloc_info = {
 		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
 		.pNext = nullptr,
 		.allocationSize = mem_req.size,
-		.memoryTypeIndex = vulkan_instance.findMemoryType(
+		.memoryTypeIndex = VulkanInstance::singleton()->findMemoryType(
 			mem_req.memoryTypeBits,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		)
 	};
 
-	result = vkAllocateMemory(vulkan_instance.device, &mem_alloc_info, nullptr, &vertex_memory);
+	result = vkAllocateMemory(VulkanInstance::singleton()->device, &mem_alloc_info, nullptr, &vertex_memory);
 	assert(result == VK_SUCCESS);
 
-	result = vkBindBufferMemory(vulkan_instance.device, vertex_buffer, vertex_memory, 0);
+	result = vkBindBufferMemory(VulkanInstance::singleton()->device, vertex_buffer, vertex_memory, 0);
 	assert(result == VK_SUCCESS);
 
 	void* raw_data;
-	vkMapMemory(vulkan_instance.device, vertex_memory, 0, vertex_buffer_create_info.size, 0, &raw_data);
+	vkMapMemory(VulkanInstance::singleton()->device, vertex_memory, 0, vertex_buffer_create_info.size, 0, &raw_data);
 	mapped_vertices = reinterpret_cast<Vertex*>(raw_data);
 
 	// command pool
@@ -255,10 +258,10 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 		.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-		.queueFamilyIndex = vulkan_instance.selected_queue_family_idx
+		.queueFamilyIndex = VulkanInstance::singleton()->selected_queue_family_idx
 	};
 
-	result = vkCreateCommandPool(vulkan_instance.device, &pool_info, nullptr, &command_pool);
+	result = vkCreateCommandPool(VulkanInstance::singleton()->device, &pool_info, nullptr, &command_pool);
 	assert(result == VK_SUCCESS);
 
 	// command buffers
@@ -273,7 +276,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 		.commandBufferCount = static_cast<uint32_t>(command_buffers.size())
 	};
 
-	result = vkAllocateCommandBuffers(vulkan_instance.device, &alloc_info, command_buffers.data());
+	result = vkAllocateCommandBuffers(VulkanInstance::singleton()->device, &alloc_info, command_buffers.data());
 	assert(result == VK_SUCCESS);
 
 	for (size_t i = 0; i < frames.size(); ++i) {
@@ -292,149 +295,175 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 }
 
 Renderer::~Renderer() {
-	vkDestroyCommandPool(vulkan_instance.device, command_pool, nullptr);
+	vkDestroyCommandPool(VulkanInstance::singleton()->device, command_pool, nullptr);
 }
 
-void Renderer::draw_node(Shared<Node> node, FrameContext& frame) {
-	CanvasItem* canvas_item = dynamic_cast<CanvasItem*>(node.get());
+void Renderer::draw_rect(const RenderCommandRect& cmd, CanvasItemRID ci, FrameContext& frame) {
+	assert(!!cmd.tex);
 
-	if (Curve2D* curve_2d = dynamic_cast<Curve2D*>(node.get())) {
-		vkCmdBindPipeline(
-        	frame.command_buffer,
-        	VK_PIPELINE_BIND_POINT_GRAPHICS,
-        	bezier_pipeline.pipeline);
+	vkCmdBindPipeline(
+		frame.command_buffer,
+		VK_PIPELINE_BIND_POINT_GRAPHICS,
+		test_pipeline.pipeline);
+	
+	// unit quad
+	mapped_vertices[4] = Vertex{ vec2(0.0, 0.0),	vec3(1.0, 1.0, 1.0), { 0.0, 0.0 } };
+	mapped_vertices[5] = Vertex{ vec2(0.0, 1.0),	vec3(1.0, 1.0, 1.0), { 0.0, 1.0 } };
+	mapped_vertices[6] = Vertex{ vec2(1.0, 0.0),	vec3(1.0, 1.0, 1.0), { 1.0, 0.0 } };
+	mapped_vertices[7] = Vertex{ vec2(1.0, 1.0),	vec3(1.0, 1.0, 1.0), { 1.0, 1.0 } };
 
-		assert(curve_2d->points.size() == 4);
+	memcpy(
+		ci->object_uniform_mapped,
+		&ci->object_ubo,
+		sizeof(ObjectUBO)
+	);
 
-		mapped_vertices[0] = Vertex{ curve_2d->points[0], vec3(1.0, 1.0, 1.0), { 0.0, 0.0 } };
-		mapped_vertices[1] = Vertex{ curve_2d->points[1], vec3(1.0, 1.0, 1.0), { 0.0, 1.0 } };
-		mapped_vertices[2] = Vertex{ curve_2d->points[2], vec3(1.0, 1.0, 1.0), { 1.0, 0.0 } };
-		mapped_vertices[3] = Vertex{ curve_2d->points[3], vec3(1.0, 1.0, 1.0), { 1.0, 1.0 } };
+	// descriptor sets
+	vkCmdBindDescriptorSets(
+		frame.command_buffer,
+		VK_PIPELINE_BIND_POINT_GRAPHICS,
+		pipeline_layout,
+		0,
+		1,
+		&frame.frame_descriptor_set,
+		0,
+		nullptr
+	);
 
-		memcpy(
-			curve_2d->object_uniform_mapped,
-			&curve_2d->object_data,
-			sizeof(CanvasItem::ObjectUniformData)
-		);
+	vkCmdBindDescriptorSets(
+		frame.command_buffer,
+		VK_PIPELINE_BIND_POINT_GRAPHICS,
+		pipeline_layout,
+		1,
+		1,
+		&ci->object_descriptor_set,
+		0,
+		nullptr
+	);
 
-		// descriptor sets
-		vkCmdBindDescriptorSets(
-			frame.command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipeline_layout,
-			0,
-			1,
-			&frame.frame_descriptor_set,
-			0,
-			nullptr
-		);
+	VkDescriptorSet sampler_descriptor_set = cmd.tex->get_descriptor_set();
 
-		vkCmdBindDescriptorSets(
-			frame.command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipeline_layout,
-			1,
-			1,
-			&canvas_item->object_descriptor_set,
-			0,
-			nullptr
-		);
+	vkCmdBindDescriptorSets(
+		frame.command_buffer,
+		VK_PIPELINE_BIND_POINT_GRAPHICS,
+		pipeline_layout,
+		2,
+		1,
+		&sampler_descriptor_set,
+		0,
+		nullptr
+	);
 
-		vkCmdBindDescriptorSets(
-			frame.command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipeline_layout,
-			2,
-			1,
-			&canvas_item->sampler_descriptor_set,
-			0,
-			nullptr
-		);
+	VkDeviceSize offset{ sizeof(Vertex) * 4 };
+	vkCmdBindVertexBuffers(frame.command_buffer, 0, 1, &vertex_buffer, &offset);
 
-		VkDeviceSize offset{ 0 };
-		vkCmdBindVertexBuffers(frame.command_buffer, 0, 1, &vertex_buffer, &offset);
+	vkCmdDraw(
+		frame.command_buffer,
+		4,
+		1,
+		0,
+		0);
+}
 
-		vkCmdDraw(
-			frame.command_buffer,
-			4,
-			1,
-			0,
-			0);
-	} else if (canvas_item) {
-		vkCmdBindPipeline(
-			frame.command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			test_pipeline.pipeline);
-		
-		// unit quad
-		mapped_vertices[4] = Vertex{ vec2(0.0, 0.0), vec3(1.0, 1.0, 1.0), { 0.0, 0.0 } };
-		mapped_vertices[5] = Vertex{ vec2(0.0, 1.0), vec3(1.0, 1.0, 1.0), { 0.0, 1.0 } };
-		mapped_vertices[6] = Vertex{ vec2(1.0, 0.0), vec3(1.0, 1.0, 1.0), { 1.0, 0.0 } };
-		mapped_vertices[7] = Vertex{ vec2(1.0, 1.0), vec3(1.0, 1.0, 1.0), { 1.0, 1.0 } };
+void Renderer::draw_curve(const RenderCommandCurve& cmd, CanvasItemRID ci, FrameContext& frame) {
+	vkCmdBindPipeline(
+		frame.command_buffer,
+		VK_PIPELINE_BIND_POINT_GRAPHICS,
+		bezier_pipeline.pipeline);
 
-		memcpy(
-			canvas_item->object_uniform_mapped,
-			&canvas_item->object_data,
-			sizeof(CanvasItem::ObjectUniformData)
-		);
+	mapped_vertices[0] = Vertex{ cmd.points[0], vec3(1.0, 1.0, 1.0), { 0.0, 0.0 } };
+	mapped_vertices[1] = Vertex{ cmd.points[1], vec3(1.0, 1.0, 1.0), { 0.0, 1.0 } };
+	mapped_vertices[2] = Vertex{ cmd.points[2], vec3(1.0, 1.0, 1.0), { 1.0, 0.0 } };
+	mapped_vertices[3] = Vertex{ cmd.points[3], vec3(1.0, 1.0, 1.0), { 1.0, 1.0 } };
 
-		// descriptor sets
-		vkCmdBindDescriptorSets(
-			frame.command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipeline_layout,
-			0,
-			1,
-			&frame.frame_descriptor_set,
-			0,
-			nullptr
-		);
+	memcpy(
+		ci->object_uniform_mapped,
+		&ci->object_ubo,
+		sizeof(ObjectUBO)
+	);
 
-		vkCmdBindDescriptorSets(
-			frame.command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipeline_layout,
-			1,
-			1,
-			&canvas_item->object_descriptor_set,
-			0,
-			nullptr
-		);
+	// descriptor sets
+	vkCmdBindDescriptorSets(
+		frame.command_buffer,
+		VK_PIPELINE_BIND_POINT_GRAPHICS,
+		pipeline_layout,
+		0,
+		1,
+		&frame.frame_descriptor_set,
+		0,
+		nullptr
+	);
 
-		vkCmdBindDescriptorSets(
-			frame.command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipeline_layout,
-			2,
-			1,
-			&canvas_item->sampler_descriptor_set,
-			0,
-			nullptr
-		);
+	vkCmdBindDescriptorSets(
+		frame.command_buffer,
+		VK_PIPELINE_BIND_POINT_GRAPHICS,
+		pipeline_layout,
+		1,
+		1,
+		&ci->object_descriptor_set,
+		0,
+		nullptr
+	);
 
-		VkDeviceSize offset{ sizeof(Vertex) * 4 };
-		vkCmdBindVertexBuffers(frame.command_buffer, 0, 1, &vertex_buffer, &offset);
+	VkDescriptorSet sampler_descriptor_set = cmd.tex->get_descriptor_set();
 
-		vkCmdDraw(
-			frame.command_buffer,
-			4,
-			1,
-			0,
-			0);
+	vkCmdBindDescriptorSets(
+		frame.command_buffer,
+		VK_PIPELINE_BIND_POINT_GRAPHICS,
+		pipeline_layout,
+		2,
+		1,
+		&sampler_descriptor_set,
+		0,
+		nullptr
+	);
+
+	VkDeviceSize offset{ 0 };
+	vkCmdBindVertexBuffers(frame.command_buffer, 0, 1, &vertex_buffer, &offset);
+
+	vkCmdDraw(
+		frame.command_buffer,
+		4,
+		1,
+		0,
+		0);
+}
+
+
+CanvasItem* get_canvas_item_root(Node* root) {
+	if(CanvasItem* root_ci = Object::cast_to<CanvasItem>(root)) {
+		return root_ci;
 	}
 
-	for (size_t i = 0; i < node->children.size(); ++i) {
-		draw_node(node->children[i], frame);
+	List<Shared<Node>> children = root->get_children();
+
+	for (size_t i = 0; i < children.size(); ++i) {
+		CanvasItem* ci = get_canvas_item_root(children[i].get());
+
+		if (ci) {
+			return ci;
+		}
 	}
+
+	return nullptr;
 }
 
 void Renderer::render() {
+	Scene& scene = *viewport->scene;
+	CanvasItem* root_ci = get_canvas_item_root(scene.root.get());
+
+	if (!root_ci) {
+		// nothing to draw
+		return;
+	}
+
 	VkResult result;
 
+	// get current frame
 	FrameContext& frame = frames[current_frame];
 
 	result = vkWaitForFences(
-		vulkan_instance.device,
+		VulkanInstance::singleton()->device,
 		1,
 		&frame.in_flight_fence,
 		VK_TRUE,
@@ -443,16 +472,17 @@ void Renderer::render() {
 	assert(result == VK_SUCCESS);
 
     result = vkResetFences(
-        vulkan_instance.device,
+        VulkanInstance::singleton()->device,
         1,
         &frame.in_flight_fence
     );
 	assert(result == VK_SUCCESS);
 
+	// acquire image index from swapchain
 	uint32_t image_index;
 	
 	result = vkAcquireNextImageKHR(
-		vulkan_instance.device,
+		VulkanInstance::singleton()->device,
 		swapchain.vk_swapchain,
 		std::numeric_limits<uint64_t>::max(),
 		frames[current_frame].image_available_semaphore,
@@ -463,28 +493,8 @@ void Renderer::render() {
 
 	const RenderTarget& render_target = swapchain.render_targets[image_index];
 
-
-	// draw scene
-	Scene& scene = *viewport->scene;
-	assert(scene.root);
-	
-	// TODO: init somewhere else
-	for (size_t i = 0; i < scene.root->children.size(); ++i) {
-		Node* n = scene.root->children[i].get();
-		CanvasItem* ci = dynamic_cast<CanvasItem*>(n);
-
-		if (!ci) break;
-
-		assert(ci->image);
-
-		if (!ci->image->get_vk_image()) {
-			ci->init(command_pool);
-		}
-	}
-
+	// begin drawing
 	frame.record_begin(render_target);
-
-	// TEMPORARY CODE START
 	
 	// dynamic states
 	VkViewport viewport{
@@ -504,10 +514,37 @@ void Renderer::render() {
 	vkCmdSetScissor(frame.command_buffer, 0, 1, &scissor);
 	
 	// draw
-	draw_node(scene.root, frame);
+	CanvasItemRID_T* current_ci = root_ci->get_canvas_item_rid();
 
-	// TEMPORARY CODE END
+	size_t count = 0;
 
+	while(current_ci) {
+		RenderCommand* cmd = current_ci->commands;
+
+		if (!!cmd) {
+			switch(cmd->type) {
+				case RenderCommand::TYPE_RECT: {
+					RenderCommandRect* cmd_rect = static_cast<RenderCommandRect*>(cmd);
+					draw_rect(*cmd_rect, current_ci, frame);
+					break;
+				}
+				case RenderCommand::TYPE_CURVE: {
+					RenderCommandCurve* cmd_curve = static_cast<RenderCommandCurve*>(cmd);
+					draw_curve(*cmd_curve, current_ci, frame);
+					break;
+				}
+				default: {
+					std::cerr << "invalid render command: " << cmd->type << std::endl;
+					abort();
+				}
+			}
+		}
+
+		current_ci = current_ci->next;
+		++count;
+	}
+
+	// end drawing
 	frame.record_end(render_target);
 
 	// submit
@@ -525,11 +562,10 @@ void Renderer::render() {
 		.pSignalSemaphores = &frame.render_finished_semaphore,
 	};
 
-	result = vkQueueSubmit(vulkan_instance.queue, 1, &submit_info, frame.in_flight_fence);
+	result = vkQueueSubmit(VulkanInstance::singleton()->queue, 1, &submit_info, frame.in_flight_fence);
 	assert(result == VK_SUCCESS);
 
 	// present
-
 	VkPresentInfoKHR present_info{
 		.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
 		.pNext = nullptr,
@@ -541,14 +577,14 @@ void Renderer::render() {
 		.pResults = nullptr
 	};
 
-	result = vkQueuePresentKHR(vulkan_instance.queue, &present_info);
+	result = vkQueuePresentKHR(VulkanInstance::singleton()->queue, &present_info);
 	assert(result == VK_SUCCESS);
 
 	current_frame = (current_frame + 1) % 2;
 }
 
 void Renderer::on_resize() {
-	vkDeviceWaitIdle(vulkan_instance.device);
+	vkDeviceWaitIdle(VulkanInstance::singleton()->device);
 
 	swapchain.recreate(viewport->scissor.extent);
 

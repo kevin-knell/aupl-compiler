@@ -8,17 +8,12 @@ static void main() {
 	Viewport viewport = win.viewport
 	renderer = Renderer(viewport)
 
-	Curve2D curve()
-
-	vec2 p1 = vec2(50.0, 50.0)
-	vec2 p2 = vec2(450.0, 50.0)
-	vec2 p3 = vec2(50.0, 450.0)
-	vec2 p4 = vec2(450.0, 450.0)
-
-	curve.add_point(p1)
-	curve.add_point(p2)
-	curve.add_point(p3)
-	curve.add_point(p4)
+	Curve2D curve(
+		vec2(50.0, 50.0),
+		vec2(450.0, 50.0),
+		vec2(50.0, 450.0),
+		vec2(450.0, 450.0)
+	)
 
 	Scene scene()
 	viewport.scene = scene

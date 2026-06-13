@@ -21,12 +21,14 @@ public: //private:
 	static constexpr bool is_ref_counted = std::is_base_of_v<RefCounted, T>;
 
 	void retain() noexcept {
+		if (!obj) return;
 		if constexpr(is_ref_counted) {
 			++obj->ref_count;
 		}
 	}
 
 	void release() noexcept {
+		if (!obj) return;
 		if constexpr(is_ref_counted) {
 			if (--obj->ref_count == 0) {
 				delete obj;

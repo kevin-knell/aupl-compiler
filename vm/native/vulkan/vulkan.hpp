@@ -27,14 +27,15 @@ struct VulkanInstance {
 	VkDescriptorSetLayout desc_set_layout_sampler;
 
 	VulkanInstance();
+	COPY_DELETE(VulkanInstance)
+	MOVE_DELETE(VulkanInstance)
 
 	void create_instance();
 	void create_device();
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+	static VulkanInstance* singleton();
 };
-
-extern VulkanInstance vulkan_instance;
-
 
 } // namespace auplib
 

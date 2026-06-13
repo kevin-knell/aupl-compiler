@@ -13,7 +13,7 @@ private:
 	static int64_t x;
 	static int64_t y;
 public:
-    DECLARE_UTILITY_CLASS(Console);
+    DECLARE_UTILITY_CLASS(Console)
 
 	static void register_to_db(vm::ClassDB& db);
 

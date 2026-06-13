@@ -22,28 +22,28 @@ FrameContext::FrameContext() {
 		.pQueueFamilyIndices = nullptr
 	};
 
-	result = vkCreateBuffer(vulkan_instance.device, &buffer_create_info, nullptr, &frame_uniform_buffer);
+	result = vkCreateBuffer(VulkanInstance::singleton()->device, &buffer_create_info, nullptr, &frame_uniform_buffer);
 	assert(result == VK_SUCCESS);
 
 	// frame uniform memory
 	VkMemoryRequirements memReq;
-	vkGetBufferMemoryRequirements(vulkan_instance.device, frame_uniform_buffer, &memReq);
+	vkGetBufferMemoryRequirements(VulkanInstance::singleton()->device, frame_uniform_buffer, &memReq);
 
 	VkMemoryAllocateInfo allocInfo{
 		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
 		.pNext = nullptr,
 		.allocationSize = memReq.size,
-		.memoryTypeIndex = vulkan_instance.findMemoryType(
+		.memoryTypeIndex = VulkanInstance::singleton()->findMemoryType(
 			memReq.memoryTypeBits,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		)
 	};
 
-	result = vkAllocateMemory(vulkan_instance.device, &allocInfo, nullptr, &frame_uniform_memory);
+	result = vkAllocateMemory(VulkanInstance::singleton()->device, &allocInfo, nullptr, &frame_uniform_memory);
 	assert(result == VK_SUCCESS);
 
-	result = vkBindBufferMemory(vulkan_instance.device, frame_uniform_buffer, frame_uniform_memory, 0);
+	result = vkBindBufferMemory(VulkanInstance::singleton()->device, frame_uniform_buffer, frame_uniform_memory, 0);
 	assert(result == VK_SUCCESS);
 
 	// semaphores
@@ -54,7 +54,7 @@ FrameContext::FrameContext() {
 	};
 
 	result = vkCreateSemaphore(
-		vulkan_instance.device,
+		VulkanInstance::singleton()->device,
 		&semaphore_info,
 		nullptr,
 		&image_available_semaphore
@@ -62,7 +62,7 @@ FrameContext::FrameContext() {
 	assert(result == VK_SUCCESS);
 
 	result = vkCreateSemaphore(
-		vulkan_instance.device,
+		VulkanInstance::singleton()->device,
 		&semaphore_info,
 		nullptr,
 		&render_finished_semaphore
@@ -76,7 +76,7 @@ FrameContext::FrameContext() {
     	.flags = VK_FENCE_CREATE_SIGNALED_BIT
 	};
 
-	result = vkCreateFence(vulkan_instance.device, &fence_info, nullptr, &in_flight_fence);
+	result = vkCreateFence(VulkanInstance::singleton()->device, &fence_info, nullptr, &in_flight_fence);
 	assert(result == VK_SUCCESS);
 }
 
@@ -222,10 +222,10 @@ void FrameContext::update_frame_uniform(FrameUniformData data) {
     VkResult result;
 
     void* mapped;
-    result = vkMapMemory(vulkan_instance.device, frame_uniform_memory, 0, sizeof(data), 0, &mapped);
+    result = vkMapMemory(VulkanInstance::singleton()->device, frame_uniform_memory, 0, sizeof(data), 0, &mapped);
 	assert(result == VK_SUCCESS);
     memcpy(mapped, &data, sizeof(data));
-    vkUnmapMemory(vulkan_instance.device, frame_uniform_memory);
+    vkUnmapMemory(VulkanInstance::singleton()->device, frame_uniform_memory);
 }
 
 }

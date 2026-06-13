@@ -31,7 +31,7 @@ Window::Window(const uint32_t width, const uint32_t height, const String name)
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 	glfw_window = glfwCreateWindow(width, height, name, nullptr, nullptr);
-	glfwCreateWindowSurface(vulkan_instance.instance, glfw_window, nullptr, &viewport->surface);
+	glfwCreateWindowSurface(VulkanInstance::singleton()->instance, glfw_window, nullptr, &viewport->surface);
 	glfwSetWindowSizeCallback(glfw_window, &window_size_callback);
 
 	Input::window = glfw_window;

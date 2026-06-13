@@ -12,7 +12,7 @@ void Swapchain::create() {
 void Swapchain::create_vk_swapchain() {
 	VkResult result;
 	VkSurfaceCapabilitiesKHR surface_caps;
-	result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vulkan_instance.phys_device, surface, &surface_caps);
+	result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VulkanInstance::singleton()->phys_device, surface, &surface_caps);
 	assert(result == VK_SUCCESS);
 
 	VkSwapchainCreateInfoKHR swapchain_create_info{
@@ -36,19 +36,19 @@ void Swapchain::create_vk_swapchain() {
 		.oldSwapchain = vk_swapchain,
 	};
 
-	result = vkCreateSwapchainKHR(vulkan_instance.device, &swapchain_create_info, nullptr, &vk_swapchain);
+	result = vkCreateSwapchainKHR(VulkanInstance::singleton()->device, &swapchain_create_info, nullptr, &vk_swapchain);
 }
 
 std::vector<VkImage> Swapchain::get_vk_images() {
 	VkResult result;
 	std::vector<VkImage> images;
 
-	result = vkGetSwapchainImagesKHR(vulkan_instance.device, vk_swapchain, &image_count, nullptr);
+	result = vkGetSwapchainImagesKHR(VulkanInstance::singleton()->device, vk_swapchain, &image_count, nullptr);
 	assert(result == VK_SUCCESS);
 	
 	images.resize(image_count);
 	
-	result = vkGetSwapchainImagesKHR(vulkan_instance.device, vk_swapchain, &image_count, images.data());
+	result = vkGetSwapchainImagesKHR(VulkanInstance::singleton()->device, vk_swapchain, &image_count, images.data());
 	assert(result == VK_SUCCESS);
 
 	return images;
@@ -91,7 +91,7 @@ void Swapchain::create_render_targets() {
 		};
 
 		result = vkCreateImageView(
-			vulkan_instance.device,
+			VulkanInstance::singleton()->device,
 			&create_info,
 			nullptr,
 			&render_targets[i].image_view
@@ -107,12 +107,12 @@ auplib::Swapchain::Swapchain(VkSurfaceKHR surface, VkFormat image_format, VkExte
 }
 
 void Swapchain::recreate(VkExtent2D new_extent) {
-	vkDeviceWaitIdle(vulkan_instance.device);
+	vkDeviceWaitIdle(VulkanInstance::singleton()->device);
 	
 	VkSwapchainKHR old_vk_swapchain = vk_swapchain;
 
 	for (auto& rt : render_targets) {
-		vkDestroyImageView(vulkan_instance.device, rt.image_view, nullptr);
+		vkDestroyImageView(VulkanInstance::singleton()->device, rt.image_view, nullptr);
 	}
 
 	render_targets.clear();
@@ -121,7 +121,7 @@ void Swapchain::recreate(VkExtent2D new_extent) {
 	
 	create_vk_swapchain();
 
-	vkDestroySwapchainKHR(vulkan_instance.device, old_vk_swapchain, nullptr);
+	vkDestroySwapchainKHR(VulkanInstance::singleton()->device, old_vk_swapchain, nullptr);
 
 	create_render_targets();
 }

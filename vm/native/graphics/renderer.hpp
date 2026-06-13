@@ -6,15 +6,24 @@
 #include "shared.hpp"
 #include "swapchain.hpp"
 #include "frame_context.hpp"
+#include "rid_forward_decl.hpp"
 
 namespace auplib
 {
 
 struct Vertex;
+struct RenderCommandRect;
+struct RenderCommandCurve;
 
 class Renderer : public Object {
+private:
+
 public:
 	Shared<Viewport> viewport;
+
+	VkBuffer instance_buffer;
+	VkDeviceMemory instance_memory;
+	void* mapped_instance_data;
 
 	VkBuffer vertex_buffer;
 	VkDeviceMemory vertex_memory;
@@ -35,7 +44,9 @@ public:
 	Renderer(Shared<Viewport> viewport);
 	~Renderer();
 
-	void draw_node(Shared<Node> node, FrameContext& frame);
+	void draw_rect(const RenderCommandRect& cmd, CanvasItemRID ci, FrameContext& frame);
+	void draw_curve(const RenderCommandCurve& cmd, CanvasItemRID ci, FrameContext& frame);
+	
 	void render();
 
 	void on_resize();

@@ -21,10 +21,12 @@ protected:
 	struct RcKey {};
 
 	explicit RefCounted(RcKey) {}
-    virtual ~RefCounted() = default;
 
 private:
     mutable uint32_t ref_count{0};
+
+public:
+	static void register_to_db(vm::ClassDB &db);
 };
 
 } // namespace auplib

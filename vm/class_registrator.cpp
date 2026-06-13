@@ -26,6 +26,8 @@
 // ref-counted
 #include "ref_counted.hpp"
 #include "image.hpp"
+#include "texture.hpp"
+#include "image_texture.hpp"
 
 // nodes
 #include "node.hpp"
@@ -86,7 +88,11 @@ void vm::register_classes(vm::ClassDB& db) {
 	Renderer::register_to_db(db);
 
 	// ref-counted
+	RefCounted::register_to_db(db);
+	Resource::register_to_db(db);
 	Image::register_to_db(db);
+	Texture::register_to_db(db);
+	ImageTexture::register_to_db(db);
 
 	// nodes
 	Node::register_to_db(db);

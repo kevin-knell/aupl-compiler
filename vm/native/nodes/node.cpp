@@ -20,8 +20,10 @@ Shared<Node> Node::compose(Shared<Node> node, List<Shared<Node>> nodes) {
 	return node;
 }
 
-void Node::add_child(Shared<Node> node)
-{
+void Node::add_child(Shared<Node> node) {
 	children.push(node);
+	node->parent = Shared<Node>(this);
+	node->_on_tree_added();
 }
+
 }

@@ -2,131 +2,55 @@
 
 #include "vulkan.hpp"
 
+#include "canvas_item_rid.hpp"
+
 namespace auplib {
+CanvasItem::CanvasItem() {
+	canvas_item_rid = new CanvasItemRID_T();
+	canvas_item_rid->init();
+	object_ubo = &canvas_item_rid->object_ubo;
+}
+
 void CanvasItem::register_to_db(vm::ClassDB &db) {
-	REGISTER_OBJECT_CLASS(CanvasItem, Node);
+	const uint16_t ID = REGISTER_OBJECT_CLASS(CanvasItem, Node);
+
+	REGISTER_SETGET(ID, CanvasItem, vec2, position);
 }
 
-void CanvasItem::init(VkCommandPool cmd_pool) {
-    VkDevice device = vulkan_instance.device;
+void CanvasItem::_on_tree_added() {
+	if (!parent) return;
 
-    // -----------------------------
-    // 1. Create uniform buffer
-    // -----------------------------
-    VkBufferCreateInfo bufferCreateInfo{
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0,
-        .size = sizeof(ObjectUniformData),
-        .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .queueFamilyIndexCount = 0,
-        .pQueueFamilyIndices = nullptr
-    };
+	List<Shared<Node>> siblings = parent->get_children();
 
-    vkCreateBuffer(device, &bufferCreateInfo, nullptr, &object_uniform_buffer);
+	if (siblings.empty()) return;
 
-    // -----------------------------
-    // 2. Allocate memory
-    // -----------------------------
-    VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(device, object_uniform_buffer, &memRequirements);
+	for (size_t i = 0; i < siblings.size(); ++i) {
+		Shared<Node> sibling = siblings[siblings.size() - 1 - i];
 
-    VkMemoryAllocateInfo allocInfo{
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .allocationSize = memRequirements.size,
-        .memoryTypeIndex = vulkan_instance.findMemoryType(
-            memRequirements.memoryTypeBits,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-        )
-    };
+		assert(!!sibling);
 
-    vkAllocateMemory(device, &allocInfo, nullptr, &object_uniform_memory);
+		if (sibling.get() == this) continue;
 
-    // -----------------------------
-    // 3. Bind buffer memory
-    // -----------------------------
-    vkBindBufferMemory(device, object_uniform_buffer, object_uniform_memory, 0);
+		CanvasItem* sibling_ci = cast_to<CanvasItem>(sibling.get());
 
-    // -----------------------------
-    // 4. (Optional) map memory for CPU updates
-    // -----------------------------
-    vkMapMemory(
-        device,
-        object_uniform_memory,
-        0,
-        sizeof(ObjectUniformData),
-        0,
-        &object_uniform_mapped
-    );
+		if (!sibling_ci) {
+			continue;
+		}
 
-    // -----------------------------
-    // 5. Allocate descriptor set
-    // -----------------------------
-	std::vector<VkDescriptorSetLayout> desc_set_layouts = {
-		vulkan_instance.desc_set_layout_object,
-		vulkan_instance.desc_set_layout_sampler
-	};
+		CanvasItemRID sibling_rid = sibling_ci->canvas_item_rid;
+		CanvasItemRID_T* item = sibling_rid;
+		item->next = canvas_item_rid;
+		return;
+	}
 
-    VkDescriptorSetAllocateInfo descAlloc{
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .descriptorPool = vulkan_instance.desc_pool,
-        .descriptorSetCount = static_cast<uint32_t>(desc_set_layouts.size()),
-        .pSetLayouts = desc_set_layouts.data()
-    };
+	CanvasItem* parent_ci = cast_to<CanvasItem>(parent.get());
 
-    vkAllocateDescriptorSets(device, &descAlloc, &object_descriptor_set);
-
-    // -----------------------------
-    // 6. Write descriptor
-    // -----------------------------
-    VkDescriptorBufferInfo object_buffer_info{
-        .buffer = object_uniform_buffer,
-        .offset = 0,
-        .range = sizeof(ObjectUniformData),
-    };
-
-    VkWriteDescriptorSet object_write{
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .pNext = nullptr,
-        .dstSet = object_descriptor_set,
-        .dstBinding = 0,
-        .dstArrayElement = 0,
-        .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .pImageInfo = nullptr,
-        .pBufferInfo = &object_buffer_info,
-        .pTexelBufferView = nullptr
-    };
-
-	image->upload(vulkan_instance.device, cmd_pool, vulkan_instance.queue);
-
-    VkDescriptorImageInfo sampler_buffer_info{
-        .sampler = image->get_sampler(),
-		.imageView = image->get_image_view(),
-		.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-    };
-
-    VkWriteDescriptorSet sampler_write{
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .pNext = nullptr,
-        .dstSet = sampler_descriptor_set,
-        .dstBinding = 0,
-        .dstArrayElement = 0,
-        .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-        .pImageInfo = &sampler_buffer_info,
-        .pBufferInfo = nullptr,
-        .pTexelBufferView = nullptr
-    };
-
-	std::vector<VkWriteDescriptorSet> writes = {
-		object_write,
-		sampler_write
-	};
-
-    vkUpdateDescriptorSets(device, static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
+	if (parent_ci) {
+		CanvasItemRID parent_rid = parent_ci->canvas_item_rid;
+		CanvasItemRID_T* item = parent_rid;
+		assert(!item->next);
+		item->next = canvas_item_rid;
+	}
 }
+
 }

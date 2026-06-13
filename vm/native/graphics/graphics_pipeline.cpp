@@ -121,11 +121,11 @@ GraphicsPipeline::GraphicsPipeline(
 	};
 
 	VkPipelineColorBlendAttachmentState color_blend_attachment{
-		.blendEnable = VK_FALSE,
-		.srcColorBlendFactor = VK_BLEND_FACTOR_ZERO,
-		.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
+		.blendEnable = VK_TRUE,
+		.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+		.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
 		.colorBlendOp = VK_BLEND_OP_ADD,
-		.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+		.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
 		.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
 		.alphaBlendOp = VK_BLEND_OP_ADD,
 		.colorWriteMask =
@@ -231,7 +231,7 @@ GraphicsPipeline::GraphicsPipeline(
 	};
 
 	result = vkCreateGraphicsPipelines(
-		vulkan_instance.device,
+		VulkanInstance::singleton()->device,
 		VK_NULL_HANDLE,
 		1,
 		&pipeline_info,
