@@ -23,7 +23,6 @@ struct VulkanInstance {
 
 	VkDescriptorPool desc_pool;
 	VkDescriptorSetLayout desc_set_layout_frame;
-	VkDescriptorSetLayout desc_set_layout_object;
 	VkDescriptorSetLayout desc_set_layout_sampler;
 
 	VulkanInstance();

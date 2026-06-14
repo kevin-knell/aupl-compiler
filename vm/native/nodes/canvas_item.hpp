@@ -9,14 +9,14 @@
 
 #include "rid_forward_decl.hpp"
 
-#include "ubo.hpp"
+#include "vertex.hpp"
 
 namespace auplib {
 
 class CanvasItem : public Node {
 	OBJECT_CLASS(CanvasItem, Node)
 public:
-	ObjectUBO* object_ubo;
+	InstanceDataBase* instance_data;
 
 	CanvasItem();
 	CanvasItem(const CanvasItem&) = delete;
@@ -30,23 +30,23 @@ public:
 	
 	vec2 get_position() const {
 		return {
-			object_ubo->model.w.x,
-			object_ubo->model.w.y
+			instance_data->model.w.x,
+			instance_data->model.w.y
 		};
 	}
 
 	void set_position(vec2 p) {
-		object_ubo->model.w.x = p.x;
-		object_ubo->model.w.y = p.y;
+		instance_data->model.w.x = p.x;
+		instance_data->model.w.y = p.y;
 	}
 	
 	void set_size(vec2 s) {
-		object_ubo->size.x = s.x;
-		object_ubo->size.y = s.y;
+		instance_data->size.x = s.x;
+		instance_data->size.y = s.y;
 	};
 
 	vec2 get_size() const {
-		return vec2(object_ubo->size.x, object_ubo->size.y);
+		return vec2(instance_data->size.x, instance_data->size.y);
 	};
 
 	void _on_tree_added() override;

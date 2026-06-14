@@ -17,17 +17,28 @@ struct RenderCommandCurve;
 
 class Renderer : public Object {
 private:
+	struct InputBuffer {
+		VkBuffer buffer;
+		VkDeviceMemory memory;
+		void* mapped_memory;
+	};
 
+	InputBuffer create_input_buffer();
+
+public:
+	Renderer(Shared<Viewport> viewport);
+	~Renderer();
+
+	static void register_to_db(vm::ClassDB &db);
+
+private:
+	size_t instance_index;
+	
 public:
 	Shared<Viewport> viewport;
 
-	VkBuffer instance_buffer;
-	VkDeviceMemory instance_memory;
-	void* mapped_instance_data;
-
-	VkBuffer vertex_buffer;
-	VkDeviceMemory vertex_memory;
-	Vertex* mapped_vertices;
+	InputBuffer instance_buffer;
+	InputBuffer vertex_buffer;
 
 	VkCommandPool command_pool;
 	std::vector<FrameContext> frames;
@@ -38,11 +49,6 @@ public:
 	VkPipelineLayout pipeline_layout;
 
 	Swapchain swapchain;
-	
-	static void register_to_db(vm::ClassDB &db);
-	
-	Renderer(Shared<Viewport> viewport);
-	~Renderer();
 
 	void draw_rect(const RenderCommandRect& cmd, CanvasItemRID ci, FrameContext& frame);
 	void draw_curve(const RenderCommandCurve& cmd, CanvasItemRID ci, FrameContext& frame);

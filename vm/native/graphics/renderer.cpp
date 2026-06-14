@@ -16,7 +16,6 @@
 #include "texture_rid.hpp"
 
 namespace auplib {
-
 void Renderer::register_to_db(vm::ClassDB &db) {
 	const int16_t ID = REGISTER_OBJECT_CLASS(Renderer, Object);
 	
@@ -25,7 +24,6 @@ void Renderer::register_to_db(vm::ClassDB &db) {
 	REGISTER_METHOD(ID, Renderer, render, void (Renderer::*)());
 
 	REGISTER_GET_ONLY(ID, Renderer, Shared<Viewport>, viewport);
-
 }
 
 Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
@@ -57,11 +55,6 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 		VkDescriptorPoolSize{
 			.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			.descriptorCount = 100
-		},
-		// Object Uniform
-		VkDescriptorPoolSize{
-			.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			.descriptorCount = 100
 		}
 	};
 
@@ -69,7 +62,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
-		.maxSets = 200,
+		.maxSets = 100,
 		.poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
 		.pPoolSizes = pool_sizes.data()
 	};
@@ -94,27 +87,13 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
     	.pBindings = &frame_uniform_binding
 	};
 	
-	result = vkCreateDescriptorSetLayout(VulkanInstance::singleton()->device, &frame_desc_set_layout_create_info, nullptr, &VulkanInstance::singleton()->desc_set_layout_frame);
-	assert(result == VK_SUCCESS);
+	result = vkCreateDescriptorSetLayout(
+		VulkanInstance::singleton()->device,
+		&frame_desc_set_layout_create_info,
+		nullptr,
+		&VulkanInstance::singleton()->desc_set_layout_frame
+	);
 
-	// object desc set layout
-	VkDescriptorSetLayoutBinding object_uniform_binding{
-		.binding = 0,
-		.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-		.descriptorCount = 1,
-		.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
-		.pImmutableSamplers = nullptr
-	};
-
-	VkDescriptorSetLayoutCreateInfo object_desc_set_layout_create_info{
-    	.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-		.pNext = nullptr,
-		.flags = 0,
-    	.bindingCount = 1,
-    	.pBindings = &object_uniform_binding
-	};
-	
-	result = vkCreateDescriptorSetLayout(VulkanInstance::singleton()->device, &object_desc_set_layout_create_info, nullptr, &VulkanInstance::singleton()->desc_set_layout_object);
 	assert(result == VK_SUCCESS);
 
 	// sampler desc set layout
@@ -134,7 +113,13 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
     	.pBindings = &sampler_uniform_binding
 	};
 	
-	result = vkCreateDescriptorSetLayout(VulkanInstance::singleton()->device, &sampler_desc_set_layout_create_info, nullptr, &VulkanInstance::singleton()->desc_set_layout_sampler);
+	result = vkCreateDescriptorSetLayout(
+		VulkanInstance::singleton()->device,
+		&sampler_desc_set_layout_create_info,
+		nullptr,
+		&VulkanInstance::singleton()->desc_set_layout_sampler
+	);
+
 	assert(result == VK_SUCCESS);
 
 	// frame descriptor sets
@@ -177,7 +162,6 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 	// pipeline layout
 	std::vector<VkDescriptorSetLayout> set_layouts = {
 		VulkanInstance::singleton()->desc_set_layout_frame,
-		VulkanInstance::singleton()->desc_set_layout_object,
 		VulkanInstance::singleton()->desc_set_layout_sampler
 	};
 
@@ -215,43 +199,8 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 	bezier_pipeline = GraphicsPipeline(pipeline_layout, shader_stages_bezier);
 
 	// vertex buffer
-	VkBufferCreateInfo vertex_buffer_create_info = {
-		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-		.pNext = nullptr,
-		.flags = 0,
-		.size = sizeof(Vertex) * 100,
-		.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-		.queueFamilyIndexCount = 0,
-		.pQueueFamilyIndices = 0,
-	};
-
-	result = vkCreateBuffer(VulkanInstance::singleton()->device, &vertex_buffer_create_info, nullptr, &vertex_buffer);
-	assert(result == VK_SUCCESS);
-
-	VkMemoryRequirements mem_req;
-	vkGetBufferMemoryRequirements(VulkanInstance::singleton()->device, vertex_buffer, &mem_req);
-
-	VkMemoryAllocateInfo mem_alloc_info = {
-		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-		.pNext = nullptr,
-		.allocationSize = mem_req.size,
-		.memoryTypeIndex = VulkanInstance::singleton()->findMemoryType(
-			mem_req.memoryTypeBits,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-		)
-	};
-
-	result = vkAllocateMemory(VulkanInstance::singleton()->device, &mem_alloc_info, nullptr, &vertex_memory);
-	assert(result == VK_SUCCESS);
-
-	result = vkBindBufferMemory(VulkanInstance::singleton()->device, vertex_buffer, vertex_memory, 0);
-	assert(result == VK_SUCCESS);
-
-	void* raw_data;
-	vkMapMemory(VulkanInstance::singleton()->device, vertex_memory, 0, vertex_buffer_create_info.size, 0, &raw_data);
-	mapped_vertices = reinterpret_cast<Vertex*>(raw_data);
+	vertex_buffer = create_input_buffer();
+	instance_buffer = create_input_buffer();
 
 	// command pool
 	VkCommandPoolCreateInfo pool_info{
@@ -294,6 +243,50 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 	current_frame = 0;
 }
 
+Renderer::InputBuffer Renderer::create_input_buffer() {
+	VkResult result;
+
+	InputBuffer input_buffer;
+
+	VkBufferCreateInfo buffer_create_info = {
+		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.size = sizeof(Vertex) * 100,
+		.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		.queueFamilyIndexCount = 0,
+		.pQueueFamilyIndices = 0,
+	};
+
+	result = vkCreateBuffer(VulkanInstance::singleton()->device, &buffer_create_info, nullptr, &input_buffer.buffer);
+	assert(result == VK_SUCCESS);
+
+	VkMemoryRequirements mem_req;
+	vkGetBufferMemoryRequirements(VulkanInstance::singleton()->device, input_buffer.buffer, &mem_req);
+
+	VkMemoryAllocateInfo mem_alloc_info = {
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.pNext = nullptr,
+		.allocationSize = mem_req.size,
+		.memoryTypeIndex = VulkanInstance::singleton()->findMemoryType(
+			mem_req.memoryTypeBits,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		)
+	};
+
+	result = vkAllocateMemory(VulkanInstance::singleton()->device, &mem_alloc_info, nullptr, &input_buffer.memory);
+	assert(result == VK_SUCCESS);
+
+	result = vkBindBufferMemory(VulkanInstance::singleton()->device, input_buffer.buffer, input_buffer.memory, 0);
+	assert(result == VK_SUCCESS);
+
+	vkMapMemory(VulkanInstance::singleton()->device, input_buffer.memory, 0, buffer_create_info.size, 0, &input_buffer.mapped_memory);
+
+	return input_buffer;
+}
+
 Renderer::~Renderer() {
 	vkDestroyCommandPool(VulkanInstance::singleton()->device, command_pool, nullptr);
 }
@@ -306,17 +299,17 @@ void Renderer::draw_rect(const RenderCommandRect& cmd, CanvasItemRID ci, FrameCo
 		VK_PIPELINE_BIND_POINT_GRAPHICS,
 		test_pipeline.pipeline);
 	
-	// unit quad
-	mapped_vertices[4] = Vertex{ vec2(0.0, 0.0),	vec3(1.0, 1.0, 1.0), { 0.0, 0.0 } };
-	mapped_vertices[5] = Vertex{ vec2(0.0, 1.0),	vec3(1.0, 1.0, 1.0), { 0.0, 1.0 } };
-	mapped_vertices[6] = Vertex{ vec2(1.0, 0.0),	vec3(1.0, 1.0, 1.0), { 1.0, 0.0 } };
-	mapped_vertices[7] = Vertex{ vec2(1.0, 1.0),	vec3(1.0, 1.0, 1.0), { 1.0, 1.0 } };
+	// instance data
+	InstanceData* mapped_instane_data = static_cast<InstanceData*>(instance_buffer.mapped_memory);
+	mapped_instane_data[instance_index] = ci->instance_data;
 
-	memcpy(
-		ci->object_uniform_mapped,
-		&ci->object_ubo,
-		sizeof(ObjectUBO)
-	);
+	// unit quad
+	Vertex* mapped_vertices = static_cast<Vertex*>(vertex_buffer.mapped_memory);
+
+	mapped_vertices[0] = Vertex{ vec2(0.0, 0.0),	vec3(1.0, 1.0, 1.0), { 0.0, 0.0 } };
+	mapped_vertices[1] = Vertex{ vec2(0.0, 1.0),	vec3(1.0, 1.0, 1.0), { 0.0, 1.0 } };
+	mapped_vertices[2] = Vertex{ vec2(1.0, 0.0),	vec3(1.0, 1.0, 1.0), { 1.0, 0.0 } };
+	mapped_vertices[3] = Vertex{ vec2(1.0, 1.0),	vec3(1.0, 1.0, 1.0), { 1.0, 1.0 } };
 
 	// descriptor sets
 	vkCmdBindDescriptorSets(
@@ -330,32 +323,30 @@ void Renderer::draw_rect(const RenderCommandRect& cmd, CanvasItemRID ci, FrameCo
 		nullptr
 	);
 
-	vkCmdBindDescriptorSets(
-		frame.command_buffer,
-		VK_PIPELINE_BIND_POINT_GRAPHICS,
-		pipeline_layout,
-		1,
-		1,
-		&ci->object_descriptor_set,
-		0,
-		nullptr
-	);
-
 	VkDescriptorSet sampler_descriptor_set = cmd.tex->get_descriptor_set();
 
 	vkCmdBindDescriptorSets(
 		frame.command_buffer,
 		VK_PIPELINE_BIND_POINT_GRAPHICS,
 		pipeline_layout,
-		2,
+		1,
 		1,
 		&sampler_descriptor_set,
 		0,
 		nullptr
 	);
 
-	VkDeviceSize offset{ sizeof(Vertex) * 4 };
-	vkCmdBindVertexBuffers(frame.command_buffer, 0, 1, &vertex_buffer, &offset);
+	std::vector<VkBuffer> buffers = {
+		instance_buffer.buffer,
+		vertex_buffer.buffer
+	};
+
+	std::vector<VkDeviceSize> offsets = {
+		sizeof(InstanceData) * instance_index,
+		sizeof(Vertex) * 0 // unit quad starts at 0
+	};
+
+	vkCmdBindVertexBuffers(frame.command_buffer, 0, static_cast<uint32_t>(buffers.size()), buffers.data(), offsets.data());
 
 	vkCmdDraw(
 		frame.command_buffer,
@@ -370,17 +361,18 @@ void Renderer::draw_curve(const RenderCommandCurve& cmd, CanvasItemRID ci, Frame
 		frame.command_buffer,
 		VK_PIPELINE_BIND_POINT_GRAPHICS,
 		bezier_pipeline.pipeline);
+	
+	// instance data
+	InstanceData* mapped_instane_data = static_cast<InstanceData*>(instance_buffer.mapped_memory);
+	*mapped_instane_data = ci->instance_data;
+	
+	// vertices
+	Vertex* mapped_vertices = static_cast<Vertex*>(vertex_buffer.mapped_memory);
 
-	mapped_vertices[0] = Vertex{ cmd.points[0], vec3(1.0, 1.0, 1.0), { 0.0, 0.0 } };
-	mapped_vertices[1] = Vertex{ cmd.points[1], vec3(1.0, 1.0, 1.0), { 0.0, 1.0 } };
-	mapped_vertices[2] = Vertex{ cmd.points[2], vec3(1.0, 1.0, 1.0), { 1.0, 0.0 } };
-	mapped_vertices[3] = Vertex{ cmd.points[3], vec3(1.0, 1.0, 1.0), { 1.0, 1.0 } };
-
-	memcpy(
-		ci->object_uniform_mapped,
-		&ci->object_ubo,
-		sizeof(ObjectUBO)
-	);
+	mapped_vertices[4] = Vertex{ cmd.points[0], vec3(1.0, 1.0, 1.0), { 0.0, 0.0 } };
+	mapped_vertices[5] = Vertex{ cmd.points[1], vec3(1.0, 1.0, 1.0), { 0.0, 1.0 } };
+	mapped_vertices[6] = Vertex{ cmd.points[2], vec3(1.0, 1.0, 1.0), { 1.0, 0.0 } };
+	mapped_vertices[7] = Vertex{ cmd.points[3], vec3(1.0, 1.0, 1.0), { 1.0, 1.0 } };
 
 	// descriptor sets
 	vkCmdBindDescriptorSets(
@@ -394,32 +386,30 @@ void Renderer::draw_curve(const RenderCommandCurve& cmd, CanvasItemRID ci, Frame
 		nullptr
 	);
 
-	vkCmdBindDescriptorSets(
-		frame.command_buffer,
-		VK_PIPELINE_BIND_POINT_GRAPHICS,
-		pipeline_layout,
-		1,
-		1,
-		&ci->object_descriptor_set,
-		0,
-		nullptr
-	);
-
 	VkDescriptorSet sampler_descriptor_set = cmd.tex->get_descriptor_set();
 
 	vkCmdBindDescriptorSets(
 		frame.command_buffer,
 		VK_PIPELINE_BIND_POINT_GRAPHICS,
 		pipeline_layout,
-		2,
+		1,
 		1,
 		&sampler_descriptor_set,
 		0,
 		nullptr
 	);
 
-	VkDeviceSize offset{ 0 };
-	vkCmdBindVertexBuffers(frame.command_buffer, 0, 1, &vertex_buffer, &offset);
+	std::vector<VkBuffer> buffers = {
+		instance_buffer.buffer,
+		vertex_buffer.buffer
+	};
+
+	std::vector<VkDeviceSize> offsets = {
+		sizeof(InstanceData) * instance_index,
+		sizeof(Vertex) * 4
+	};
+
+	vkCmdBindVertexBuffers(frame.command_buffer, 0, static_cast<uint32_t>(buffers.size()), buffers.data(), offsets.data());
 
 	vkCmdDraw(
 		frame.command_buffer,
@@ -516,7 +506,7 @@ void Renderer::render() {
 	// draw
 	CanvasItemRID_T* current_ci = root_ci->get_canvas_item_rid();
 
-	size_t count = 0;
+	instance_index = 0;
 
 	while(current_ci) {
 		RenderCommand* cmd = current_ci->commands;
@@ -541,7 +531,7 @@ void Renderer::render() {
 		}
 
 		current_ci = current_ci->next;
-		++count;
+		++instance_index;
 	}
 
 	// end drawing

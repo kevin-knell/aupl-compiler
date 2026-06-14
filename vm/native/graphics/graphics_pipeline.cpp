@@ -5,6 +5,10 @@
 #include "vulkan.hpp"
 #include "vertex.hpp"
 
+#include "vec2.hpp"
+#include "vec3.hpp"
+#include "vec4.hpp"
+
 namespace auplib {
 
 VkPipelineTessellationStateCreateInfo get_tessellation_state() {
@@ -24,43 +28,18 @@ GraphicsPipeline::GraphicsPipeline(
 
 	VkFormat image_format = VK_FORMAT_B8G8R8A8_SRGB;
 
-	VkVertexInputBindingDescription vertex_binding_desc {
-		.binding = 0,
-		.stride = sizeof(Vertex),
-		.inputRate = VK_VERTEX_INPUT_RATE_VERTEX
-	};
-	
-	std::vector<VkVertexInputAttributeDescription> vertex_attribute_desc = {
-		{
-			.location = 0,
-			.binding = 0,
-			.format = VK_FORMAT_R32G32B32_SFLOAT,
-			.offset = 0,
-		},
-		{
-			.location = 1,
-			.binding = 0,
-			.format = VK_FORMAT_R32G32B32_SFLOAT,
-			.offset = offsetof(Vertex, color),
-		},
-		{
-			.location = 2,
-			.binding = 0,
-			.format = VK_FORMAT_R32G32_SFLOAT,
-			.offset = offsetof(Vertex, uv),
-		}
-	};
-	
-	VkPipelineVertexInputStateCreateInfo vertex_input{
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+	// rendering
+	VkPipelineRenderingCreateInfo pipeline_rendering_info{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
 		.pNext = nullptr,
-		.flags = 0,
-		.vertexBindingDescriptionCount = 1,
-		.pVertexBindingDescriptions = &vertex_binding_desc,
-		.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_attribute_desc.size()),
-		.pVertexAttributeDescriptions = vertex_attribute_desc.data()
+		.viewMask = 0,
+		.colorAttachmentCount = 1,
+		.pColorAttachmentFormats = &image_format,
+		.depthAttachmentFormat = {},
+		.stencilAttachmentFormat = {}
 	};
 
+	// shader stages
 	bool has_tesc = false;
 	bool has_tese = false;
 
@@ -76,6 +55,10 @@ GraphicsPipeline::GraphicsPipeline(
 
 	assert(has_tesc == has_tese);
 
+	// vertex input
+	VkPipelineVertexInputStateCreateInfo vertex_input = create_vertex_input();
+
+	// tessellation
 	VkPipelineTessellationStateCreateInfo tess_create_info{};
 	VkPipelineTessellationStateCreateInfo* tess_create_info_ptr = nullptr;
 
@@ -84,6 +67,7 @@ GraphicsPipeline::GraphicsPipeline(
 		tess_create_info_ptr = &tess_create_info;
 	}
 
+	// input assembly
 	VkPipelineInputAssemblyStateCreateInfo input_assembly{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
 		.pNext = nullptr,
@@ -92,6 +76,26 @@ GraphicsPipeline::GraphicsPipeline(
 		.primitiveRestartEnable = VK_FALSE
 	};
 
+	// viewport state
+	VkViewport viewport{
+		.x = 0.0f,			.y = 0.0f,
+		.width = 500.0f,	.height = 500.0f,
+		.minDepth = 0.0f,	.maxDepth = 1.0f
+	};
+
+	VkRect2D scissor{ { 0, 0 }, { 500, 500 } };
+
+	VkPipelineViewportStateCreateInfo viewport_state{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.viewportCount = 1,
+		.pViewports = &viewport,
+		.scissorCount = 1,
+		.pScissors = &scissor,
+	};
+
+	// rasterizer
 	VkPipelineRasterizationStateCreateInfo rasterizer{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
 		.pNext = nullptr,
@@ -108,6 +112,7 @@ GraphicsPipeline::GraphicsPipeline(
 		.lineWidth = 1.0f
 	};
 
+	// multisampling
 	VkPipelineMultisampleStateCreateInfo multisampling{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
 		.pNext = nullptr,
@@ -120,6 +125,21 @@ GraphicsPipeline::GraphicsPipeline(
 		.alphaToOneEnable = 0
 	};
 
+	// dynamic states
+	const VkDynamicState dynamic_states[] = {
+		VK_DYNAMIC_STATE_SCISSOR,
+		VK_DYNAMIC_STATE_VIEWPORT
+	};
+
+	VkPipelineDynamicStateCreateInfo dynamic_state{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.dynamicStateCount = std::size(dynamic_states),
+		.pDynamicStates = dynamic_states,
+	};
+
+	// color blend
 	VkPipelineColorBlendAttachmentState color_blend_attachment{
 		.blendEnable = VK_TRUE,
 		.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
@@ -134,17 +154,7 @@ GraphicsPipeline::GraphicsPipeline(
 			VK_COLOR_COMPONENT_B_BIT |
 			VK_COLOR_COMPONENT_A_BIT
 	};
-
-	VkPipelineRenderingCreateInfo pipeline_rendering_info{
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
-		.pNext = nullptr,
-		.viewMask = 0,
-		.colorAttachmentCount = 1,
-		.pColorAttachmentFormats = &image_format,
-		.depthAttachmentFormat = {},
-		.stencilAttachmentFormat = {}
-	};
-
+	
 	VkPipelineColorBlendStateCreateInfo color_blending{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
 		.pNext = nullptr,
@@ -160,44 +170,8 @@ GraphicsPipeline::GraphicsPipeline(
 			0.0
 		}
 	};
-
-	const VkDynamicState dynamic_states[] = {
-		VK_DYNAMIC_STATE_SCISSOR,
-		VK_DYNAMIC_STATE_VIEWPORT
-	};
-
-	VkPipelineDynamicStateCreateInfo dynamic_state{
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-		.pNext = nullptr,
-		.flags = 0,
-		.dynamicStateCount = std::size(dynamic_states),
-		.pDynamicStates = dynamic_states,
-	};
-
-	VkViewport viewport{
-		.x = 0.0f,
-		.y = 0.0f,
-		.width = 500.0f,
-		.height = 500.0f,
-		.minDepth = 0.0f,
-		.maxDepth = 1.0f
-	};
-
-	VkRect2D scissor{
-		.offset{ 0, 0 },
-		.extent{ 500, 500 }
-	};
-
-	VkPipelineViewportStateCreateInfo viewport_state{
-		.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-		.pNext = nullptr,
-		.flags = 0,
-		.viewportCount = 1,
-		.pViewports = &viewport,
-		.scissorCount = 1,
-		.pScissors = &scissor,
-	};
 	
+	// create pipeline
 	VkGraphicsPipelineCreateInfo pipeline_info{
 		.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
 		.pNext = &pipeline_rendering_info,
@@ -239,6 +213,64 @@ GraphicsPipeline::GraphicsPipeline(
 		&pipeline
 	);
 	assert(result == VK_SUCCESS);
+}
+
+#define GET_VERT_ATTR_DESC(m_loc, m_bind, m_type, m_member)				\
+	{																	\
+		.location = (m_loc),											\
+		.binding = (m_bind),											\
+		.format = get_format_from_type<decltype(m_type::m_member)>(),	\
+		.offset = offsetof(m_type, m_member),							\
+	}
+
+#define GET_VERT_ATTR_DESC_SUB(m_loc, m_bind, m_type, m_member, m_sub_type, m_sub_member)	\
+	{																						\
+		.location = (m_loc),																\
+		.binding = (m_bind),																\
+		.format = get_format_from_type<decltype(m_sub_type::m_sub_member)>(),				\
+		.offset = offsetof(m_type, m_member) + offsetof(m_sub_type, m_sub_member),			\
+	}
+
+VkPipelineVertexInputStateCreateInfo GraphicsPipeline::create_vertex_input() {
+	binding_desc = {
+		{
+			.binding = 0,
+			.stride = sizeof(InstanceData),
+			.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE
+		},
+		{
+			.binding = 1,
+			.stride = sizeof(Vertex),
+			.inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+		}
+	};
+	
+	vertex_attribute_desc = {
+		// per instance
+		GET_VERT_ATTR_DESC(0, 0, InstanceData, position),
+		GET_VERT_ATTR_DESC(1, 0, InstanceData, size),
+		GET_VERT_ATTR_DESC_SUB(2, 0, InstanceData, model, mat4, x),
+		GET_VERT_ATTR_DESC_SUB(3, 0, InstanceData, model, mat4, y),
+		GET_VERT_ATTR_DESC_SUB(4, 0, InstanceData, model, mat4, z),
+		GET_VERT_ATTR_DESC_SUB(5, 0, InstanceData, model, mat4, w),
+		GET_VERT_ATTR_DESC(6, 0, InstanceData, modulate),
+		// per vertex
+		GET_VERT_ATTR_DESC(7, 1, Vertex, position),
+		GET_VERT_ATTR_DESC(8, 1, Vertex, color),
+		GET_VERT_ATTR_DESC(9, 1, Vertex, uv)
+	};
+	
+	VkPipelineVertexInputStateCreateInfo vertex_input{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.vertexBindingDescriptionCount = static_cast<uint32_t>(binding_desc.size()),
+		.pVertexBindingDescriptions = binding_desc.data(),
+		.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_attribute_desc.size()),
+		.pVertexAttributeDescriptions = vertex_attribute_desc.data()
+	};
+
+	return vertex_input;
 }
 
 }

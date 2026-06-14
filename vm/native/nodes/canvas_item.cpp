@@ -8,7 +8,7 @@ namespace auplib {
 CanvasItem::CanvasItem() {
 	canvas_item_rid = new CanvasItemRID_T();
 	canvas_item_rid->init();
-	object_ubo = &canvas_item_rid->object_ubo;
+	instance_data = &canvas_item_rid->instance_data;
 }
 
 void CanvasItem::register_to_db(vm::ClassDB &db) {
