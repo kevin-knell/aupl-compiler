@@ -1,3 +1,6 @@
+#!/bin/bash
+set -e
+
 PROJECT=""
 for arg in "$@"; do
 	PROJECT="$arg"
