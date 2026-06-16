@@ -38,6 +38,7 @@ SymbolTable::SymbolTable(vm::ClassDB &db) : class_db(db) {
 			
 			if (class_bind_1->parent_id == class_bind_2->id) {
 				nat_1->class_ptr->parent = nat_2->class_ptr;
+				nat_1->class_ptr->scope->upper_scope = nat_2->class_ptr->scope;
 				break;
 			}
 		}
