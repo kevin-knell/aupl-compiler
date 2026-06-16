@@ -18,11 +18,13 @@ layout (set = 0, binding = 0) uniform FrameData {
 	float delta_time;
 } frame_data;
 
+// item data
+layout (location = 0) in mat4 inst_model;
+layout (location = 4) in vec4 inst_modulate;
+
 // instance data
-layout (location = 0) in vec4 inst_position;
-layout (location = 1) in vec4 inst_size;
-layout (location = 2) in mat4 inst_model;
-layout (location = 6) in vec4 inst_modulate;
+layout (location = 5) in vec4 inst_offset;
+layout (location = 6) in vec4 inst_size;
 
 // vertex data
 layout (location = 7) in vec3 vert_position;
@@ -34,7 +36,7 @@ layout (location = 0) out vec3 frag_color;
 layout (location = 1) out vec2 frag_uv;
 
 void main() {
-	vec4 worldPos = inst_model * vec4(vert_position * inst_size.xyz, 1.0);
+	vec4 worldPos = inst_model * vec4(vert_position * inst_size.xyz + inst_offset.xyz, 1.0);
 
 	vec2 ndc;
 

@@ -21,9 +21,6 @@ String::String(const char *s) : value(s) {}
 String::String(const std::string& s) : value(s) {}
 String::String(std::string&& s) : value(std::move(s)) {}
 
-String::String(int64_t i) : value(std::to_string(i)) {}
-//String::String(void *p) : value(std::to_string(size_t(p))) {}
-
 const std::string& String::str() const { return value; }
 size_t String::size() const { return value.size(); }
 bool String::empty() const { return value.empty(); }

@@ -13,6 +13,10 @@ public:
     static constexpr double TAU = 6.28318530717958647692;
     static constexpr double PI  = 3.14159265358979323846;
     static constexpr double E   = 2.71828182845904523536;
+    
+    static constexpr float TAU_F = static_cast<float>(TAU);
+    static constexpr float PI_F  = static_cast<float>(PI);
+    static constexpr float E_F   = static_cast<float>(E);
 
     static float sqrt(float x);
     static double sqrt(double x);
@@ -28,12 +32,16 @@ public:
 
     // trigonometry
     static double sin(double x);
+	static float sin(float x);
     static double cos(double x);
+	static float cos(float x);
     static double tan(double x);
 
     static double asin(double x);
     static double acos(double x);
     static double atan(double x);
+
+	static double atan2(double y, double x);
 
     // range
     static double max(double a, double b);
@@ -47,6 +55,9 @@ public:
 
     static double clamp(double x, double from, double to);
     static int clamp(int x, int from, int to);
+
+	static double abs(double x);
+	static float abs(float x);
 };
 static_assert(sizeof(long) == 8);
 

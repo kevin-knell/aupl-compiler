@@ -12,7 +12,7 @@ struct CanvasItemRID_T {
 	CanvasItemRID_T* next = nullptr;
 	RenderCommand* commands;
 
-	InstanceData instance_data;
+	ItemData item_data;
 
 	void init();
 };

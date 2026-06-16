@@ -74,13 +74,13 @@ void cmp::EraseUnusedVariableOptimizer::optimize(SymbolTable &st) const {
                 }
             }
 
-            f->scope->body.erase(
-                std::remove_if(f->scope->body.begin(), f->scope->body.end(),
-                    [&unread_declarations](StmtPtr x) {
-                        return unread_declarations.count(x) > 0;
-                    }),
-                f->scope->body.end()
-            );
+            //f->scope->body.erase(
+            //    std::remove_if(f->scope->body.begin(), f->scope->body.end(),
+            //        [&unread_declarations](StmtPtr x) {
+            //            return unread_declarations.count(x) > 0;
+            //        }),
+            //    f->scope->body.end()
+            //);
 
             for (const auto& stmt : unread_declarations) {
                 auto decl = std::dynamic_pointer_cast<DeclareStatement>(stmt);

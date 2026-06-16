@@ -19,7 +19,7 @@ struct RenderCommand {
 	};
 
 	Type type;
-	void* next;
+	RenderCommand* next = nullptr;
 };
 
 struct RenderCommandRect : public RenderCommand {

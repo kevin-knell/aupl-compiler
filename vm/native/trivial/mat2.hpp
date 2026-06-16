@@ -1,6 +1,7 @@
 #pragma once
 #include "native.hpp"
 #include "vec2.hpp"
+#include <cmath>
 
 #define SET_MAT2_ROW(a) void set_##a(vec2 v) { a = v; }
 #define GET_MAT2_ROW(a) vec2 get_##a() const { return a; }
@@ -13,6 +14,8 @@ namespace auplib {
 struct mat2 {
 	vec2 x;
 	vec2 y;
+
+	static mat2 from_angle(float angle);
 
 	constexpr mat2() = default;
 	constexpr mat2(vec2 x, vec2 y) : x(x), y(y) {}
@@ -51,6 +54,10 @@ struct mat2 {
 			{ x.x, y.x },
 			{ x.y, y.y }
 		};
+	}
+
+	float angle() const {
+		return vec2(y.x, x.x).angle();
 	}
 
 	constexpr mat2 operator+(const mat2& other) const { return mat2(x + other.x, y + other.y); }

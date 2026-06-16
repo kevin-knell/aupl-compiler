@@ -8,13 +8,15 @@ namespace auplib {
 CanvasItem::CanvasItem() {
 	canvas_item_rid = new CanvasItemRID_T();
 	canvas_item_rid->init();
-	instance_data = &canvas_item_rid->instance_data;
+	item_data = &canvas_item_rid->item_data;
 }
 
 void CanvasItem::register_to_db(vm::ClassDB &db) {
 	const uint16_t ID = REGISTER_OBJECT_CLASS(CanvasItem, Node);
 
 	REGISTER_SETGET(ID, CanvasItem, vec2, position);
+	REGISTER_SETGET(ID, CanvasItem, float, rotation);
+	REGISTER_SETGET(ID, CanvasItem, float, scale);
 }
 
 void CanvasItem::_on_tree_added() {

@@ -14,10 +14,11 @@ class ColorRect : public CanvasItem {
 	OBJECT_CLASS(ColorRect, CanvasItem)
 public:
 	Color color;
+	vec2 size;
 
 	static void register_to_db(vm::ClassDB& db);
 
-	ColorRect(vec2 position, vec2 size, Color color) : CanvasItem(), color(color) {
+	ColorRect(vec2 position, vec2 size, Color color) : CanvasItem(), color(color), size(size) {
 		static Shared<Image> image;
 		static TextureRID tex;
 		
@@ -27,17 +28,18 @@ public:
 		}
 		
 		set_position(position);
-		set_size(size);
 
 		DrawUtil::draw_rectangle(
 			get_canvas_item_rid(),
 			tex,
-			Rect2(vec2(), get_size()),
-			Rect2(vec2(), get_size())
+			Rect2(vec2(), size),
+			Rect2(vec2(), size)
 		);
 	}
 
 	COPY_DELETE(ColorRect)
+
+	SETGET(size)
 };
 
 } // namespace auplib

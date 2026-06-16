@@ -6,11 +6,12 @@
 #include "class_db.hpp"
 #include "complex.hpp"
 #include "math.hpp"
+#include "string.hpp"
 
 namespace auplib {
 
 const vec2 vec2::ZERO(0, 0);
-const vec2 vec2::ONE(0, 0);
+const vec2 vec2::ONE(1, 1);
 const vec2 vec2::EX(1, 0);
 const vec2 vec2::EY(0, 1);
 
@@ -22,6 +23,10 @@ float vec2::dot(vec2 v) const
 float vec2::length() const
 {
     return Math::sqrt(length_squared());
+}
+
+vec2::operator String() const {
+	return "vec2(" + String(x) + ", " + String(y) + ")";
 }
 
 void vec2::register_to_db(vm::ClassDB& db) {

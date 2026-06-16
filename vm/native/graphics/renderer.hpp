@@ -23,7 +23,8 @@ private:
 		void* mapped_memory;
 	};
 
-	InputBuffer create_input_buffer();
+	InputBuffer create_input_buffer(VkDeviceSize size);
+	void copy_item_data_to_item_buffer(CanvasItemRID ci);
 
 public:
 	Renderer(Shared<Viewport> viewport);
@@ -32,11 +33,13 @@ public:
 	static void register_to_db(vm::ClassDB &db);
 
 private:
+	size_t item_index;
 	size_t instance_index;
 	
 public:
 	Shared<Viewport> viewport;
 
+	InputBuffer item_buffer;
 	InputBuffer instance_buffer;
 	InputBuffer vertex_buffer;
 

@@ -199,8 +199,9 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 	bezier_pipeline = GraphicsPipeline(pipeline_layout, shader_stages_bezier);
 
 	// vertex buffer
-	vertex_buffer = create_input_buffer();
-	instance_buffer = create_input_buffer();
+	item_buffer = create_input_buffer(sizeof(ItemData) * 100);
+	instance_buffer = create_input_buffer(sizeof(InstanceData) * 100);
+	vertex_buffer = create_input_buffer(sizeof(Vertex) * 100);
 
 	// command pool
 	VkCommandPoolCreateInfo pool_info{
@@ -243,7 +244,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 	current_frame = 0;
 }
 
-Renderer::InputBuffer Renderer::create_input_buffer() {
+Renderer::InputBuffer Renderer::create_input_buffer(VkDeviceSize size) {
 	VkResult result;
 
 	InputBuffer input_buffer;
@@ -252,7 +253,7 @@ Renderer::InputBuffer Renderer::create_input_buffer() {
 		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
-		.size = sizeof(Vertex) * 100,
+		.size = size,
 		.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
 		.queueFamilyIndexCount = 0,
@@ -282,13 +283,26 @@ Renderer::InputBuffer Renderer::create_input_buffer() {
 	result = vkBindBufferMemory(VulkanInstance::singleton()->device, input_buffer.buffer, input_buffer.memory, 0);
 	assert(result == VK_SUCCESS);
 
-	vkMapMemory(VulkanInstance::singleton()->device, input_buffer.memory, 0, buffer_create_info.size, 0, &input_buffer.mapped_memory);
+	vkMapMemory(
+		VulkanInstance::singleton()->device,
+		input_buffer.memory,
+		0,
+		buffer_create_info.size,
+		0,
+		&input_buffer.mapped_memory
+	);
 
 	return input_buffer;
 }
 
 Renderer::~Renderer() {
 	vkDestroyCommandPool(VulkanInstance::singleton()->device, command_pool, nullptr);
+}
+
+void Renderer::copy_item_data_to_item_buffer(CanvasItemRID ci) {
+	// item data
+	ItemData* mapped_item_data = static_cast<ItemData*>(item_buffer.mapped_memory);
+	mapped_item_data[item_index] = ci->item_data;
 }
 
 void Renderer::draw_rect(const RenderCommandRect& cmd, CanvasItemRID ci, FrameContext& frame) {
@@ -299,13 +313,18 @@ void Renderer::draw_rect(const RenderCommandRect& cmd, CanvasItemRID ci, FrameCo
 		VK_PIPELINE_BIND_POINT_GRAPHICS,
 		test_pipeline.pipeline);
 	
+	copy_item_data_to_item_buffer(ci);
+	
 	// instance data
-	InstanceData* mapped_instane_data = static_cast<InstanceData*>(instance_buffer.mapped_memory);
-	mapped_instane_data[instance_index] = ci->instance_data;
+	InstanceData* mapped_instance_data = static_cast<InstanceData*>(instance_buffer.mapped_memory);
+	mapped_instance_data[instance_index].offset.x = cmd.dst_rect.start.x;
+	mapped_instance_data[instance_index].offset.y = cmd.dst_rect.start.y;
+	mapped_instance_data[instance_index].size.x = cmd.dst_rect.size.x;
+	mapped_instance_data[instance_index].size.y = cmd.dst_rect.size.y;
 
 	// unit quad
+	// TODO: only do once
 	Vertex* mapped_vertices = static_cast<Vertex*>(vertex_buffer.mapped_memory);
-
 	mapped_vertices[0] = Vertex{ vec2(0.0, 0.0),	vec3(1.0, 1.0, 1.0), { 0.0, 0.0 } };
 	mapped_vertices[1] = Vertex{ vec2(0.0, 1.0),	vec3(1.0, 1.0, 1.0), { 0.0, 1.0 } };
 	mapped_vertices[2] = Vertex{ vec2(1.0, 0.0),	vec3(1.0, 1.0, 1.0), { 1.0, 0.0 } };
@@ -337,16 +356,24 @@ void Renderer::draw_rect(const RenderCommandRect& cmd, CanvasItemRID ci, FrameCo
 	);
 
 	std::vector<VkBuffer> buffers = {
+		item_buffer.buffer,
 		instance_buffer.buffer,
 		vertex_buffer.buffer
 	};
 
 	std::vector<VkDeviceSize> offsets = {
+		sizeof(ItemData) * item_index,
 		sizeof(InstanceData) * instance_index,
 		sizeof(Vertex) * 0 // unit quad starts at 0
 	};
 
-	vkCmdBindVertexBuffers(frame.command_buffer, 0, static_cast<uint32_t>(buffers.size()), buffers.data(), offsets.data());
+	vkCmdBindVertexBuffers(
+		frame.command_buffer,
+		0,
+		static_cast<uint32_t>(buffers.size()),
+		buffers.data(),
+		offsets.data()
+	);
 
 	vkCmdDraw(
 		frame.command_buffer,
@@ -362,13 +389,17 @@ void Renderer::draw_curve(const RenderCommandCurve& cmd, CanvasItemRID ci, Frame
 		VK_PIPELINE_BIND_POINT_GRAPHICS,
 		bezier_pipeline.pipeline);
 	
+	copy_item_data_to_item_buffer(ci);
+	
 	// instance data
-	InstanceData* mapped_instane_data = static_cast<InstanceData*>(instance_buffer.mapped_memory);
-	*mapped_instane_data = ci->instance_data;
+	InstanceData* mapped_instance_data = static_cast<InstanceData*>(instance_buffer.mapped_memory);
+	mapped_instance_data[instance_index].offset.x = 0.0;
+	mapped_instance_data[instance_index].offset.y = 0.0;
+	mapped_instance_data[instance_index].size.x = 1.0;
+	mapped_instance_data[instance_index].size.y = 1.0;
 	
 	// vertices
 	Vertex* mapped_vertices = static_cast<Vertex*>(vertex_buffer.mapped_memory);
-
 	mapped_vertices[4] = Vertex{ cmd.points[0], vec3(1.0, 1.0, 1.0), { 0.0, 0.0 } };
 	mapped_vertices[5] = Vertex{ cmd.points[1], vec3(1.0, 1.0, 1.0), { 0.0, 1.0 } };
 	mapped_vertices[6] = Vertex{ cmd.points[2], vec3(1.0, 1.0, 1.0), { 1.0, 0.0 } };
@@ -400,13 +431,15 @@ void Renderer::draw_curve(const RenderCommandCurve& cmd, CanvasItemRID ci, Frame
 	);
 
 	std::vector<VkBuffer> buffers = {
+		item_buffer.buffer,
 		instance_buffer.buffer,
 		vertex_buffer.buffer
 	};
 
 	std::vector<VkDeviceSize> offsets = {
+		sizeof(ItemData) * item_index,
 		sizeof(InstanceData) * instance_index,
-		sizeof(Vertex) * 4
+		sizeof(Vertex) * 0 // unit quad starts at 0
 	};
 
 	vkCmdBindVertexBuffers(frame.command_buffer, 0, static_cast<uint32_t>(buffers.size()), buffers.data(), offsets.data());
@@ -506,12 +539,13 @@ void Renderer::render() {
 	// draw
 	CanvasItemRID_T* current_ci = root_ci->get_canvas_item_rid();
 
+	item_index = 0;
 	instance_index = 0;
 
 	while(current_ci) {
 		RenderCommand* cmd = current_ci->commands;
 
-		if (!!cmd) {
+		while (!!cmd) {
 			switch(cmd->type) {
 				case RenderCommand::TYPE_RECT: {
 					RenderCommandRect* cmd_rect = static_cast<RenderCommandRect*>(cmd);
@@ -528,10 +562,12 @@ void Renderer::render() {
 					abort();
 				}
 			}
+			cmd = cmd->next;
+			++instance_index;
 		}
 
 		current_ci = current_ci->next;
-		++instance_index;
+		++item_index;
 	}
 
 	// end drawing

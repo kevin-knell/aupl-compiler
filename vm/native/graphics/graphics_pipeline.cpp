@@ -235,29 +235,35 @@ VkPipelineVertexInputStateCreateInfo GraphicsPipeline::create_vertex_input() {
 	binding_desc = {
 		{
 			.binding = 0,
-			.stride = sizeof(InstanceData),
+			.stride = sizeof(ItemData),
 			.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE
 		},
 		{
 			.binding = 1,
+			.stride = sizeof(InstanceData),
+			.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE
+		},
+		{
+			.binding = 2,
 			.stride = sizeof(Vertex),
 			.inputRate = VK_VERTEX_INPUT_RATE_VERTEX
 		}
 	};
 	
 	vertex_attribute_desc = {
+		// per CanvasItem
+		GET_VERT_ATTR_DESC_SUB(0, 0, ItemData, model, mat4, x),
+		GET_VERT_ATTR_DESC_SUB(1, 0, ItemData, model, mat4, y),
+		GET_VERT_ATTR_DESC_SUB(2, 0, ItemData, model, mat4, z),
+		GET_VERT_ATTR_DESC_SUB(3, 0, ItemData, model, mat4, w),
+		GET_VERT_ATTR_DESC(4, 0, ItemData, modulate),
 		// per instance
-		GET_VERT_ATTR_DESC(0, 0, InstanceData, position),
-		GET_VERT_ATTR_DESC(1, 0, InstanceData, size),
-		GET_VERT_ATTR_DESC_SUB(2, 0, InstanceData, model, mat4, x),
-		GET_VERT_ATTR_DESC_SUB(3, 0, InstanceData, model, mat4, y),
-		GET_VERT_ATTR_DESC_SUB(4, 0, InstanceData, model, mat4, z),
-		GET_VERT_ATTR_DESC_SUB(5, 0, InstanceData, model, mat4, w),
-		GET_VERT_ATTR_DESC(6, 0, InstanceData, modulate),
-		// per vertex
-		GET_VERT_ATTR_DESC(7, 1, Vertex, position),
-		GET_VERT_ATTR_DESC(8, 1, Vertex, color),
-		GET_VERT_ATTR_DESC(9, 1, Vertex, uv)
+		GET_VERT_ATTR_DESC(5, 1, InstanceData, offset),
+		GET_VERT_ATTR_DESC(6, 1, InstanceData, size),
+		// per Vertex
+		GET_VERT_ATTR_DESC(7, 2, Vertex, position),
+		GET_VERT_ATTR_DESC(8, 2, Vertex, color),
+		GET_VERT_ATTR_DESC(9, 2, Vertex, uv)
 	};
 	
 	VkPipelineVertexInputStateCreateInfo vertex_input{

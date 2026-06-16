@@ -11,11 +11,12 @@ void Sprite2D::register_to_db(vm::ClassDB &db) {
 }
 
 void Sprite2D::draw() const {
+	DrawUtil::clear_commands(get_canvas_item_rid());
 	DrawUtil::draw_rectangle(
 		get_canvas_item_rid(),
 		texture->get_rid(),
-		Rect2(vec2(), get_size()),
-		Rect2(vec2(), get_size())
+		Rect2(-size / 2.0, size),
+		Rect2(-size / 2.0, size)
 	);
 }
 

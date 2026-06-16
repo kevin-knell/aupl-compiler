@@ -37,10 +37,8 @@ struct Vertex {
 ASSERT_STRUCT_OFFSET_RELATIVE(Vertex, position, color)
 ASSERT_STRUCT_OFFSET_RELATIVE(Vertex, color, uv)
 
-struct InstanceDataBase {
-	vec4 position;
-	vec4 size = vec4(1.0, 1.0, 1.0, 1.0);
-
+// data per CanvasItem
+struct ItemData {
 	mat4 model{
 		vec4::EX,
 		vec4::EY,
@@ -50,14 +48,13 @@ struct InstanceDataBase {
 
 	vec4 modulate;
 };
+ASSERT_STRUCT_OFFSET_RELATIVE(ItemData, model, modulate)
 
-struct InstanceData : public InstanceDataBase {
-	// TODO model * view, inv_model, etc.
-
-	InstanceData() : InstanceDataBase() {}
+// data for each command from DrawUtil
+struct InstanceData {
+	vec4 offset;
+	vec4 size = vec4(1.0, 1.0, 1.0, 1.0);
 };
-ASSERT_STRUCT_OFFSET_RELATIVE(InstanceData, position, size)
-ASSERT_STRUCT_OFFSET_RELATIVE(InstanceData, size, model)
-ASSERT_STRUCT_OFFSET_RELATIVE(InstanceData, model, modulate)
+ASSERT_STRUCT_OFFSET_RELATIVE(InstanceData, offset, size)
 
 } // namespace auplib

@@ -8,6 +8,12 @@ if [[ -z "$PROJECT" ]]; then
     exit 1
 fi
 
+echo -e "compiling shaders..."
+find ./shaders -type f ! -name '*.spv' -print0 |
+while IFS= read -r -d '' shader; do
+	glslc "$shader" -o "$shader.spv"
+done
+
 ./build.sh
 ./project.sh --pj=$PROJECT
 ./examples/$PROJECT/build/cpp/aupl

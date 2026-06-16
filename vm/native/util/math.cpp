@@ -1,6 +1,7 @@
 #include "math.hpp"
 #include <cmath>
 #include <algorithm>
+#include <bit>
 
 namespace auplib {
 
@@ -71,7 +72,15 @@ double Math::sin(double x) {
     return std::sin(x);
 }
 
+float Math::sin(float x) {
+    return std::sin(x);
+}
+
 double Math::cos(double x) {
+    return std::cos(x);
+}
+
+float Math::cos(float x) {
     return std::cos(x);
 }
 
@@ -89,6 +98,10 @@ double Math::acos(double x) {
 
 double Math::atan(double x) {
     return std::atan(x);
+}
+
+double Math::atan2(double y, double x) {
+	return std::atan2(y, x);
 }
 
 // range
@@ -124,6 +137,18 @@ double Math::clamp(double x, double from, double to) {
 
 int Math::clamp(int x, int from, int to) {
     return std::clamp(x, from, to);
+}
+
+double Math::abs(double x) {
+    uint64_t i = std::bit_cast<uint64_t>(x);
+    i &= ~(1ULL << 63);
+    return std::bit_cast<double>(i);
+}
+
+float Math::abs(float x) {
+    uint32_t i = std::bit_cast<uint32_t>(x);
+    i &= ~(1U << 31);
+    return std::bit_cast<float>(i);
 }
 
 }

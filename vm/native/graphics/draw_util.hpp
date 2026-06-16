@@ -4,6 +4,8 @@
 
 namespace auplib::DrawUtil {
 
+void clear_commands(CanvasItemRID ci);
+
 void draw_rectangle(CanvasItemRID ci, TextureRID tex, Rect2 dst, Rect2 src);
 void draw_curve(CanvasItemRID ci, vec2 points[4]);
 

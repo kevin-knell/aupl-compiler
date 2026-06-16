@@ -25,8 +25,9 @@ public:
     String(const char* s);
     String(const std::string& s);
     String(std::string&& s);
-	String(int64_t i);
-	String(void* p);
+
+	template<typename T>
+	String(T val) : value(std::to_string(val)) {}
 
     const std::string& str() const;
     size_t size() const;

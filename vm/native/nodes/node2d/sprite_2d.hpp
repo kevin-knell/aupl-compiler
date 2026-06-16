@@ -16,13 +16,13 @@ public:
 	Sprite2D() = default;
 	Sprite2D(Shared<Texture> tex) : CanvasItem() {
 		texture = tex;
-		set_size(texture->get_size());
+		size = texture->get_size();
 		draw();
 	};
 
 	void set_texture(Shared<Texture> tex) {
 		texture = tex;
-		set_size(texture->get_size());
+		size = texture->get_size();
 		draw();
 	}
 	

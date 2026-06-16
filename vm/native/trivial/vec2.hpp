@@ -5,6 +5,7 @@
 #include "native.hpp"
 #include "vec2i.hpp"
 #include "macros.hpp"
+#include "math.hpp"
 
 // Generate all 2-component swizzles for x,y,z
 // Declaration helpers
@@ -54,6 +55,24 @@ struct vec2 {
 
     float length() const;
 
+	vec2 normalized() const {
+		return vec2(*this) / length();
+	}
+
+	vec2 abs() const {
+		return vec2(Math::abs(x), Math::abs(y));
+	}
+
+	bool linearly_independent(const vec2& other) const {
+		return *this != other.abs();
+	}
+
+	float angle() {
+		double a = Math::atan2(-y, x);
+		if (a < 0.0f) a += Math::TAU;
+		return static_cast<float>(a);
+	}
+
     // operators
     vec2 operator+(const vec2& other) const {
         return vec2(x + other.x, y + other.y);
@@ -74,6 +93,12 @@ struct vec2 {
     vec2 operator/(const float& s) const {
         return vec2(x / s, y / s);
     }
+
+	bool operator!=(const vec2& other) const {
+		return x != other.x || y != other.y;
+	}
+
+	operator String() const;
 };
 static_assert(sizeof(vec2) == 8);
 
