@@ -15,7 +15,7 @@ namespace cmp {
 
 struct SymbolTable {
     std::unordered_map<std::string, ClassPtr> classes;
-    std::vector<Error> errors;
+	mutable std::vector<Error> errors;
 	std::unordered_map<std::string, std::shared_ptr<ClassType>> native_types;
 	FuncVec global_native_functions;
 	std::vector<vm::Value> const_memory;
@@ -33,7 +33,7 @@ struct SymbolTable {
 	Error& add_error(
 		const SourceLocation& source_location,
 		const std::string message,
-		Error::Level level);
+		Error::Level level) const;
 };
 
 }

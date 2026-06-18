@@ -21,7 +21,9 @@ std::string VariableExpression::to_string() const {
 }
 
 bool VariableExpression::is_unresolved_symbol() const {
-    return var == nullptr;
+    return !var
+		|| !var->type
+		|| var->type->get_kind() == Type::INVALID;
 }
 
 TypePtr VariableExpression::get_type() const {

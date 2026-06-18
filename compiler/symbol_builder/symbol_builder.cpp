@@ -419,12 +419,11 @@ bool SymbolBuilder::parse_variable(ParserInfo parser_info) {
     
 	SourceLocation source_location(&source_file, start_idx, index - 1);
     VarPtr variable_symbol = VariableSymbol::create(source_location, member_type, name, initial_value);
-    variable_symbol->scope = scope;
     variable_symbol->is_public = is_public;
     variable_symbol->is_static = is_static;
     variable_symbol->is_const = is_const;
     
-    scope->variables[name] = variable_symbol;
+    scope->add_variable(variable_symbol);
 
     return true;
 }
@@ -437,8 +436,7 @@ VarVec SymbolBuilder::parse_parameters(ParserInfo parser_info, ParserInfo parser
 		SourceLocation source_location(&source_file, 0, 1);
 		auto this_var = VariableSymbol::create(source_location, pointer_type, "this", nullptr);
 		scope->args.push_back(this_var->name);
-		scope->variables["this"] = this_var;
-		this_var->scope = scope;
+		scope->add_variable(this_var);
 	}
 
     VarVec parameters;
@@ -491,7 +489,7 @@ VarVec SymbolBuilder::parse_parameters(ParserInfo parser_info, ParserInfo parser
 		SourceLocation source_location(&source_file, param_start_idx, index - 1);
         VarPtr param = VariableSymbol::create(source_location, param_type, arg_name, initial_value);
         scope->args.push_back(arg_name);
-		scope->variables[arg_name] = param;
+		scope->add_variable(param);
         parameters.push_back(param);
     }
     next(); // consume )

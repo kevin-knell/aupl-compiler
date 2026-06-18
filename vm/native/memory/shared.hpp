@@ -107,8 +107,9 @@ static_assert(sizeof(Shared<RefCounted>) == 8);
 
 #define REGISTER_SHARED(T) \
 	do { \
-		const int16_t id = REGISTER_CLASS(Shared<T>); \
-		(void)id; \
+		const uint16_t ID = REGISTER_CLASS(Shared<T>); \
+		(void)ID; \
 		if constexpr(std::is_same_v<T, vm::Value>) { \
 		} \
+		REGISTER_METHOD(ID, Shared<T>, operator=, Shared<T>& (Shared<T>::*)(const Shared<T>& s));\
 	} while(0);

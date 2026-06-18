@@ -24,7 +24,7 @@ struct GenericType final : public Type {
 
     size_t get_size() { return 1; };
 
-	KIND get_kind() const override { return INVALID; };
+	KIND get_kind() const override { return GENERIC; };
 
 	bool is_cpp_type(const std::string&) const override { return false; }
 	

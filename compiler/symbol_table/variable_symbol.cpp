@@ -30,9 +30,16 @@ std::string VariableSymbol::name_to_string() const {
 }
 
 size_t VariableSymbol::get_index() const {
-	COMPILER_ASSERT(scope, "");
-	COMPILER_ASSERT(scope->has(name), "");
-	return Scope::get_variable_index(scope, name);
+	auto sc = scope.lock();
+	
+	COMPILER_ASSERT(sc, to_string() + " has no scope");
+	COMPILER_ASSERT(
+		sc->has(name),
+		"scope of " + to_string() + " does not have itself:\n" +
+		sc->get_full_name() + "\n" +
+		sc->structure_to_string()
+	);
+	return Scope::get_variable_index(sc, name);
 }
 
 } // namespace cmp

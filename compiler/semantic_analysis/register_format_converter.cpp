@@ -120,7 +120,6 @@ void RegisterFormatConverter::replace_with_temp(ExprPtr& expr, bool is_volatile)
 	VarExprPtr tmp_expr = std::make_shared<VariableExpression>(tmp);
 	StmtPtr tmp_decl = std::make_shared<DeclareStatement>(tmp);
 	tmp_decl->is_volatile = is_volatile;
-	tmp->scope = scope;
 	RF_DEBUG_PRINT_V("\tcreated temp: " << tmp->name_to_string());
 
 	if (expr->get_kind() == Expression::VARIABLE && expr->get_type()->is_pointer_type()) {

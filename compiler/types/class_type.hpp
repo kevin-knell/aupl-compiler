@@ -16,7 +16,7 @@ struct ClassType final : public Type {
 
 	ClassType(const vm::ClassBind& class_bind);
 
-    std::string to_string() const override { return name; }
+    std::string to_string() const override;
     size_t get_size() const override { return 256; };
 
 	KIND get_kind() const override { return CLASS; };

@@ -21,6 +21,7 @@
 #include "bytecode_generator.hpp"
 #include "cpp_generator.hpp"
 #include "type_from_cpp.hpp"
+#include "compiler_args.hpp"
 
 #include "vm.hpp"
 #include "instructions.hpp"
@@ -28,13 +29,16 @@
 #include "execute.hpp"
 #include "class_registrator.hpp"
 
-
 void print_help() {
 	std::cout <<
 		"Usage: aupl [options] folder..." << std::endl <<
-		"-h, --help             Display this message" << std::endl <<
-		"-v, --version          Display version" << std::endl <<
-		"-o [file]              Output file" << std::endl;
+		"-h, --help				Display this message" << std::endl <<
+		"-v, --version			Display version" << std::endl <<
+		"--gen-no-bc			Generate no AUPL bytecode" << std::endl <<
+		"--gen-cpp				Generate C++ code" << std::endl <<
+		"--gen-js				Generate JavaScript code" << std::endl <<
+		"--gen-gbc				Generate ???" << std::endl <<
+		"-o [file]				Output file" << std::endl;
 }
 
 static std::vector<std::string>::iterator contains_arg(std::vector<std::string>& args, std::vector<std::string> searched) {
@@ -67,6 +71,16 @@ int main(int argc, char** argv) {
 	if (contains_arg(args, {"--version", "-v"}) != args.end()) {
 		std::cout << "Version: 0.1" << std::endl;
 		return 0;
+	}
+
+	// generate no bytecode
+	if (contains_arg(args, {"--gen-no-bc"}) != args.end()) {
+		cmp::compiler_args().generate_bytecode = false;
+	}
+
+	// generate cpp
+	if (contains_arg(args, {"--gen-cpp"}) != args.end()) {
+		cmp::compiler_args().generate_cpp = true;
 	}
 
 	// output
@@ -151,11 +165,11 @@ int main(int argc, char** argv) {
     optimizers.push_back(static_cast<cmp::Optimizer*>(new cmp::ConstFoldingOptimizer()));
     optimizers.push_back(static_cast<cmp::Optimizer*>(new cmp::EraseUnusedVariableOptimizer()));
 
-    for (int i = 0; i < 1; ++i) {
-        for (auto p : optimizers) {
-            p->optimize(symbol_table);
-        }
-    }
+    //for (int i = 0; i < 1; ++i) {
+    //    for (auto p : optimizers) {
+    //        p->optimize(symbol_table);
+    //    }
+    //}
 	
 	// scope structure / memory layout
 	symbol_table.generate_scope_structures();
@@ -173,62 +187,59 @@ int main(int argc, char** argv) {
 		}
 	}
 
-#ifdef GEN_BC
-	// generate bytecode
-	auto size_gen = cmp::BytecodeGenerator<true>(symbol_table);
-    size_t bytecode_size = size_gen.generate_bytecode();
-	
-	auto code_gen = cmp::BytecodeGenerator<false>(symbol_table);
-    auto bpi = code_gen.generate_bytecode();
+	if (cmp::compiler_args().generate_bytecode) {
+		auto size_gen = cmp::BytecodeGenerator<true>(symbol_table);
+		size_t bytecode_size = size_gen.generate_bytecode();
+		
+		auto code_gen = cmp::BytecodeGenerator<false>(symbol_table);
+		auto bpi = code_gen.generate_bytecode();
 
-    if (!bpi.has_main) {
-        std::cout << "no main function!" << std::endl;
-        return 1;
-    }
+		if (!bpi.has_main) {
+			std::cout << "no main function!" << std::endl;
+			return 1;
+		}
 
-    if (bpi.bytecode.size() != bytecode_size) {
-        std::cout << std::dec << "bytecode size is wrong:" << bpi.bytecode.size() << " / " << bytecode_size << std::endl;
-        return 1;
-    }
+		if (bpi.bytecode.size() != bytecode_size) {
+			std::cout << std::dec << "bytecode size is wrong:" << bpi.bytecode.size() << " / " << bytecode_size << std::endl;
+			return 1;
+		}
 
-	// save to file
-	std::ofstream output_file(output_path, std::ios::binary | std::ios::trunc);
+		// save to file
+		std::ofstream output_file(output_path, std::ios::binary | std::ios::trunc);
 
-	size_t code_size = bytecode_size;
-	size_t const_size = bpi.const_memory.size();
-	size_t main_start = bpi.main_start;
+		size_t code_size = bytecode_size;
+		size_t const_size = bpi.const_memory.size();
+		size_t main_start = bpi.main_start;
 
-	output_file.write(reinterpret_cast<char*>(&code_size), sizeof(code_size));
-	output_file.write(reinterpret_cast<char*>(&const_size), sizeof(const_size));
-	output_file.write(reinterpret_cast<char*>(&main_start), sizeof(main_start));
+		output_file.write(reinterpret_cast<char*>(&code_size), sizeof(code_size));
+		output_file.write(reinterpret_cast<char*>(&const_size), sizeof(const_size));
+		output_file.write(reinterpret_cast<char*>(&main_start), sizeof(main_start));
 
-	output_file.write(
-		reinterpret_cast<char*>(bpi.bytecode.data()),
-		sizeof(uint8_t) * code_size
-	);
+		output_file.write(
+			reinterpret_cast<char*>(bpi.bytecode.data()),
+			sizeof(uint8_t) * code_size
+		);
 
-	for (auto& v : bpi.const_memory) {
-		output_file.write(reinterpret_cast<char*>(&v.u8), sizeof(uint8_t));
+		for (auto& v : bpi.const_memory) {
+			output_file.write(reinterpret_cast<char*>(&v.u8), sizeof(uint8_t));
+		}
+
+		output_file.close();
 	}
 
-	output_file.close();
-#endif
+	if (cmp::compiler_args().generate_cpp) {
+		// generate C++
+		std::ofstream hpp_file(output_path + "/cpp/output.hpp", std::ios::trunc);
+		std::ofstream cpp_file(output_path + "/cpp/output.cpp", std::ios::trunc);
 
-#define GEN_CPP
-#ifdef GEN_CPP
-	// generate C++
-	std::ofstream hpp_file(output_path + ".hpp", std::ios::trunc);
-	std::ofstream cpp_file(output_path + ".cpp", std::ios::trunc);
+		cmp::CppCodeGenerator cpp_generator(symbol_table);
+		cpp_generator.generate_cpp_code(hpp_file, cpp_file);
 
-	cmp::CppCodeGenerator cpp_generator(symbol_table);
-	cpp_generator.generate_cpp_code(hpp_file, cpp_file);
+		std::cout << "written" << std::endl;
 
-	std::cout << "written" << std::endl;
-
-	hpp_file.close();
-	cpp_file.close();
-
-#endif
+		hpp_file.close();
+		cpp_file.close();
+	}
 	
     return 0;
 }

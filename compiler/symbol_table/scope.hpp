@@ -54,6 +54,7 @@ public:
     std::string structure_to_string() const;
     VarPtr get_temp(TypePtr type, ExprPtr init_val, std::string temp_name = "tmp");
 	std::string get_label_name(std::string name) const;
+	void add_variable(VarPtr var);
 };
 
 }

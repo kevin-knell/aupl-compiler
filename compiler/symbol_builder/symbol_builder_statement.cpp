@@ -114,7 +114,6 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
     
 	RETURN_IF_NOT(type);
 
-	TypePtr constructor_type = type;
 	TypePtr variable_type;
 
 	if (type->default_store_shared()) {
@@ -158,16 +157,23 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
 			}
 		}
 		next(); // consume ')'
-		
-		expr = std::make_shared<CallExpression>(constructor_type->to_string(), args, nullptr);
 
+		if (type->get_kind() == Type::CLASS) {
+			std::shared_ptr<ClassType> constructor_type = std::static_pointer_cast<ClassType>(type);
+			expr = std::make_shared<CallExpression>(constructor_type->name, args, nullptr);
+		} else {
+			add_error(start_idx, "syntax: 'Type identifier(...)' can only be used for class types", Error::ERROR);
+			exit(1); // TODO error expression
+		}
 		expr->source_location = SourceLocation(&source_file, start_idx, index);
 	}
 
 	SourceLocation source_location(&source_file, start_idx, index - 1);
     VarPtr var = VariableSymbol::create(source_location, variable_type, var_name, expr);
-    parser_info.scope->variables[var_name] = var;
-    var->scope = parser_info.scope;
+	if (var->type->get_kind() == Type::INVALID) {
+		symbol_table.add_error(var->source_location, "Invalid type: " + var->type->to_string(), Error::ERROR);
+	}
+    parser_info.scope->add_variable(var);
     return { std::make_shared<DeclareStatement>(var) };
 }
 
@@ -290,7 +296,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_for(ParserInfo& parser_info) {
 	ScopePtr for_scope = parse_block(parser_info, "for");
     LabelPtr for_label = Label::create(for_scope, for_name);
 
-	for_scope->variables[it_name] = it_var;
+	for_scope->add_variable(it_var);
 
 	StmtVec result;
 

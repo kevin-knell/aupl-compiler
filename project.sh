@@ -31,8 +31,6 @@ if [[ -z "$PROJECT" ]]; then
     exit 1
 fi
 
-./aupl.sh --pj=$PROJECT
-
 CPP_DIR="examples/$PROJECT/build/cpp"
 
 if [[ ! -f "$CPP_DIR/output.cpp" ]]; then

@@ -44,19 +44,21 @@ SymbolTable::SymbolTable(vm::ClassDB &db) : class_db(db) {
 		}
 	}
 
-	for (auto& cls : db.classes) {
+	for (vm::ClassBind& cls : db.classes) {
 		std::shared_ptr<ClassType> nat = native_types[cls.name];
 		auto class_symbol = nat->class_ptr;
 
 		//std::cout << "native class: " << nat->to_string() << std::endl;
 
-		for (auto& v : cls.variables) {
+		for (vm::VariableBind& v : cls.variables) {
 			auto nat_var = VariableSymbol::create(v);
-			nat->class_ptr->scope->variables[v.name] = nat_var;
+			COMPILER_ASSERT(nat_var->type->get_kind() != Type::INVALID, nat_var->to_string() + " from class " + cls.name);
+			
+			nat->class_ptr->scope->add_variable(nat_var);
 			//std::cout << "\tnative var: " << nat_var->to_string() << std::endl;
 		}
 		
-		for (auto& f : cls.methods) {
+		for (vm::MethodPair& f : cls.methods) {
 			auto nat_func = FunctionSymbol::create(f);
 			class_symbol->functions[f.name] = nat_func;
 			
@@ -91,7 +93,7 @@ void SymbolTable::generate_scope_structures() const {
 Error &SymbolTable::add_error(
 		const SourceLocation& source_location,
 		const std::string message,
-		Error::Level level) {
+		Error::Level level) const {
 	const SourceFile* source_file = source_location.source_file;
 	
 	std::string path = "(unknown file)";

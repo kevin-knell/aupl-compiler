@@ -15,6 +15,7 @@ public:
 	Curve2D() = default;
 
 	Curve2D(vec2 a, vec2 b, vec2 c, vec2 d) : points{a, b, c, d} {
+		DrawUtil::clear_commands(get_canvas_item_rid());
 		DrawUtil::draw_curve(get_canvas_item_rid(), points);
 	}
 };

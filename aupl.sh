@@ -39,5 +39,6 @@ fi
 mkdir -p "examples/$PROJECT/build/cpp"
 
 ./build/cmp/aupl \
+	--gen-cpp \
     -o "examples/$PROJECT/build/cpp/output" \
     "examples/$PROJECT"

@@ -380,7 +380,17 @@ namespace vm {
                 }
             case BinType::UINT64:
                 switch (op) {
+                    case BinOp::ADD: return is_const ? Instruction::ADD_CONST_I64 : Instruction::ADD_I64;
+                    case BinOp::SUB: return is_const ? Instruction::SUB_CONST_I64 : Instruction::SUB_I64;
+                    case BinOp::MUL: return is_const ? Instruction::MUL_CONST_I64 : Instruction::MUL_I64;
                     case BinOp::DIV: return is_const ? Instruction::DIV_CONST_U64 : Instruction::DIV_U64;
+                    case BinOp::MOD: return is_const ? Instruction::MOD_CONST_I64 : Instruction::MOD_I64;
+					case BinOp::EQ: return is_const ? Instruction::IF_EQ_CONST_I64 : Instruction::IF_EQ_I64;
+					case BinOp::NEQ: return is_const ? Instruction::IF_NEQ_CONST_I64 : Instruction::IF_EQ_I64;
+					case BinOp::GT: return is_const ? Instruction::IF_GT_CONST_U64 : Instruction::ERR;
+					case BinOp::LT: return is_const ? Instruction::IF_LT_CONST_U64 : Instruction::IF_LT_U64;
+					case BinOp::GE: return is_const ? Instruction::IF_EGT_CONST_U64 : Instruction::ERR;
+					case BinOp::LE: return is_const ? Instruction::IF_ELT_CONST_U64 : Instruction::IF_ELT_U64;
 					default: return Instruction::ERR;
                     // Add other ops as needed
                 }

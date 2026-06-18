@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <algorithm>
 #include "expression.hpp"
+#include "forward_declarations.hpp"
 
 #ifdef SCOPE_DEBUG_VERBOSE
 #define SCOPE_DEBUG
@@ -117,11 +118,16 @@ VarPtr Scope::get_temp(TypePtr type, ExprPtr init_val, std::string temp_name) {
     std::string name = "%" + temp_name + std::to_string(temp_count++);
     VarPtr var = VariableSymbol::create(init_val->source_location, type, name, init_val);
     var->is_const = true;
-    variables[name] = var;
+	add_variable(var);
     return var;
 }
 
 std::string Scope::get_label_name(std::string name) const {
 	return name + std::to_string(label_count++);
+}
+void Scope::add_variable(VarPtr var) {
+	COMPILER_ASSERT(!variables.contains(var->name), get_full_name() + " already contains " + var->name);
+	variables[var->name] = var;
+	var->scope = weak_from_this();
 }
 }

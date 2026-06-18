@@ -40,7 +40,8 @@ FunctionSymbol::FunctionSymbol(Private, vm::MethodPair &method_pair)
 		{
 			for (size_t i = 0; i < method_pair.arg_count; ++i) {
 				SourceLocation source_location;
-				auto var = VariableSymbol::create(source_location, get_type_from_cpp(method_pair.arg_types[i]), method_pair.arg_names[i]);
+				TypePtr type_from_cpp = get_type_from_cpp(method_pair.arg_types[i]);
+				VarPtr var = VariableSymbol::create(source_location, type_from_cpp, method_pair.arg_names[i]);
 				parameters.push_back(var);
 			}
 		}

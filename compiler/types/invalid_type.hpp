@@ -1,5 +1,6 @@
 #pragma once
 #include "type.hpp"
+#include "text_color.hpp"
 
 namespace cmp
 {
@@ -13,7 +14,10 @@ struct InvalidType final : public Type {
 
     InvalidType(const std::string& n) : name(n) {}
 
-    std::string to_string() const override { return "(invalid)" + name; }
+    std::string to_string() const override {
+		return "(invalid)" + C_ERROR(name);
+	}
+
     size_t get_size() const override { return 16; };
 
 	KIND get_kind() const override { return INVALID; };

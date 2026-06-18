@@ -439,7 +439,7 @@ void Renderer::draw_curve(const RenderCommandCurve& cmd, CanvasItemRID ci, Frame
 	std::vector<VkDeviceSize> offsets = {
 		sizeof(ItemData) * item_index,
 		sizeof(InstanceData) * instance_index,
-		sizeof(Vertex) * 0 // unit quad starts at 0
+		sizeof(Vertex) * 4 // unit quad starts at 0
 	};
 
 	vkCmdBindVertexBuffers(frame.command_buffer, 0, static_cast<uint32_t>(buffers.size()), buffers.data(), offsets.data());
