@@ -16,7 +16,7 @@ void CanvasItem::register_to_db(vm::ClassDB &db) {
 
 	REGISTER_SETGET(ID, CanvasItem, vec2, position);
 	REGISTER_SETGET(ID, CanvasItem, float, rotation);
-	REGISTER_SETGET(ID, CanvasItem, float, scale);
+	REGISTER_SETGET(ID, CanvasItem, vec2, scale);
 }
 
 void CanvasItem::_on_tree_added() {

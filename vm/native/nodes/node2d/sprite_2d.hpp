@@ -9,6 +9,7 @@ namespace auplib {
 class Sprite2D final : public CanvasItem {
 private:
 	Shared<Texture> texture;
+	vec2 size;
 
 public:
 	static void register_to_db(vm::ClassDB& db);

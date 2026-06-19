@@ -18,7 +18,9 @@ class CanvasItem : public Node {
 	OBJECT_CLASS(CanvasItem, Node)
 public:
 	ItemData* item_data;
-	vec2 size;
+	vec2 position = vec2(0, 0);
+	float rotation = 0;
+	vec2 scale = vec2(1.0, 1.0);
 
 	CanvasItem();
 	CanvasItem(const CanvasItem&) = delete;
@@ -31,64 +33,54 @@ public:
 	static void register_to_db(vm::ClassDB &db);
 	
 	vec2 get_position() const {
-		return {
-			item_data->model.w.x,
-			item_data->model.w.y
-		};
+		return position;
 	}
 
 	void set_position(vec2 p) {
-		item_data->model.w.x = p.x;
-		item_data->model.w.y = p.y;
+		position = p;
+		item_data->model.w.x = position.x;
+		item_data->model.w.y = position.y;
 	}
 	
 	void set_rotation(float angle) {
-		mat2 rot_mat = mat2::from_angle(angle);
-
-		item_data->model.x.x = rot_mat.x.x;
-		item_data->model.x.y = rot_mat.x.y;
-		item_data->model.y.x = rot_mat.y.x;
-		item_data->model.y.y = rot_mat.y.y;
+		rotation = angle;
+		update_model();
 	}
 
 	float get_rotation() const {
-		return vec2(
-			item_data->model.x.x,
-			item_data->model.y.x
-		).angle();
+		return rotation;
 	}
 	
-	void set_scale(float scale) {
-		mat2 scale_mat = mat2(
-			{ item_data->model.x.x, item_data->model.x.y },
-			{ item_data->model.y.x, item_data->model.y.y }
-		);
-
-		float det = scale_mat.det();
-
-		if (det == 0.0) scale_mat = mat2( vec2::EX, vec2::EY );
-
-		scale_mat = scale_mat / scale_mat.det() * scale;
-
-		item_data->model.x.x = scale_mat.x.x;
-		item_data->model.x.y = scale_mat.x.y;
-		item_data->model.y.x = scale_mat.y.x;
-		item_data->model.y.y = scale_mat.y.y;
+	void set_scale(vec2 _scale) {
+		scale = _scale;
+		update_model();
 	}
 
-	float get_scale() const {
-		mat2 scale_mat = mat2(
-			{ item_data->model.x.x, item_data->model.x.y },
-			{ item_data->model.y.x, item_data->model.y.y }
-		);
-
-		return scale_mat.det();
+	vec2 get_scale() const {
+		return scale;
 	}
 
 	void _on_tree_added() override;
 
 	CanvasItemRID get_canvas_item_rid() const {
 		return canvas_item_rid;
+	}
+
+private:
+	void update_model() {
+		mat2 rot_mat = mat2::from_angle(rotation);
+
+		mat2 scale_mat = mat2(
+			{ scale.x, 0.0 },
+			{ 0.0, scale.y }
+		);
+
+		mat2 xform = scale_mat * rot_mat;
+
+		item_data->model.x.x = xform.x.x;
+		item_data->model.x.y = xform.x.y;
+		item_data->model.y.x = xform.y.x;
+		item_data->model.y.y = xform.y.y;
 	}
 };
 

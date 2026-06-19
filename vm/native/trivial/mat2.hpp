@@ -66,8 +66,8 @@ struct mat2 {
 
 	constexpr mat2 operator*(const mat2& other) const {
 		return mat2{
-			{ x.x * other.x.x + x.y + other.y.x, x.x * other.x.y + x.y + other.y.y },
-			{ y.x * other.x.x + y.y + other.y.x, y.x * other.x.y + y.y + other.y.y }
+			{ x.x * other.x.x + x.y * other.y.x, x.x * other.x.y + x.y * other.y.y },
+			{ y.x * other.x.x + y.y * other.y.x, y.x * other.x.y + y.y * other.y.y }
 		};
 	}
 
