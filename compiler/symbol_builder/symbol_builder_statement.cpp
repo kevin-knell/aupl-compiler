@@ -45,15 +45,34 @@ namespace cmp {
 
 
 std::vector<StmtPtr> SymbolBuilder::parse_statement(ParserInfo& parser_info) {
+	if (!peek().has_flag(TokenFlagBits::STMT_BEGIN)) {
+		size_t error_start = index;
+		
+		recover_to_stmt();
+
+		if (error_start != index) {
+			add_error(error_start, "Invalid start for member element: " + tokens[error_start].value, Error::ERROR);
+		}
+
+		if (!has_more_tokens()) {
+			return {};
+		}
+	}
+
     std::vector<StmtPtr> result;
-    auto if_stmts = parse_if(parser_info); if (!if_stmts.empty()) return if_stmts;
-    auto while_stmts = parse_while(parser_info); if (!while_stmts.empty()) return while_stmts;
-    auto for_stmts = parse_for(parser_info); if (!for_stmts.empty()) return for_stmts;
-    auto declare_stmts = parse_declare_statement(parser_info); if (!declare_stmts.empty()) return declare_stmts;
-    auto assign_stmts = parse_assign(parser_info); if (!assign_stmts.empty()) return assign_stmts;
-    auto return_stmts = parse_return(parser_info); if (!return_stmts.empty()) return return_stmts;
-    auto expr_stmts = parse_expression_statement(parser_info); if (!expr_stmts.empty()) return expr_stmts;
-    return result;
+
+	if (match(TokenType::KEYWORD)) {
+		// must begin with keyword
+		auto if_stmts = parse_if(parser_info); if (!if_stmts.empty()) return if_stmts;
+		auto while_stmts = parse_while(parser_info); if (!while_stmts.empty()) return while_stmts;
+		auto for_stmts = parse_for(parser_info); if (!for_stmts.empty()) return for_stmts;
+		auto return_stmts = parse_return(parser_info); if (!return_stmts.empty()) return return_stmts;
+	}
+	// can also begin with keyword
+	auto declare_stmts = parse_declare_statement(parser_info); if (!declare_stmts.empty()) return declare_stmts;
+	auto assign_stmts = parse_assign(parser_info); if (!assign_stmts.empty()) return assign_stmts;
+	auto expr_stmts = parse_expression_statement(parser_info); if (!expr_stmts.empty()) return expr_stmts;
+	return result;
 }
 
 std::vector<StmtPtr> SymbolBuilder::parse_assign(ParserInfo& parser_info) {
@@ -148,12 +167,14 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
 				}
 			}
 
+			size_t error_start_idx = index;
+
 			ExprPtr arg = parse_expression(parser_info);
 			if (arg) {
 				args.push_back(arg);
 			} else {
-				std:: cout << "error parsing decl constructor: " << peek().value << std::endl;
-				next();
+				add_error(error_start_idx, "invalid constructor argument", Error::ERROR);
+				recover_to_stmt();
 			}
 		}
 		next(); // consume ')'
@@ -173,7 +194,16 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
 	if (var->type->get_kind() == Type::INVALID) {
 		symbol_table.add_error(var->source_location, "Invalid type: " + var->type->to_string(), Error::ERROR);
 	}
-    parser_info.scope->add_variable(var);
+	if (!parser_info.scope->has(var_name)) {
+		parser_info.scope->add_variable(var);
+	} else {
+		symbol_table.add_error(
+			var->source_location,
+			"Scope: " + parser_info.scope->get_full_name() +
+			" already has: " + var->to_string(),
+			Error::ERROR
+		);
+	}
     return { std::make_shared<DeclareStatement>(var) };
 }
 
@@ -221,7 +251,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
 
     ExprPtr condition_expr = parse_expression(parser_info);
 
-	RETURN_IF_NOT(condition_expr);
+	ERROR_IF_NOT(condition_expr, "no expression after 'if'");
 
 	std::string if_ret_name = parser_info.scope->get_label_name("if_return");
 	std::string if_name = parser_info.scope->get_label_name("if");
@@ -238,7 +268,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
 
         else_scope = parse_block(parser_info, "else");
 
-		RETURN_IF_NOT(else_scope);
+		ERROR_IF_NOT(else_scope, "no {...} after 'else'");
 
         else_label = Label::create(else_scope, else_name);
     }
@@ -409,6 +439,12 @@ std::vector<StmtPtr> SymbolBuilder::parse_expression_statement(ParserInfo& parse
 	RETURN_IF_NOT(expr);
 
     return { std::make_shared<ExpressionStatement>(expr) };
+}
+
+void SymbolBuilder::recover_to_stmt() {
+	do {
+		next();
+	} while (has_more_tokens() && !expect("}") && !peek().has_flag(TokenFlagBits::STMT_BEGIN));
 }
 
 }

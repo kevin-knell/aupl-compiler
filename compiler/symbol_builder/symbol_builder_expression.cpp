@@ -15,6 +15,31 @@
 #include <iostream>
 #include "compiler_error.hpp"
 
+#define RETURN_IF_NOT(m_value)		\
+	do {							\
+		if (!(m_value)) {			\
+    	    index = start_idx;		\
+    	    return nullptr;			\
+    	}							\
+	} while(0)
+
+#define ERROR_IF_NOT(m_value, m_message)		\
+	do {							\
+		if (!(m_value)) {			\
+    	    add_error(0, m_message, Error::CRITICAL);		\
+    	    abort();			\
+    	}							\
+	} while(0)
+
+#define TRY_CONSUME(m_value)		\
+	do {							\
+		if (!expect(m_value)) {		\
+    	    index = start_idx;		\
+    	    return nullptr;			\
+    	}							\
+    	next();						\
+	} while(0)
+
 namespace cmp {
 
 ExprPtr SymbolBuilder::parse_expression(ParserInfo& parser_info) {
@@ -149,66 +174,7 @@ ExprPtr SymbolBuilder::parse_mul(ParserInfo& parser_info) {
     return left;
 }
 
-/*
-ExprPtr SymbolBuilder::parse_access(ParserInfo& parser_info) {
-    ExprPtr left = parse_index(parser_info);
-    if (!left) return nullptr;
-
-    while (expect(".")) {
-        next(); // consume .
-        ExprPtr right = parse_primary(parser_info);
-        if (!right) return nullptr;
-
-		if (right->get_kind() == Expression::CALL) {
-			auto call_expr = std::dynamic_pointer_cast<CallExpression>(right);
-			call_expr->obj_expr = left;
-			left = call_expr;
-			continue;
-		} else if (right->get_kind() == Expression::VARIABLE) {
-			auto var_expr = std::dynamic_pointer_cast<VariableExpression>(right);
-			var_expr->obj_expr = left;
-			left = var_expr;
-			continue;
-		} else {
-			std::cerr << "unknown access expression: " << right->to_string() << std::endl;
-			exit(1);
-		}
-    }
-
-    return left;
-}
-*/
-
-/*
-ExprPtr SymbolBuilder::parse_index(ParserInfo &parser_info) {
-    ExprPtr left = parse_access(parser_info);
-    if (!left) return nullptr;
-
-	if (!expect("[")) {
-		return left;
-	}
-	next(); // consume '['
-
-	ExprPtr index_expr = parse_expression(parser_info);
-	if (!index_expr) {
-		std::cerr << "error! no index expression!" << std::endl;
-		exit(1);
-	}
-
-	if (!expect("]")) {
-		std::cerr << "error! ] expected in indexing operator!" << std::endl;
-		exit(1);
-	}
-	next(); // consume ']'
-
-	std::cout << left->to_string() << "[" << index_expr->to_string() << "]" << std::endl;
-
-	exit(1);
-
-	return ExprPtr();
-}
-*/
-
+// . []
 ExprPtr SymbolBuilder::parse_postfix(ParserInfo& parser_info) {
     ExprPtr expr = parse_primary(parser_info);
     if (!expr) return nullptr;
@@ -236,15 +202,9 @@ ExprPtr SymbolBuilder::parse_postfix(ParserInfo& parser_info) {
             next(); // consume '['
 
             ExprPtr index_expr = parse_expression(parser_info);
-            if (!index_expr) {
-                std::cerr << "missing index expression" << std::endl;
-                exit(1);
-            }
+			ERROR_IF_NOT(index_expr, "missing index expression");
 
-            if (!expect("]")) {
-                std::cerr << "expected ']'" << std::endl;
-                exit(1);
-            }
+			ERROR_IF_NOT(expect("]"), "expected ']'");
             next(); // consume ']'
 
             expr = std::make_shared<IndexExpression>(expr, index_expr);
@@ -323,22 +283,13 @@ ExprPtr SymbolBuilder::parse_primary(ParserInfo& parser_info) {
 }
 
 ExprPtr SymbolBuilder::parse_call(ParserInfo& parser_info) {
-    (void)parser_info;
     size_t start_idx = index;
 
-    if (!match(TokenType::IDENTIFIER)) {
-        index = start_idx;
-        return nullptr;
-    }
+	RETURN_IF_NOT(match(TokenType::IDENTIFIER));
     std::string name = next().value;
 
-    if (!expect("(")) {
-        index = start_idx;
-        return nullptr;
-    }
-    next(); // consume (
+	TRY_CONSUME("(");
 
-    // TODO: parse args
     std::vector<ExprPtr> args;
     while (!expect(")")) {
         ExprPtr arg = parse_expression(parser_info);
@@ -362,13 +313,9 @@ ExprPtr SymbolBuilder::parse_call(ParserInfo& parser_info) {
 }
 
 ExprPtr SymbolBuilder::parse_tuple(ParserInfo &parser_info) {
-    size_t idx = index;
+    size_t start_idx = index;
 
-    if (!expect("(")) {
-		index = idx;
-        return nullptr;
-    }
-    next(); // consume (
+	TRY_CONSUME("(");
 
     ExprVec expressions;
 
@@ -377,14 +324,14 @@ ExprPtr SymbolBuilder::parse_tuple(ParserInfo &parser_info) {
 			if (expect(",")) {
 				next(); // consume ,
 			} else {
-				index = idx;
+				index = start_idx;
 				return nullptr;
 			}
         }
 
         ExprPtr t = parse_expression(parser_info);
         if (!t) {
-            index = idx;
+            index = start_idx;
             return nullptr;
         }
         expressions.push_back(t);
@@ -395,13 +342,9 @@ ExprPtr SymbolBuilder::parse_tuple(ParserInfo &parser_info) {
 }
 
 ExprPtr SymbolBuilder::parse_initializer_list(ParserInfo &parser_info) {
-    size_t idx = index;
+    size_t start_idx = index;
 
-    if (!expect("{")) {
-		index = idx;
-        return nullptr;
-    }
-    next(); // consume {
+	TRY_CONSUME("{");
 
     ExprVec expressions;
 
@@ -410,14 +353,14 @@ ExprPtr SymbolBuilder::parse_initializer_list(ParserInfo &parser_info) {
 			if (expect(",")) {
 				next(); // consume ,
 			} else {
-				index = idx;
+				index = start_idx;
 				return nullptr;
 			}
         }
 
         ExprPtr t = parse_expression(parser_info);
         if (!t) {
-            index = idx;
+            index = start_idx;
             return nullptr;
         }
         expressions.push_back(t);
@@ -429,37 +372,21 @@ ExprPtr SymbolBuilder::parse_initializer_list(ParserInfo &parser_info) {
 
 ExprPtr SymbolBuilder::parse_node_composition(ParserInfo &parser_info) {
 	size_t start_idx = index;
-	
-	if (!expect("\\")) {
-		return nullptr;
-	}
-	next(); // consume '\'
 
-	if (!match(TokenType::IDENTIFIER)) {
-		SourceLocation source_location(&source_file, start_idx, index);
-		symbol_table.add_error(source_location, "identifier expected after '\\'", Error::ERROR);
+	TRY_CONSUME("\\");
 
-		// TODO: recover
-
-		return nullptr;
-	}
+	ERROR_IF_NOT(match(TokenType::IDENTIFIER), "identifier expected after '\\'");
 	std::string node_name = next().value;
 
 	// parse args / values
-	if (!expect("(")) {
-		SourceLocation source_location(&source_file, start_idx, index);
-		symbol_table.add_error(source_location, "'(' expected after \\Node", Error::ERROR);
-	}
+	ERROR_IF_NOT(expect("("), "'(' expected after \\Node");
 	next(); // consume '('
 
 	ExprVec args;
 
 	while(!expect(")")) {
 		if (!args.empty()) {
-			if (!expect(",")) {
-				SourceLocation source_location(&source_file, start_idx, index);
-				symbol_table.add_error(source_location, "',' expected in \\Node(...)", Error::ERROR);
-			}
+			ERROR_IF_NOT(expect(","), "',' expected in \\Node(...)");
 			next(); // consume ','
 		}
 
@@ -479,20 +406,14 @@ ExprPtr SymbolBuilder::parse_node_composition(ParserInfo &parser_info) {
 	next(); // consume ')'
 
 	// parse content
-	if (!expect("{")) {
-		SourceLocation source_location(&source_file, start_idx, index);
-		symbol_table.add_error(source_location, "'{' expected after \\Node()", Error::ERROR);
-	}
+	ERROR_IF_NOT(expect("{"), "'{' expected after \\Node()");
 	next(); // consume '{'
 
 	ExprVec content;
 
 	while(!expect("}")) {
 		if (!content.empty()) {
-			if (!expect(",")) {
-				SourceLocation source_location(&source_file, start_idx, index);
-				symbol_table.add_error(source_location, "',' expected in \\Node() {...}", Error::ERROR);
-			}
+			ERROR_IF_NOT(expect(","), "',' expected in \\Node() {...}");
 			next(); // consume ','
 		}
 
@@ -510,6 +431,12 @@ ExprPtr SymbolBuilder::parse_node_composition(ParserInfo &parser_info) {
 	next(); // consume '}'
 
 	return std::make_shared<NodeCompositionExpression>(node_name, args, content);
+}
+
+void SymbolBuilder::recover_to_expr() {
+	do {
+		next();
+	} while (has_more_tokens() && !expect(")") && !peek().has_flag(TokenFlagBits::EXPR_BEGIN));
 }
 
 }

@@ -138,7 +138,7 @@ void SymbolBuilder::parse_class() {
 		}
 
 		if (error_start != index) {
-			add_error(error_start, "Invalid start for header element: " + tokens[error_start].value, Error::ERROR);
+			add_error(error_start, "Invalid start for member element: " + tokens[error_start].value, Error::ERROR);
 			continue;
 		}
 
@@ -573,11 +573,7 @@ void SymbolBuilder::parse_body(ParserInfo parser_info, FuncPtr function_symbol)
 		if (statements.empty()) {
 			size_t error_start_index = index;
 
-			while (has_more_tokens()
-					&& !expect("}")
-					&& !peek().has_flag(TokenFlagBits::STMT_BEGIN)) {
-				next();
-			}
+			recover_to_stmt();
 
 			add_error(error_start_index, "invalid statement in function " + function_symbol->head_to_string(), Error::ERROR);
 		} else {

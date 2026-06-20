@@ -105,6 +105,9 @@ private:
     bool expect(const std::string& value);
 
 	Error& add_error(size_t start_idx, const std::string message, Error::Level level);
+	
+	void recover_to_stmt();
+	void recover_to_expr();
 };
 
 }
