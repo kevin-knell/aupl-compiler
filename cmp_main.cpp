@@ -139,6 +139,19 @@ int main(int argc, char** argv) {
 		}
 	}
 
+	if (std::any_of(
+			symbol_table.errors.begin(),
+			symbol_table.errors.end(),
+			[](cmp::Error err) {
+				return err.level == cmp::Error::CRITICAL
+					|| err.level == cmp::Error::ERROR;
+			}
+		)
+	) {
+		std::cerr << "found error during parsing" << std::endl;
+		return 1;
+	}
+
     cmp::NameAnalyzer name_analyzer(symbol_table);
     name_analyzer.resolve_variables();
 
@@ -156,7 +169,7 @@ int main(int argc, char** argv) {
 			}
 		)
 	) {
-		std::cerr << "found error" << std::endl;
+		std::cerr << "found error during name analysis" << std::endl;
 		return 1;
 	}
 

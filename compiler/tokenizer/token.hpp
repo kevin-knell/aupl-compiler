@@ -17,15 +17,16 @@ enum class TokenType {
 };
 
 enum class TokenFlagBits : unsigned {
-	NONE =				0,
+	NONE =					0,
 
-	FILE_ELEMENT_BEGIN =		1 << 0,
-	STMT_BEGIN =		1 << 1,
-	EXPR_BEGIN =		1 << 2 | STMT_BEGIN,
-	TYPE_BEGIN =		1 << 3,
+	FILE_ELEMENT_BEGIN =	1 << 0,
+	STMT_BEGIN =			1 << 1,
+	EXPR_BEGIN =			1 << 2 | STMT_BEGIN,
+	TYPE_BEGIN =			1 << 3,
+	CLOSING_PAREN =			1 << 4,
 
-	IS_EXPR =			EXPR_BEGIN,
-	IS_TYPE =			FILE_ELEMENT_BEGIN | STMT_BEGIN | EXPR_BEGIN | TYPE_BEGIN
+	IS_EXPR =				EXPR_BEGIN,
+	IS_TYPE =				FILE_ELEMENT_BEGIN | STMT_BEGIN | EXPR_BEGIN | TYPE_BEGIN
 };
 
 constexpr TokenFlagBits operator|(TokenFlagBits left, TokenFlagBits right) {
@@ -42,13 +43,19 @@ constexpr TokenFlagBits operator&(TokenFlagBits left, TokenFlagBits right) {
 	);
 }
 
+constexpr TokenFlagBits operator~(TokenFlagBits bits) {
+	return static_cast<TokenFlagBits>(
+		~static_cast<uint32_t>(bits)
+	);
+}
+
 struct Token {
     TokenType type;
     std::string value;
 	TokenFlagBits flags;
 	int line;
 	int col;
-    int pos;
+    size_t pos;
     bool is_new_line;
 
     Token(
@@ -57,7 +64,7 @@ struct Token {
 		TokenFlagBits flags,
 		int line,
 		int col,
-		int pos,
+		size_t pos,
 		bool is_new_line)
 			:	type(type),
 				value(value),

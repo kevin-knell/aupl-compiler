@@ -27,7 +27,7 @@
 #define ERROR_IF_NOT(m_value, m_message)		\
 	do {							\
 		if (!(m_value)) {			\
-    	    add_error(0, m_message, Error::CRITICAL);		\
+    	    add_error(error_start_idx, m_message, Error::CRITICAL);		\
     	    return {};				\
     	}							\
 	} while(0)
@@ -50,9 +50,7 @@ std::vector<StmtPtr> SymbolBuilder::parse_statement(ParserInfo& parser_info) {
 		
 		recover_to_stmt();
 
-		if (error_start != index) {
-			add_error(error_start, "Invalid start for member element: " + tokens[error_start].value, Error::ERROR);
-		}
+		add_error(error_start, "Invalid start for statement: " + tokens[error_start].value, Error::ERROR);
 
 		if (!has_more_tokens()) {
 			return {};
@@ -163,18 +161,25 @@ std::vector<StmtPtr> SymbolBuilder::parse_declare_statement(ParserInfo& parser_i
 		while (!expect(")")) {
 			if (!args.empty()) {
 				if (expect(",")) {
-					next(); // consume ';'
+					next(); // consume ','
+				} else {
+					add_error(start_idx, "expected comma", Error::ERROR);
+					while (has_more_tokens() && !expect(")")) next();
+					break;
 				}
 			}
 
-			size_t error_start_idx = index;
-
+			COMPILER_ASSERT(has_more_tokens(), "no more tokens");
 			ExprPtr arg = parse_expression(parser_info);
 			if (arg) {
 				args.push_back(arg);
 			} else {
-				add_error(error_start_idx, "invalid constructor argument", Error::ERROR);
-				recover_to_stmt();
+				add_error(index - 1, "invalid constructor argument", Error::ERROR);
+				recover_to_expr();
+				if (!has_more_tokens()
+						|| (peek().has_flag(TokenFlagBits::STMT_BEGIN) && !peek().has_flag(TokenFlagBits::EXPR_BEGIN))) {
+					return {};
+				}
 			}
 		}
 		next(); // consume ')'
@@ -249,6 +254,8 @@ std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
 
 	TRY_CONSUME("if");
 
+	size_t error_start_idx = index;
+
     ExprPtr condition_expr = parse_expression(parser_info);
 
 	ERROR_IF_NOT(condition_expr, "no expression after 'if'");
@@ -265,6 +272,8 @@ std::vector<StmtPtr> SymbolBuilder::parse_if(ParserInfo& parser_info) {
 
     if (expect("else")) {
         next(); // consume else
+
+		error_start_idx = index;
 
         else_scope = parse_block(parser_info, "else");
 
@@ -299,6 +308,8 @@ std::vector<StmtPtr> SymbolBuilder::parse_for(ParserInfo& parser_info) {
     size_t start_idx = index;
 
 	TRY_CONSUME("for");
+
+	size_t error_start_idx = index;
     
 	// for i in 5
 	// for x in list
@@ -309,6 +320,8 @@ std::vector<StmtPtr> SymbolBuilder::parse_for(ParserInfo& parser_info) {
 	std::string it_name = next().value;
 	
 	TRY_CONSUME("in");
+
+	error_start_idx = index;
 
 	ExprPtr expr = parse_expression(parser_info);
 
@@ -355,6 +368,8 @@ std::vector<StmtPtr> SymbolBuilder::parse_while(ParserInfo& parser_info) {
     size_t start_idx = index;
 	
 	TRY_CONSUME("while");
+
+	size_t error_start_idx = index;
 
     ExprPtr condition_expr = parse_expression(parser_info);
 

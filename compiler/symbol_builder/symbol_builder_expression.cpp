@@ -15,6 +15,8 @@
 #include <iostream>
 #include "compiler_error.hpp"
 
+#define EXPR_DEBUG_PRINT(m_text) //std::cout << (m_text) << ": " << peek().value << std::endl;
+
 #define RETURN_IF_NOT(m_value)		\
 	do {							\
 		if (!(m_value)) {			\
@@ -43,6 +45,20 @@
 namespace cmp {
 
 ExprPtr SymbolBuilder::parse_expression(ParserInfo& parser_info) {
+	EXPR_DEBUG_PRINT("start parsing expr");
+
+	if (!peek().has_flag(TokenFlagBits::EXPR_BEGIN)) {
+		size_t error_start = index;
+		
+		recover_to_expr();
+
+		add_error(error_start, "Invalid start for expression: " + tokens[error_start].value, Error::ERROR);
+
+		if (!has_more_tokens()) {
+			return nullptr;
+		}
+	}
+
     return parse_or(parser_info);
 }
 
@@ -134,6 +150,7 @@ ExprPtr SymbolBuilder::parse_add(ParserInfo& parser_info) {
     while (expect("+") || expect("-")) {
 		if (expect("+")){
         	next(); // consume +
+			EXPR_DEBUG_PRINT("expr: " + left->to_string() + " + ...");
         	ExprPtr right = parse_mul(parser_info);
         	if (!right) return nullptr;
         	left = std::make_shared<BinaryExpression>(left, right, BinaryExpression::OPERATOR::ADD);
@@ -176,6 +193,8 @@ ExprPtr SymbolBuilder::parse_mul(ParserInfo& parser_info) {
 
 // . []
 ExprPtr SymbolBuilder::parse_postfix(ParserInfo& parser_info) {
+	size_t start_idx = index;
+
     ExprPtr expr = parse_primary(parser_info);
     if (!expr) return nullptr;
 
@@ -183,8 +202,17 @@ ExprPtr SymbolBuilder::parse_postfix(ParserInfo& parser_info) {
         if (expect(".")) {
             next(); // consume '.'
 
+			if (peek().is_new_line) {
+				add_error(start_idx, "newline after '.'", Error::ERROR);
+				break;
+			}
+
             ExprPtr right = parse_primary(parser_info);
-            if (!right) return nullptr;
+            if (!right) {
+				add_error(start_idx, "expected call or variable", Error::ERROR);
+				recover_to_expr();
+				continue;
+			}
 
             if (right->get_kind() == Expression::CALL) {
                 auto call_expr = std::dynamic_pointer_cast<CallExpression>(right);
@@ -195,10 +223,12 @@ ExprPtr SymbolBuilder::parse_postfix(ParserInfo& parser_info) {
                 var_expr->obj_expr = expr;
                 expr = var_expr;
             } else {
-                std::cerr << "invalid member access: " << right->to_string() << std::endl;
-                return nullptr;
+				add_error(start_idx, "invalid member access: " + right->to_string(), Error::ERROR);
             }
         } else if (expect("[")) {
+			if (peek().is_new_line) {
+				add_error(start_idx, "newline before '['", Error::ERROR);
+			}
             next(); // consume '['
 
             ExprPtr index_expr = parse_expression(parser_info);
@@ -217,10 +247,18 @@ ExprPtr SymbolBuilder::parse_postfix(ParserInfo& parser_info) {
 }
 
 ExprPtr SymbolBuilder::parse_primary(ParserInfo& parser_info) {
+	EXPR_DEBUG_PRINT("parse primary");
 	if (auto call_expr = parse_call(parser_info)) return call_expr;
     if (auto tuple_expr = parse_tuple(parser_info)) return tuple_expr;
     if (auto init_list_expr = parse_initializer_list(parser_info)) return init_list_expr;
 	
+	if (expect("\\")) {
+		ExprPtr result = parse_node_composition(parser_info);
+		return result;
+	}
+	
+	EXPR_DEBUG_PRINT("parse single token expression");
+
     if (match(TokenType::INT_LITERAL)) {
         vm::Value8* value8 = new vm::Value8();
         value8->i64 = std::stoi(next().value);
@@ -274,11 +312,6 @@ ExprPtr SymbolBuilder::parse_primary(ParserInfo& parser_info) {
         return result;
     }
 
-	if (expect("\\")) {
-		ExprPtr result = parse_node_composition(parser_info);
-		return result;
-	}
-
     return nullptr;
 }
 
@@ -289,6 +322,8 @@ ExprPtr SymbolBuilder::parse_call(ParserInfo& parser_info) {
     std::string name = next().value;
 
 	TRY_CONSUME("(");
+
+	EXPR_DEBUG_PRINT("parse call");
 
     std::vector<ExprPtr> args;
     while (!expect(")")) {
@@ -317,6 +352,8 @@ ExprPtr SymbolBuilder::parse_tuple(ParserInfo &parser_info) {
 
 	TRY_CONSUME("(");
 
+	EXPR_DEBUG_PRINT("parse (...)");
+
     ExprVec expressions;
 
     while (!expect(")")) {
@@ -330,6 +367,7 @@ ExprPtr SymbolBuilder::parse_tuple(ParserInfo &parser_info) {
         }
 
         ExprPtr t = parse_expression(parser_info);
+
         if (!t) {
             index = start_idx;
             return nullptr;
@@ -337,6 +375,10 @@ ExprPtr SymbolBuilder::parse_tuple(ParserInfo &parser_info) {
         expressions.push_back(t);
     }
     next(); // consume )
+
+	if (expressions.size() == 1) {
+		return expressions.front();
+	}
 
     return std::make_shared<TupleExpression>(expressions);
 }
@@ -374,6 +416,8 @@ ExprPtr SymbolBuilder::parse_node_composition(ParserInfo &parser_info) {
 	size_t start_idx = index;
 
 	TRY_CONSUME("\\");
+
+	EXPR_DEBUG_PRINT("parse node composition");
 
 	ERROR_IF_NOT(match(TokenType::IDENTIFIER), "identifier expected after '\\'");
 	std::string node_name = next().value;
@@ -434,9 +478,15 @@ ExprPtr SymbolBuilder::parse_node_composition(ParserInfo &parser_info) {
 }
 
 void SymbolBuilder::recover_to_expr() {
-	do {
+	while (has_more_tokens()
+			&& !peek().has_flag(TokenFlagBits::CLOSING_PAREN)) {
 		next();
-	} while (has_more_tokens() && !expect(")") && !peek().has_flag(TokenFlagBits::EXPR_BEGIN));
+
+		if (peek().has_flag(TokenFlagBits::EXPR_BEGIN)
+				|| peek().has_flag(TokenFlagBits::STMT_BEGIN)) {
+			break;
+		}
+	}
 }
 
 }

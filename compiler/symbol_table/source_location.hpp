@@ -19,7 +19,10 @@ struct SourceLocation {
 			:	source_file(source_file),
 				start_token_index(start_token_index),
 				end_token_index(end_token_index) {
-					COMPILER_ASSERT(start_token_index <= end_token_index, "start token index must not be larger than end token index");
+					if (start_token_index == end_token_index) {
+						end_token_index = start_token_index + 1;
+					}
+					COMPILER_ASSERT(start_token_index < end_token_index, "start token index must not be larger than end token index");
 				}
 
 	std::string get_text() const;

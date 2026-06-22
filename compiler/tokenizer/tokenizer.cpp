@@ -118,7 +118,7 @@ std::vector<Token> tokenize(const std::string& source) {
     const std::string int_number = R"([+-]?\d+)";
     // Multi-char operators first, then single-char
     const std::string special = R"(>=|<=|==|!=|\+=|-=|\*=|/=|[{}()\[\]:,=+\-*/%<>.\\])";
-    const std::string string_literal = R"(\"(.*)\")";
+    const std::string string_literal = R"(\"(.*?)\")";
     const std::string char_literal = R"('(\\.|[^'\\])')";
 
     // Master regex: all pieces combined
@@ -207,7 +207,14 @@ std::vector<Token> tokenize(const std::string& source) {
 				);
 				break;
 			case TokenType::SPECIAL:
-				// TODO
+				if (token_text == "(") {
+					flags = TokenFlagBits::EXPR_BEGIN
+					| TokenFlagBits::STMT_BEGIN;
+				} else if (token_text == ")"
+						|| token_text == "}"
+						|| token_text == "}") {
+					flags = TokenFlagBits::CLOSING_PAREN;
+				}
 				break;
 			case TokenType::ANNOTATION:
 				flags = (
@@ -227,7 +234,7 @@ std::vector<Token> tokenize(const std::string& source) {
 			flags = value_flags[token_text];
 		}
 
-        tokens.emplace_back(
+		Token token(
 			type,
 			token_text,
 			flags,
@@ -236,6 +243,14 @@ std::vector<Token> tokenize(const std::string& source) {
 			start_pos,
 			is_newline
 		);
+
+		COMPILER_ASSERT(
+			!token.has_flag(TokenFlagBits::EXPR_BEGIN)
+			|| token.has_flag(TokenFlagBits::STMT_BEGIN),
+			""
+		);
+
+		tokens.push_back(token);
 
 		is_newline = false;
 	}

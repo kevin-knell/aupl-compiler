@@ -25,12 +25,12 @@ bool SymbolBuilder::has_more_tokens() const {
 }
 
 const Token& SymbolBuilder::peek() const {
-    if (index >= tokens.size()) throw std::out_of_range("Token index out of range");
+    if (index >= tokens.size()) COMPILER_ERR("peek(): Token index out of range");
     return tokens[index];
 }
 
 const Token& SymbolBuilder::next() {
-    if (index >= tokens.size()) throw std::out_of_range("Unexpected end of tokens");
+    if (index >= tokens.size()) COMPILER_ERR("next(): Unexpected end of tokens");
     return tokens[index++];
 }
 
@@ -582,7 +582,7 @@ void SymbolBuilder::parse_body(ParserInfo parser_info, FuncPtr function_symbol)
 				st->is_volatile = false;
 				COMPILER_ASSERT(function_symbol->scope, "");
 				function_symbol->scope->body.push_back(st);
-				//std::cout << st->to_string() << std::endl;
+				std::cout << st->to_string() << std::endl;
 			}
 		}
 	}

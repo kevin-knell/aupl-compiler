@@ -110,6 +110,10 @@ Error &SymbolTable::add_error(
 		col = source_file->tokens[start_token_idx].col;
 	}
 
+	if (start_token_idx == end_token_idx) {
+		end_token_idx = start_token_idx + 1;
+	}
+
 	Error& error = errors.emplace_back(
 		path,
 		start_token_idx,
@@ -126,6 +130,8 @@ Error &SymbolTable::add_error(
 			message << std::endl;
 
 	std::cerr << source_location.get_text_as_rect() << "\n" << std::endl;
+
+	COMPILER_ASSERT(start_token_idx < end_token_idx, "start token must come before end token");
 	
 	return error;
 }

@@ -701,7 +701,7 @@ inline void BytecodeGenerator<size_only>::generate_bytecode(
 		const LoadConstExpression &expr,
 		VarExprPtr dest_var) {
 	TypePtr dest_type = dest_var->get_type();
-	COMPILER_ASSERT(!!dest_type, "no dest type")
+	COMPILER_ASSERT(!!dest_type, "no dest type");
 	size_t size = dest_type->get_size();
 	COMPILER_ASSERT(expr.get_type()->get_size() >= size, "");
 	if (size == 0) return;
