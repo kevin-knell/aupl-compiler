@@ -137,7 +137,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 		assert(result == VK_SUCCESS);
 
 		// update desc set
-		VkDescriptorBufferInfo bufferInfo{
+		VkDescriptorBufferInfo buffer_info{
 			.buffer = f.frame_uniform_buffer,
 			.offset = 0,
 			.range = sizeof(FrameContext::FrameUniformData)
@@ -152,7 +152,7 @@ Renderer::Renderer(Shared<Viewport> viewport) : viewport(viewport) {
 			.descriptorCount = 1,
 			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			.pImageInfo = nullptr,
-			.pBufferInfo = &bufferInfo,
+			.pBufferInfo = &buffer_info,
 			.pTexelBufferView = nullptr
 		};
 
@@ -270,7 +270,7 @@ Renderer::InputBuffer Renderer::create_input_buffer(VkDeviceSize size) {
 		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
 		.pNext = nullptr,
 		.allocationSize = mem_req.size,
-		.memoryTypeIndex = VulkanInstance::singleton()->findMemoryType(
+		.memoryTypeIndex = VulkanInstance::singleton()->find_memory_type(
 			mem_req.memoryTypeBits,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT

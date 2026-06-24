@@ -149,13 +149,13 @@ void VulkanInstance::create_device() {
 	assert(result == VK_SUCCESS);
 }
 
-uint32_t VulkanInstance::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
-	VkPhysicalDeviceMemoryProperties memProps;
-	vkGetPhysicalDeviceMemoryProperties(phys_device, &memProps);
+uint32_t VulkanInstance::find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties) {
+	VkPhysicalDeviceMemoryProperties mem_props;
+	vkGetPhysicalDeviceMemoryProperties(phys_device, &mem_props);
 
-	for (uint32_t i = 0; i < memProps.memoryTypeCount; i++) {
-		if ((typeFilter & (1 << i)) &&
-			(memProps.memoryTypes[i].propertyFlags & properties) == properties) {
+	for (uint32_t i = 0; i < mem_props.memoryTypeCount; i++) {
+		if ((type_filter & (1 << i)) &&
+			(mem_props.memoryTypes[i].propertyFlags & properties) == properties) {
 			return i;
 		}
 	}

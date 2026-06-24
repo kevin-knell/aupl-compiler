@@ -31,7 +31,7 @@ struct VulkanInstance {
 
 	void create_instance();
 	void create_device();
-	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+	uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties);
 
 	static VulkanInstance* singleton();
 };

@@ -35,13 +35,13 @@ layout (location = 9) in vec2 vert_uv;
 layout(location = 0) out vec2 out_position;
 
 void main() {
-	vec4 worldPos = inst_model * vec4(vert_position, 1.0);
+	vec4 world_pos = inst_model * vec4(vert_position, 1.0);
 
 	vec2 ndc;
 
-	ndc.x = (worldPos.x / frame_data.viewport_size.x) * 2.0 - 1.0;
+	ndc.x = (world_pos.x / frame_data.viewport_size.x) * 2.0 - 1.0;
 
-	ndc.y = (worldPos.y / frame_data.viewport_size.y) * 2.0 - 1.0;
+	ndc.y = (world_pos.y / frame_data.viewport_size.y) * 2.0 - 1.0;
 	
 	out_position = ndc;
 }

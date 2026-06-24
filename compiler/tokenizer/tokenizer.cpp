@@ -214,6 +214,8 @@ std::vector<Token> tokenize(const std::string& source) {
 						|| token_text == "}"
 						|| token_text == "}") {
 					flags = TokenFlagBits::CLOSING_PAREN;
+				} else if (token_text == "\\") {
+					flags = TokenFlagBits::EXPR_BEGIN;
 				}
 				break;
 			case TokenType::ANNOTATION:

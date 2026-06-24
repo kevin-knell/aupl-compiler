@@ -63,8 +63,8 @@ struct ClassBind {
 };
 
 namespace {
-	std::string replace_member_pointer_with_name(const std::string& input, const std::string& funcName) {
-    	return std::regex_replace(input, std::regex(R"(\(\w+(<\w+>)?::\*\)|\(\*\))"), funcName);
+	std::string replace_member_pointer_with_name(const std::string& input, const std::string& func_name) {
+    	return std::regex_replace(input, std::regex(R"(\(\w+(<\w+>)?::\*\)|\(\*\))"), func_name);
 	}
 
 	std::vector<std::string> ExtractTypeNames(const std::string& s) {
@@ -72,42 +72,34 @@ namespace {
 		std::string token;
 		int depth = 0;
 
-		auto flushToken = [&]()
-		{
-			if (!token.empty())
-			{
+		auto flush_token = [&]() {
+			if (!token.empty()) {
 				result.push_back(token);
 				token.clear();
 			}
 		};
 
-		for (char c : s)
-		{
-			if (std::isalnum(static_cast<unsigned char>(c)) || c == '_')
-			{
+		for (char c : s) {
+			if (std::isalnum(static_cast<unsigned char>(c)) || c == '_') {
 				token += c;
 			}
-			else if (c == '<')
-			{
-				flushToken();
+			else if (c == '<') {
+				flush_token();
 				++depth;
 			}
-			else if (c == '>')
-			{
-				flushToken();
+			else if (c == '>') {
+				flush_token();
 				--depth;
 			}
-			else if (c == ',')
-			{
-				flushToken();
+			else if (c == ',') {
+				flush_token();
 			}
-			else
-			{
-				flushToken();
+			else {
+				flush_token();
 			}
 		}
 
-		flushToken();
+		flush_token();
 		return result;
 	}
 }

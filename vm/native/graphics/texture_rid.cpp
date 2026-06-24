@@ -34,7 +34,7 @@ void TextureRID_T::upload(Image* image, VkDevice device, VkCommandPool cmd_pool,
 		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
 		.pNext = nullptr,
 		.allocationSize = mem_req.size,
-		.memoryTypeIndex = VulkanInstance::singleton()->findMemoryType(
+		.memoryTypeIndex = VulkanInstance::singleton()->find_memory_type(
 			mem_req.memoryTypeBits,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
@@ -79,7 +79,7 @@ void TextureRID_T::upload(Image* image, VkDevice device, VkCommandPool cmd_pool,
 		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
 		.pNext = nullptr,
 		.allocationSize = img_mem_req.size,
-		.memoryTypeIndex = VulkanInstance::singleton()->findMemoryType(img_mem_req.memoryTypeBits, 
+		.memoryTypeIndex = VulkanInstance::singleton()->find_memory_type(img_mem_req.memoryTypeBits, 
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
 	};
@@ -149,7 +149,7 @@ void TextureRID_T::upload(Image* image, VkDevice device, VkCommandPool cmd_pool,
 	assert(result == VK_SUCCESS);
 
 	// alloc desc set
-    VkDescriptorSetAllocateInfo descAlloc{
+    VkDescriptorSetAllocateInfo desc_alloc{
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
         .descriptorPool = VulkanInstance::singleton()->desc_pool,
@@ -157,7 +157,7 @@ void TextureRID_T::upload(Image* image, VkDevice device, VkCommandPool cmd_pool,
         .pSetLayouts = &VulkanInstance::singleton()->desc_set_layout_sampler
     };
 
-    vkAllocateDescriptorSets(device, &descAlloc, &vulkan_data.sampler_descriptor_set);
+    vkAllocateDescriptorSets(device, &desc_alloc, &vulkan_data.sampler_descriptor_set);
 
 	// update desc set
 	VkDescriptorImageInfo sampler_buffer_info{

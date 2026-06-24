@@ -12,7 +12,7 @@ namespace {
         return s.substr(start, end - start + 1);
     }
 
-    void splitParams(const std::string& params, std::vector<std::string>& types, std::vector<std::string>& names) {
+    void split_params(const std::string& params, std::vector<std::string>& types, std::vector<std::string>& names) {
         std::stringstream ss(params);
         std::string param;
 
@@ -41,14 +41,14 @@ FunctionSignature FunctionParser::parse(const std::string& code) {
     std::smatch match;
     if (!std::regex_search(code, match, pattern)) return sig;
 
-    std::string rawReturn = match[1].str();
+    std::string raw_return = match[1].str();
     std::string obj = match[2].str();
-    std::string rawParams = match[3].str();
+    std::string raw_params = match[3].str();
 
-    sig.return_type = rawReturn;
+    sig.return_type = raw_return;
 
     sig.is_const   = match[4].matched;
-    splitParams(rawParams, sig.parameter_types, sig.parameters);
+    split_params(raw_params, sig.parameter_types, sig.parameters);
 
     return sig;
 }

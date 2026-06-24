@@ -26,21 +26,21 @@ FrameContext::FrameContext() {
 	assert(result == VK_SUCCESS);
 
 	// frame uniform memory
-	VkMemoryRequirements memReq;
-	vkGetBufferMemoryRequirements(VulkanInstance::singleton()->device, frame_uniform_buffer, &memReq);
+	VkMemoryRequirements mem_req;
+	vkGetBufferMemoryRequirements(VulkanInstance::singleton()->device, frame_uniform_buffer, &mem_req);
 
-	VkMemoryAllocateInfo allocInfo{
+	VkMemoryAllocateInfo alloc_info{
 		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
 		.pNext = nullptr,
-		.allocationSize = memReq.size,
-		.memoryTypeIndex = VulkanInstance::singleton()->findMemoryType(
-			memReq.memoryTypeBits,
+		.allocationSize = mem_req.size,
+		.memoryTypeIndex = VulkanInstance::singleton()->find_memory_type(
+			mem_req.memoryTypeBits,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		)
 	};
 
-	result = vkAllocateMemory(VulkanInstance::singleton()->device, &allocInfo, nullptr, &frame_uniform_memory);
+	result = vkAllocateMemory(VulkanInstance::singleton()->device, &alloc_info, nullptr, &frame_uniform_memory);
 	assert(result == VK_SUCCESS);
 
 	result = vkBindBufferMemory(VulkanInstance::singleton()->device, frame_uniform_buffer, frame_uniform_memory, 0);
