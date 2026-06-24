@@ -38,6 +38,11 @@ struct vec2 {
     constexpr vec2(float x, float y) : x(x), y(y) {}
 	constexpr vec2(vec2i v) : x(static_cast<float>(v.x)), y(static_cast<float>(v.y)) {}
 
+	COPY_DEFAULT(vec2)
+	MOVE_DEFAULT(vec2)
+
+	~vec2() = default;
+
 	SETGET(x)
 	SETGET(y)
 
@@ -46,53 +51,57 @@ struct vec2 {
 	SWIZZLE2(DECL_GET2)
 
     // vector functions
+	vec2 abs() const;
+
+	float angle() const;
+	float angle_to(vec2 other) const;
+	float angle_to_point(vec2 p) const;
+
+	float aspect() const;
+
+	vec2 bounce(vec2 norm) const;
+
+	float cross(vec2 other) const;
 
     float dot(vec2 v) const;
 
-    float length_squared() const {
-        return x * x + y * y;
-    }
+	float length() const;
 
-    float length() const;
+    float length_squared() const;
 
-	vec2 normalized() const {
-		return vec2(*this) / length();
+	bool linearly_independent(const vec2& other) const;
+
+	vec2 normalized() const;
+
+	// rounding
+	vec2 ceil() const;
+	vec2 floor() const;
+	vec2 round() const;
+
+	// min / max
+	vec2 clamp(vec2 min, vec2 max) const;
+	vec2 clamp(float min, float max) const;
+
+	// operators
+	vec2 operator+(const vec2& other) const {
+		return vec2(x + other.x, y + other.y);
 	}
 
-	vec2 abs() const {
-		return vec2(Math::abs(x), Math::abs(y));
+	vec2 operator-(const vec2& other) const {
+		return vec2(x - other.x, y - other.y);
 	}
 
-	bool linearly_independent(const vec2& other) const {
-		return *this != other.abs();
+	vec2 operator-() const {
+		return vec2(-x, -y);
 	}
 
-	float angle() {
-		double a = Math::atan2(-y, x);
-		if (a < 0.0f) a += Math::TAU;
-		return static_cast<float>(a);
+	vec2 operator*(const float& s) const {
+		return vec2(x * s, y * s);
 	}
 
-    // operators
-    vec2 operator+(const vec2& other) const {
-        return vec2(x + other.x, y + other.y);
-    }
-
-    vec2 operator-(const vec2& other) const {
-        return vec2(x - other.x, y - other.y);
-    }
-
-    vec2 operator-() const {
-        return vec2(-x, -y);
-    }
-
-    vec2 operator*(const float& s) const {
-        return vec2(x * s, y * s);
-    }
-
-    vec2 operator/(const float& s) const {
-        return vec2(x / s, y / s);
-    }
+	vec2 operator/(const float& s) const {
+		return vec2(x / s, y / s);
+	}
 
 	bool operator!=(const vec2& other) const {
 		return x != other.x || y != other.y;

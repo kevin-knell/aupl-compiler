@@ -40,11 +40,18 @@ struct vec3 {
 
     float dot(vec3 v) const { return x * v.x + y * v.y + z * v.z; }
 
-    float length_squared() const {
-        return x * x + y * y + z * z;
-    }
-
+    float length_squared() const { return x * x + y * y + z * z; }
     float length() const;
+
+	vec3 cross(const vec3& other) const {
+		return vec3(
+			y * other.z - z * other.y,
+			z * other.x - x * other.z,
+			x * other.y - y * other.x
+		);
+	}
+
+	bool linearly_independent(const vec2& other) const;
 
     // operators
     vec3 operator+(const vec3& other) const {

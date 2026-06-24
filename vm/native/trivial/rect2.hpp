@@ -15,6 +15,10 @@ struct Rect2 {
 	vec2 get_end() const {
 		return start + size;
 	}
+
+	float area() const {
+		return size.x * size.y;
+	}
 };
 
 MARK_TRIVIAL(Rect2);

@@ -38,6 +38,27 @@ struct vec2i {
 
 	int32_t area() const;
 
+	// operators
+	vec2i operator+(const vec2i& other) const {
+		return vec2i(x + other.x, y + other.y);
+	}
+
+	vec2i operator-(const vec2i& other) const {
+		return vec2i(x - other.x, y - other.y);
+	}
+
+	vec2i operator-() const {
+		return vec2i(-x, -y);
+	}
+
+	vec2i operator*(const int32_t& s) const {
+		return vec2i(x * s, y * s);
+	}
+
+	bool operator!=(const vec2i& other) const {
+		return x != other.x || y != other.y;
+	}
+
 	operator String() const;
 };
 
